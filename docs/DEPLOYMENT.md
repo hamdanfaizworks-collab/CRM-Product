@@ -8,12 +8,12 @@ Runbook ini membedakan verifikasi lokal, publikasi frontend, dan go-live operasi
 | --- | --- | --- |
 | GitHub `hamdanfaizworks-collab/CRM-Product` | Source pada `main`; CI menyiapkan artifact branch `hostinger` | Hasil CI/artifact dan deployment provider dicatat per commit |
 | Supabase `yqmcafgnryvsrvalbycz` | Tiga migrasi, 11 tabel ber-RLS, 87 produk, Storage privat dan fungsi admin; 23 pemeriksaan API hosted lulus | Director mengonfirmasi login pilot; SMTP dan onboarding tim masih pending |
-| Hostinger | Frontend live; hPanel Completed 13:24 WIB (3 detik), release metadata HTTPS 200 cocok source commit; Git branch `hostinger` ke `public_html` | Login director origin baru dan verifikasi auto-update masih pending |
+| Hostinger | Frontend live; auto-update source `630bf076…`, CI `42973665518` SUCCESS, artifact `b41f3ce…`, hPanel Completed 13:37 WIB (4 detik), metadata cocok; HTTP smoke 13/13 PASS 13:38 WIB | Login Hostinger dikonfirmasi pengguna; siap pilot director, SMTP/UAT workflow nyata/backup-restore tetap tindak lanjut |
 | Validasi lokal | 51 tes aplikasi, 5 tes environment, 47 SQL/RLS, serta build guarded lulus | Bukan bukti provider Hostinger telah live |
 
 Penolakan akses awal telah diselesaikan dan merupakan riwayat pekerjaan. Status final dipelihara pada `RELEASE.md`; hasil layanan target pada `HOSTED-UAT.md`. Pengguna menyetujui frontend publik dengan login CRM invitation-only, tanpa hosting password gate tambahan. Gunakan environment penyedia untuk credential; jangan menyalin secret ke chat/repository.
 
-Initial access failures are historical. Current evidence is recorded in RELEASE, HOSTED-UAT and HOSTINGER-UAT. The user approved a public frontend with invitation-only CRM authentication. The initial Hostinger frontend deployment and demo smoke tests are verified; real director sign-in on the new origin and a subsequent automatic-update cycle remain pending.
+Initial access failures are historical. The public Hostinger frontend and an automatic update cycle are verified; the user explicitly confirmed successful Hostinger sign-in. This is user acceptance, not an agent-observed authenticated business workflow. The release is ready for the director pilot; team SMTP, real-workflow UAT and backup/restore remain follow-ups. Current evidence is recorded in RELEASE, HOSTED-UAT and HOSTINGER-UAT.
 
 ## Kontrak release
 
@@ -60,7 +60,7 @@ Konfigurasi `.openai/hosting.json` memetakan Site ke `dist/`. Simpan versi sourc
 
 ### Hostinger target yang dipilih
 
-Target yang diinspeksi adalah website PHP/HTML yang sudah ada; tidak dilakukan migrasi site/domain. CI membangun source `main` menggunakan Node 24 dan memublikasikan hanya isi `dist` (termasuk metadata release) ke branch `hostinger`. hPanel Git mengambil branch tersebut ke `public_html`; wizard PHP/HTML tidak menjalankan build React. Deployment awal telah Completed 13:24 WIB, durasi 3 detik; CI `42971963802` SUCCESS dan `/release.json` HTTPS 200 cocok source `b4cebfd9578c2960e3ca40167a24b5905316fb6e`. ID/EN/reload dan demo modul/CSV pada origin nyata lulus. Ikuti `HOSTINGER-UAT.md` untuk bukti; login director baru dan auto-update dari push berikutnya masih pending.
+Target memakai PHP/HTML yang sudah ada, tanpa migrasi site/domain. CI membangun source `main` menggunakan Node 24 dan memublikasikan isi `dist` ke branch `hostinger`; hPanel mengambilnya ke `public_html`. Deployment awal Completed 13:24 WIB (3 detik). Pembaruan otomatis source `630bf0762c5c76944d926b688d2b2b9c2219f6d0` melalui CI `42973665518` menghasilkan artifact `b41f3ce05110d9dfab3258e4a92faa41400676e3` dan Completed 13:37 WIB (4 detik) tanpa klik Redeploy; live metadata cocok. HTTP smoke 13/13 PASS pada 13:38 WIB. Login Hostinger diterima berdasarkan konfirmasi pengguna, tanpa klaim agent mengobservasi workflow akun nyata. Primary Auth Site URL cutover lulus 13:35 WIB: hanya satu properti berubah, post-push diff nol, redirects dipertahankan, signup/anon off, minimum password 10. Detail sanitized: `HOSTINGER-UAT.md`.
 
 The selected Hostinger target uses an artifact branch: main → GitHub Actions → dist contents on hostinger → hPanel Git → public_html. Keep the existing site/domain. A published artifact branch alone is not a verified Hostinger deployment.
 
@@ -111,9 +111,11 @@ Simpan tanggal, versi/commit, penguji, hasil, dan bukti per skenario pada catata
 - **Snapshot saat ini:** snapshot bisnis lokal telah dibuat dengan persetujuan pengguna dan tidak mencakup Auth maupun file Storage. PITR off dan belum ada hosted physical backup. Snapshot ini bukan bukti pemulihan lengkap; retensi dan restore drill masih harus ditetapkan/diuji. Advisor Auth terakhir memberi peringatan leaked-password protection.
 - **Storage:** backup database tidak otomatis menjadi salinan file lampiran. Pastikan objek, metadata, dan kebijakan pemulihan lampiran tercakup. Dokumentasikan retensi dan penanggung jawab.
 - **Sasaran pemulihan:** Product Director/operator menetapkan RPO dan RTO sebelum go-live; belum ada target layanan yang dianggap disetujui hanya karena script tersedia. Rekam hasil restore drill dan lama pemulihannya.
-- **Rollback frontend:** hentikan rollout, kembali ke versi static/provider sebelumnya yang sudah diketahui baik, lalu uji login dan operasi baca/tulis. Pastikan versi lama kompatibel dengan schema saat ini; jangan mengembalikan frontend ke schema yang tidak kompatibel.
+- **Rollback frontend Hostinger:** revert perubahan source melalui GitHub `main` dengan riwayat tetap utuh; biarkan CI membangun ulang dan memublikasikan artifact ke `hostinger`, kemudian verifikasi hasil provider dan live `release.json`. Pastikan source yang dipulihkan kompatibel dengan schema. Tidak diasumsikan ada fitur rollback hPanel yang belum diamati; database produksi tidak direset.
 - **Rollback database:** utamakan migrasi perbaikan maju yang direview. Jika restore diperlukan, hentikan penulisan, simpan data sejak backup sesuai rencana, pulihkan pada lingkungan terpisah dan validasi sebelum cutover. Jangan menjatuhkan tabel produksi atau menghapus history migrasi untuk mengulang migrasi awal.
 - **Insiden secret:** rotasi di penyedia, cabut sesi/token sesuai jenis credential, bersihkan riwayat bila sempat terpublikasi, lalu build ulang frontend dengan publishable key yang valid. Jangan menaruh secret baru dalam commit.
+
+Archive source berasal dari final source HEAD; archive static berasal dari `origin/hostinger` yang diverifikasi. Snapshot bisnis lokal tidak disertakan pada keduanya. Arsip tidak menggantikan backup Auth/Storage atau restore drill.
 
 ## 5. Checklist bukti go-live
 
@@ -126,7 +128,8 @@ Simpan tanggal, versi/commit, penguji, hasil, dan bukti per skenario pada catata
 - [ ] Master produk, anggota, wilayah, unit demo, dan data awal disetujui TTM.
 - [ ] Backup, restore drill, pemantauan, pemilik support, dan rollback siap.
 - [x] Provider memberi status deployment awal sukses; frontend publik dan smoke test demo pada URL final telah terverifikasi.
-- [ ] Director mengonfirmasi login nyata pada origin Hostinger dan auto-update dibuktikan melalui push berikutnya.
+- [x] Director mengonfirmasi login Hostinger (acceptance pengguna); auto-update terbukti melalui push source `630bf076…` tanpa Redeploy manual.
+- [ ] UAT alur bisnis terautentikasi dengan akun/data nyata dan backup/restore diterima sebelum rollout tim penuh.
 - [ ] Product Director mencatat keputusan go-live/pilot dan tanggal rollout.
 
 Sampai checklist itu terbukti, gunakan status yang tepat: implementasi lokal, frontend terpublikasi, atau pilot backend; bukan go-live CRM lengkap.

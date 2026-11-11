@@ -2,21 +2,25 @@
 
 Date / Tanggal: **11 November 2026, Asia/Jakarta**.  
 Target: **https://cyan-oryx-350189.hostingersite.com**.  
-Scope / Cakupan: initial deployment and frontend smoke tests; real director sign-in and automatic update proof remain pending.
+Status / Status: **READY FOR DIRECTOR PILOT**. Hostinger is live, automatic updates are proven, and the user explicitly confirmed successful Hostinger sign-in. Team SMTP, real-business-workflow UAT and backup/restore remain follow-ups. User confirmation is not an agent-observed authenticated dashboard/workflow.
 
 ## Provenance / Jejak release
 
 | Item | Verified value / Nilai terverifikasi |
 | --- | --- |
 | Source branch | `main` |
-| Source commit | `b4cebfd9578c2960e3ca40167a24b5905316fb6e` |
-| GitHub Actions run | [`42971963802`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42971963802) — **SUCCESS** |
+| Latest verified application source | `630bf0762c5c76944d926b688d2b2b9c2219f6d0` |
+| GitHub Actions run | [`42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518) — **SUCCESS**, both jobs |
 | CI jobs | verify + publish-hostinger succeeded |
 | Static artifact branch | `hostinger` |
-| Artifact commit | `f315da4e2da9c701ef4086771d76e480167b921d` |
+| Artifact commit | `b41f3ce05110d9dfab3258e4a92faa41400676e3` |
 | Existing Hostinger site type | PHP/HTML; Git deployment to `public_html` |
 | Initial provider deployment | **Completed**, **13:24 WIB**, **3 seconds** |
+| Proven automatic update | **Completed**, **13:37 WIB**, **4 seconds**, no Redeploy click |
 | Public release metadata | [`/release.json`](https://cyan-oryx-350189.hostingersite.com/release.json), HTTPS **200**, source commit matches |
+| HTTP verification | **13/13 PASS**, **13:38 WIB**; sanitized deliverable `TTM-Hostinger-checks.json` |
+
+Initial deployment history: source `b4cebfd9578c2960e3ca40167a24b5905316fb6e` → CI `42971963802` SUCCESS → artifact `f315da4e2da9c701ef4086771d76e480167b921d` → initial manual deployment Completed 13:24 WIB (3 seconds). The later source/CI/artifact above updated the same origin automatically at 13:37 WIB without a Redeploy click. The live release metadata changed to the later source commit. This proves the update cycle; it does not predict the result of an upcoming documentation commit or a future CI run.
 
 The existing domain/site was retained. GitHub Actions built React/Vite, and Hostinger deployed compiled static files from the artifact branch. No hosting password gate was added; the user approved a public frontend with invitation-only CRM authentication.
 
@@ -34,18 +38,24 @@ Domain/site yang ada dipertahankan. React/Vite dibangun di GitHub Actions, lalu 
 | Demo Calendar | PASS | Navigation/rendering smoke test. |
 | Demo Reports | PASS | Reports render on the Hostinger origin. |
 | English CSV download | PASS | Download observed; no real customer export was required. |
-| Real director authentication on Hostinger | **PENDING USER HANDOFF** | Previous Sites login was confirmed; this new origin still requires confirmation. |
-| Auto-deploy setting | **ON / GREEN OBSERVED** | Setting enabled; a later push-to-origin update has not yet been proven. |
+| Director sign-in acceptance on Hostinger | **USER CONFIRMED** | User explicitly stated “login Hostinger berhasil”. The agent did not observe a real-account authenticated dashboard or business workflow. |
+| Automatic update | **PROVEN** | Source `630bf076…` reached live metadata through CI/artifact and hPanel Completed 13:37 WIB without a Redeploy click. |
 | Auth primary Site URL cutover | **PASS — 13:35 WIB** | Primary origin is Hostinger; both redirects retained, signup/anonymous disabled, minimum password 10. Exactly one property changed; post-push diff is zero. |
 | SMTP, invitation/recovery and team rollout | **PENDING** | A live frontend does not prove email deliverability or full team onboarding. |
+
+The 13 HTTP checks at 13:38 WIB passed, including HTTP→HTTPS 301 redirection, asset MIME types, `nosniff`, PRD HTTP 200, `.env`/`.git` HTTP 403, SPA HTTP 200, and missing-asset HTTP 404. These are public-origin checks; they do not claim real-business-workflow UAT. Sanitized results are in the separate `TTM-Hostinger-checks.json` deliverable.
 
 Screenshot deliverable: **`TTM-Hostinger-deployment.png`**. This record contains no passwords, tokens, administrative keys, session cookies, or real customer data. Do not add authentication screenshots containing credentials to the public repository.
 
 ## Remaining sign-off / Verifikasi berikutnya
 
-1. Confirm director sign-in on this exact Hostinger origin and one authenticated business workflow.
-2. Confirm the Auth Site URL cutover and retain allowed redirects for the intended origins.
-3. Push a subsequent approved release, verify CI/artifact publication, then confirm the target release metadata changes without a manual provider deploy.
+1. Complete one authenticated business workflow with the director's real account/data; successful login has already been accepted by the user.
+2. Retain the verified Auth cutover and redirects; test invitation/recovery after email configuration is ready.
+3. Keep source/CI/artifact/live-metadata evidence for every later release. Automatic updates are already proven for source `630bf076…`.
 4. Complete SMTP/deliverability, team UAT and backup/restore acceptance before claiming full team go-live.
 
-Status saat pencatatan: **frontend Hostinger live; login director origin baru dan verifikasi auto-update masih pending**. / Recorded status: **Hostinger frontend live; new-origin director login and automatic-update verification remain pending**.
+Status saat pencatatan: **siap pilot director; frontend Hostinger live, auto-update terbukti, login dikonfirmasi pengguna**. / Recorded status: **ready for the director pilot; Hostinger live, automatic updates proven, sign-in user-confirmed**.
+
+## Rollback yang didokumentasikan / Documented rollback
+
+Revert the source change through GitHub `main` while preserving history; let CI rebuild and publish the `hostinger` branch, then verify the provider result and live `release.json`. Do not reset the production database. No unobserved hPanel rollback feature is assumed. Release archives are separated: source from the final source HEAD, static output from the verified `origin/hostinger`; the local business-data snapshot is excluded from both.

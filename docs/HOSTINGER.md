@@ -3,13 +3,15 @@
 **Target:** `https://cyan-oryx-350189.hostingersite.com`  
 **Source:** `hamdanfaizworks-collab/CRM-Product`, branch `main`  
 **Artifact branch:** `hostinger`  
-**Status:** **frontend Hostinger live**; login director pada origin baru dan bukti auto-update masih pending / **Hostinger frontend live**; new-origin director sign-in and automatic-update proof remain pending.
+**Status: READY FOR DIRECTOR PILOT.** Frontend live; auto-update terbukti; login Hostinger dikonfirmasi pengguna. SMTP tim dan UAT alur bisnis nyata/backup-restore tetap tindak lanjut. / Live frontend; proven automatic updates; user-confirmed Hostinger sign-in. Team email and real-workflow/recovery acceptance remain follow-ups.
 
 ## Bukti deployment awal / Initial deployment evidence
 
 Source `main` **`b4cebfd9578c2960e3ca40167a24b5905316fb6e`** diproses oleh [CI run `42971963802`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42971963802), verify dan publish **SUCCESS**, menghasilkan artifact commit **`f315da4e2da9c701ef4086771d76e480167b921d`** pada branch `hostinger`. Deployment manual awal di hPanel berstatus **Completed**, **13:24 WIB**, durasi **3 detik**. HTTPS [`release.json`](https://cyan-oryx-350189.hostingersite.com/release.json) mengembalikan **200** dan source commit yang cocok.
 
-The initial deployment is verified. Hostinger-origin browser checks passed for ID/EN login UI, language persistence after reload, demo Dashboard, 87-entry Catalog, Calendar, Reports and an English CSV download. These demo checks do not authenticate the real director. The auto-deploy setting is ON/green; a later push-to-live update still requires proof. Details are recorded in `HOSTINGER-UAT.md`.
+The initial deployment is verified. Hostinger-origin browser checks passed for ID/EN login UI, language persistence after reload, demo Dashboard, 87-entry Catalog, Calendar, Reports and an English CSV download. These were demo/UI checks. The user subsequently confirmed successful Hostinger sign-in; the agent does not claim to have observed an authenticated business workflow.
+
+**Auto-update terbukti:** source `630bf0762c5c76944d926b688d2b2b9c2219f6d0` → [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518) **SUCCESS** dua jobs → artifact `b41f3ce05110d9dfab3258e4a92faa41400676e3` → hPanel **Completed 13:37 WIB, 4 detik**, tanpa klik Redeploy → live `release.json` cocok source baru. HTTP smoke **13/13 PASS pada 13:38 WIB**, termasuk HTTPS redirect, asset/header, PRD, proteksi `.env`/`.git`, SPA dan missing asset. Ini deployment aplikasi terakhir yang telah diperiksa, bukan klaim atas commit dokumentasi berikutnya. / Automatic updates are proven for that verified application source, not for a future documentation commit. Detail: `HOSTINGER-UAT.md`, deliverable `TTM-Hostinger-checks.json`.
 
 ## Jalur aktual / Actual deployment path
 
@@ -79,7 +81,7 @@ Primary Auth Site URL telah dipindahkan ke Hostinger dan diverifikasi pada 13:35
 
 The primary Auth Site URL is now Hostinger, verified at 13:35 WIB. Both redirect origins and existing Auth protections were retained. The post-push diff is zero. Verify invitation/recovery on the actual target after email configuration is ready.
 
-Director sebelumnya telah mengonfirmasi login pilot di Sites. Handoff login director nyata pada origin Hostinger masih pending. SMTP/deliverability undangan dan recovery serta onboarding tim juga pending; frontend live bukan rollout tim penuh. Tidak ada password bawaan pada source.
+Pengguna secara eksplisit mengonfirmasi **“login Hostinger berhasil”**. Ini acceptance pengguna; agent tidak mengklaim melihat dashboard akun nyata atau menyelesaikan workflow terautentikasi. SMTP/deliverability undangan dan recovery serta onboarding tim masih pending. Status siap pilot director tidak berarti rollout tim penuh. Tidak ada password bawaan pada source.
 
 ## Indonesia / English
 
@@ -89,8 +91,12 @@ The language selector is available before and after sign-in. Indonesian is the d
 
 ## Verifikasi dan rollback / Verification and rollback
 
-**Frontend Hostinger live** telah dibuktikan untuk deployment awal. Langkah tersisa: konfirmasi login director nyata pada origin baru dan satu alur pelanggan → peluang → kegiatan → approval → laporan → tindak lanjut; buktikan siklus push berikutnya memperbarui origin secara otomatis. Uji invitation/recovery setelah SMTP siap dan lengkapi UAT tim. Catat hasil dan commit pada `RELEASE.md`/`HOSTINGER-UAT.md`.
+**Frontend Hostinger live, auto-update terbukti, login director diterima pengguna.** Langkah tindak lanjut: UAT satu alur pelanggan → peluang → kegiatan → approval → laporan → tindak lanjut dengan data/akun nyata, invitation/recovery setelah SMTP siap, onboarding tim dan backup/restore. Catat bukti masing-masing pada `RELEASE.md`/`HOSTINGER-UAT.md`.
 
-The initial **Hostinger frontend is live**. Real director sign-in and automatic-update proof remain pending. Finish authenticated workflow, team/email and backup acceptance before full rollout. Roll back to the previous compatible static artifact/deployment if needed; do not reset the production database.
+The **Hostinger frontend is live**, automatic updates are proven, and director sign-in is user-confirmed. Finish real-workflow UAT, team/email and backup/restore acceptance before full rollout.
+
+Rollback: revert source melalui GitHub `main` dengan riwayat tetap utuh, biarkan CI membangun ulang dan memublikasikan branch `hostinger`, lalu verifikasi hasil provider dan live `release.json`. Database produksi tidak direset; tidak diasumsikan ada fitur rollback hPanel yang belum diamati. / Revert the source change on `main`, preserve history, allow CI to rebuild/publish, then verify the provider and live metadata. No unobserved hPanel rollback feature is assumed.
+
+Archive source dibuat dari final source HEAD, archive static dari `origin/hostinger` yang diverifikasi. Snapshot bisnis lokal tidak dimasukkan ke kedua archive. / Source and static archives are kept separate; neither includes the local business snapshot.
 
 Panduan platform / Platform references: [Hostinger Git deployment](https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/), [Vite static output](https://vite.dev/guide/static-deploy). Hostinger juga mendukung native Node.js pada paket tertentu, tetapi itu bukan wizard PHP/HTML yang telah diinspeksi untuk target ini. / Hostinger also supports native Node.js on eligible plans; that is separate from the inspected target wizard. [Native Node.js reference](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).

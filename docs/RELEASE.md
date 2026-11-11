@@ -2,7 +2,7 @@
 
 Tanggal / Date: **11 November 2026, Asia/Jakarta**.
 
-**Status:** **frontend Hostinger live**; verifikasi login director pada origin baru dan bukti auto-update masih pending. Backend, pilot director di Sites, dan validasi release bilingual telah diverifikasi. / **The Hostinger frontend is live**; director sign-in on the new origin and automatic-update verification remain pending. The backend, Sites director pilot, and bilingual release validation are verified.
+**Status: READY FOR DIRECTOR PILOT.** Frontend Hostinger live, auto-update terbukti, dan pengguna mengonfirmasi “login Hostinger berhasil”. Konfirmasi login berasal dari pengguna, bukan observasi agent atas dashboard terautentikasi. SMTP/rollout tim, UAT alur bisnis nyata, dan backup/restore masih tindak lanjut. / **Ready for the director pilot:** Hostinger is live, automatic updates are proven, and the user confirmed successful Hostinger sign-in. This is user acceptance, not an agent-observed authenticated workflow. Team/email, business-workflow UAT and recovery acceptance remain follow-ups.
 
 ## Bukti terkini / Current evidence
 
@@ -15,16 +15,17 @@ Tanggal / Date: **11 November 2026, Asia/Jakarta**.
 | Guard environment deployment | **5 PASS** | Target proyek dan publishable key diperiksa; secret pada variabel browser ditolak tanpa dicetak. / Verifies the project and publishable key; rejects browser-exposed secrets without printing them. |
 | PostgreSQL/RLS lokal / Local PostgreSQL/RLS | **47 PASS** | Role, ownership, workflow, konflik interval, last-admin, attachment privat, konteks tugas, dan riwayat anggota nonaktif. / Roles, ownership, workflow, intervals, last-admin, private evidence, task context, and inactive-member history. |
 | API hosted Supabase | **23 PASS** | Auth, REST, Storage, Edge Function, persistensi, tiga race overlap, adjacency, serta pencabutan akses setelah deaktivasi. Detail di `HOSTED-UAT.md`. / Actual Auth/REST/Storage/Edge APIs, persistence, three overlap races, adjacency, and access removal after deactivation. |
-| Pilot director | SITES CONFIRMED; HOSTINGER PENDING | Login director sebelumnya dikonfirmasi di Sites. Handoff login nyata pada origin Hostinger masih menunggu pengguna. / The director previously confirmed Sites sign-in; real sign-in on the Hostinger origin awaits the user handoff. |
+| Pilot director | **USER CONFIRMED — HOSTINGER** | Pengguna secara eksplisit mengonfirmasi “login Hostinger berhasil”. Agent tidak mengklaim melihat dashboard akun nyata atau menyelesaikan alur bisnis terautentikasi. / The user explicitly confirmed Hostinger sign-in; the agent does not claim to have observed the real-account dashboard or an authenticated workflow. |
 | SMTP dan rollout tim / SMTP and team rollout | PENDING | Deliverability undangan/recovery dan onboarding anggota belum dinyatakan lulus; pilot director dapat berjalan sambil konfigurasi diselesaikan. / Invitation/recovery deliverability and team onboarding are not yet signed off. |
 | Build TypeScript/produksi / TypeScript/production build | **PASS** | `npm run build:hostinger` final lulus (guard environment, TypeScript, Vite). Edge Function sebelumnya lulus Deno typecheck. / The final guarded Hostinger build passed; the Edge Function previously passed Deno type checking. |
 | Backup dan advisor / Backup and advisors | FOLLOW-UP REQUIRED | Snapshot bisnis lokal dibuat dengan persetujuan pengguna; tidak mencakup Auth/Storage blobs. PITR off dan belum ada hosted physical backup; advisor Auth terakhir memberi peringatan leaked-password protection. / An approved local business snapshot excludes Auth and Storage blobs. PITR is off, no hosted physical backup is available, and the latest Auth advisor warns about leaked-password protection. |
-| Hostinger frontend | **LIVE — INITIAL MANUAL DEPLOY VERIFIED** | hPanel Completed pada 13:24 WIB, durasi 3 detik; HTTPS release metadata cocok dengan commit source; smoke test bilingual dan demo lulus. / hPanel reported Completed at 13:24 WIB in 3 seconds; HTTPS release metadata matches the source commit; bilingual and demo smoke tests passed. |
-| Auto-deploy | ENABLED; PUSH PROOF PENDING | Indikator hPanel hijau/ON, tetapi siklus push baru → CI → artifact → pembaruan origin belum dibuktikan. / hPanel shows ON/green, but a subsequent push-to-live update cycle is not yet proven. |
+| Hostinger frontend | **LIVE** | Deployment otomatis terakhir Completed **13:37 WIB**, **4 detik**; live metadata cocok source `630bf076…`; HTTP smoke **13/13 PASS** pada 13:38 WIB. / Latest automatic deployment completed at 13:37 WIB in 4 seconds; metadata matches source `630bf076…`; all 13 HTTP checks passed at 13:38 WIB. |
+| Auto-deploy | **PROVEN** | Push → CI `42973665518` SUCCESS (dua jobs) → artifact `b41f3ce…` → hPanel Completed tanpa klik Redeploy → live release metadata berubah sesuai source. / Push-to-CI-to-artifact-to-origin update is verified without clicking Redeploy. |
+| Auth primary origin | **PASS — 13:35 WIB** | Primary Site URL Hostinger; hanya `auth.site_url` berubah, post-push diff nol; kedua redirect dipertahankan, signup/anon off dan minimum password 10. / Only the primary Site URL changed; post-push diff is zero and existing redirects/protections remain. |
 
 Hasil final lokal: 51 tes aplikasi, 5 tes guard environment, 47 tes SQL/RLS, dan build Hostinger lulus. Kamus memuat 695 entri; pemeriksaan 547 literal tidak menemukan key hilang; 42 pesan DB/Edge dipetakan secara tepat. Bukti tersebut tidak menggantikan hasil deployment Hostinger. / Final local checks passed: 51 application tests, 5 environment tests, 47 SQL/RLS checks, and the Hostinger build. The dictionary contains 695 entries; 547 checked literals had no missing keys; 42 DB/Edge messages have exact translations. These checks do not prove Hostinger deployment.
 
-## Bukti deployment Hostinger / Hostinger deployment evidence
+## Riwayat deployment awal / Initial deployment history
 
 - Source `main`: [`b4cebfd9578c2960e3ca40167a24b5905316fb6e`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/b4cebfd9578c2960e3ca40167a24b5905316fb6e).
 - [GitHub Actions run `42971963802`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42971963802): **SUCCESS**, jobs verify dan publish / verify and publish jobs.
@@ -34,6 +35,16 @@ Hasil final lokal: 51 tes aplikasi, 5 tes guard environment, 47 tes SQL/RLS, dan
 - Browser pada origin Hostinger: layar login ID/EN, persistensi bahasa setelah reload, demo Dashboard, Catalog 87 entri, Calendar, Reports, dan unduhan CSV English **PASS**. Ini pengujian frontend/demo, bukan login director nyata. / Hostinger-origin login language, reload persistence, demo modules, and English CSV download passed; this is not real director authentication.
 
 Rincian sanitized terdapat pada `HOSTINGER-UAT.md`. Screenshot deployment disimpan sebagai deliverable `TTM-Hostinger-deployment.png`; tidak memuat credential. / Sanitized details are in HOSTINGER-UAT; the deployment screenshot is a separate deliverable without credentials.
+
+### Deployment aplikasi terakhir yang telah diverifikasi / Latest verified application deployment
+
+- Source: [`630bf0762c5c76944d926b688d2b2b9c2219f6d0`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/630bf0762c5c76944d926b688d2b2b9c2219f6d0).
+- [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518): **SUCCESS**, kedua jobs / both jobs.
+- Artifact `hostinger`: **`b41f3ce05110d9dfab3258e4a92faa41400676e3`**.
+- hPanel **Completed 13:37 WIB**, durasi **4 detik**, tanpa klik Redeploy / no Redeploy click.
+- HTTPS `release.json` cocok source **`630bf076…`**; **13/13 HTTP checks PASS pada 13:38 WIB**: redirect HTTP→HTTPS 301, asset MIME, nosniff, PRD 200, `.env`/`.git` 403, SPA 200, missing asset 404. Bukti sanitized: `TTM-Hostinger-checks.json`.
+
+Record ini menunjuk deployment yang telah diperiksa, bukan commit dokumentasi berikutnya atau CI yang belum berjalan. / This record identifies the deployment already verified, not a subsequent documentation commit or a future CI run.
 
 ## Backend dan data / Backend and data
 
@@ -57,8 +68,8 @@ Hanya URL Supabase dan publishable key publik yang masuk browser; secret adminis
 
 ## Verifikasi tersisa dan rollout / Remaining verification and rollout
 
-1. Pertahankan jejak source/CI/artifact/deployment yang sudah lulus; buktikan pembaruan otomatis dengan push release berikutnya dan metadata origin yang baru. / Retain the verified provenance and prove automatic updates with a subsequent push and changed origin metadata.
-2. Selesaikan handoff login director nyata di Hostinger. Primary Auth Site URL telah dipindahkan dan diverifikasi pada 13:35 WIB; kedua redirect serta perlindungan Auth dipertahankan. / Complete the real director sign-in handoff on Hostinger. The primary Auth Site URL cutover was verified at 13:35 WIB, retaining both redirects and Auth protections.
+1. Pertahankan jejak source/CI/artifact/deployment yang telah terbukti; setiap release berikutnya memperoleh bukti sendiri. / Retain the verified provenance; each subsequent release requires its own evidence.
+2. Login director Hostinger telah diterima berdasarkan konfirmasi pengguna; jangan memperluas konfirmasi itu menjadi klaim observasi agent atas alur akun nyata. / Director sign-in is user-confirmed; do not extend that acceptance into an agent-observed real-account workflow claim.
 3. Uji satu alur peluang → kegiatan → approval → laporan → follow-up dari sesi director di origin baru. Demo dan 23 pengujian API hosted tidak menggantikan UAT akun nyata pada origin itu. / Test one business workflow from the director's new-origin session; demo and API checks do not replace that real-account UAT.
 4. SMTP/undangan/recovery, daftar anggota dan unit nyata, backup/retensi, restore drill, serta UAT tim dicatat sebelum rollout penuh. / Record SMTP/onboarding, real members and units, backup/retention, a restore drill, and team UAT before full rollout.
 
