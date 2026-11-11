@@ -4,9 +4,9 @@ Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radio
 
 ## Status pengiriman
 
-Source dan PRD tersedia lokal. Pada pemeriksaan akses 11 November 2026, koneksi GitHub hanya memiliki hak baca dan push ke repository target ditolak dengan 403. Kedua koneksi Supabase yang tersedia tidak dapat mengakses proyek `yqmcafgnryvsrvalbycz`. Karena itu, source lokal atau frontend demo tidak membuktikan bahwa CRM telah go-live pada backend target.
+Source tersedia pada branch `feat/ttm-crm-v1` di repository GitHub yang diminta. Backend telah diterapkan pada proyek Supabase `yqmcafgnryvsrvalbycz`: 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan Edge Function `team-admin`. Advisor keamanan setelah deployment tidak menemukan isu. Konfigurasi Auth, bootstrap director, serta uji login/persistensi target tetap dicatat terpisah dan belum boleh dianggap selesai hanya karena schema terpasang.
 
-Hasil verifikasi yang sudah dijalankan: **36 pengujian aturan frontend lulus** (`npm test`). Bukti build, pengujian database, serta deployment akhir dicatat terpisah saat dijalankan. Workflow CI yang disediakan belum dapat disebut lulus di GitHub sampai repository target menerima commit dan workflow benar-benar berjalan.
+Verifikasi lokal: **39 tes aplikasi lulus** (36 aturan domain dan 3 alur DOM) serta **47 pemeriksaan SQL/RLS lulus**. TypeScript dan build produksi lulus. Login, dashboard, kalender, dan form kegiatan telah ditinjau di browser, termasuk lebar ponsel 390 px. Baca [status release](docs/RELEASE.md) untuk bukti deployment dan pekerjaan go-live yang masih tertunda.
 
 ## Menjalankan aplikasi
 

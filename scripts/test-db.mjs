@@ -14,6 +14,8 @@ await db.exec(`
  alter table storage.objects enable row level security;
  grant usage on schema storage to authenticated;
  grant select,insert,update,delete on storage.objects to authenticated;
+ -- Target has this pre-existing event-trigger helper. Stub only its signature/default ACL.
+ create function public.rls_auto_enable() returns event_trigger language plpgsql security definer as $$begin null;end$$;
 `);
 const migrations = (await fs.readdir(path.join(root,'supabase/migrations'))).filter(x=>x.endsWith('.sql')).sort();
 for (const file of migrations) {
@@ -97,5 +99,7 @@ await ok('task completion records actual operator',async()=>{await db.exec(`inse
 await actor('director');await ok('audits record changes',async()=>{const r=await db.query('select count(*)::int v from public.audit_logs');if(r.rows[0].v<8)throw new Error('Audit missing');});
 await db.exec('reset role');
 await ok('all public tables enable RLS',()=>eq("select count(*)::int v from pg_tables where schemaname='public' and not rowsecurity",0));
+await ok('anonymous cannot execute pre-existing helper',()=>eq("select has_function_privilege('anon','public.rls_auto_enable()','execute') v",false));
+await ok('authenticated cannot execute pre-existing helper',()=>eq("select has_function_privilege('authenticated','public.rls_auto_enable()','execute') v",false));
 console.log(JSON.stringify({result:'PASS',checks:passes,limitation:'PGlite verifies SQL and sequential RLS/business rules; hosted Supabase integration and parallel network race require target access.'}));
 await db.close();

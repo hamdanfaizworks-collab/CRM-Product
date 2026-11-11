@@ -4,7 +4,7 @@ Backend target: `yqmcafgnryvsrvalbycz`. Dokumen ini menjelaskan artefak yang dis
 
 ## Artefak dan kontrak
 
-- `supabase/migrations/20261110220432_ttm_crm_initial.sql`: schema tambahan, RLS, constraints, trigger, indeks, audit, dan bucket privat.
+- `supabase/migrations/20261110222856_ttm_crm_initial.sql`: schema tambahan, RLS, constraints, trigger, indeks, audit, dan bucket privat.
 - `supabase/seed.sql`: 87 model/produk hasil pembacaan visual katalog; tidak memuat pelanggan, anggota, unit demo, atau penjualan fiktif. `source_page` berarti nomor halaman fisik PDF berbasis 1. Nomor halaman tercetak disimpan pada `specs.source_printed_page`.
 - `supabase/functions/team-admin/index.ts`: endpoint administratif undangan/profil.
 - `scripts/test-db.mjs`: verifikasi PostgreSQL lokal melalui PGlite. Membuat database sementara in-memory, tidak menghubungi target.
@@ -73,7 +73,7 @@ Periksa tepat satu baris tersimpan. Terakhir director/admin aktif tidak dapat di
 
 Jalankan `npm run test:db` setelah dependency PGlite terpasang. Tes mencakup schema/seed, anon, nonmember, inactive, viewer, self escalation, ownership, nilai peluang, workflow, approval actor, overlap/adjacency, laporan, cancellation, audit, dan evidence storage RLS.
 
-Hasil verifikasi lokal 11 November 2026: **45 checks SQL/RLS lulus**, seed **87 produk** terbaca, dan `deno check supabase/functions/team-admin/index.ts` lulus menggunakan Deno **2.9.6** serta SDK terpin **2.119.0**. Typecheck bukan bukti endpoint sudah dideploy atau SMTP undangan sudah bekerja.
+Hasil verifikasi lokal 11 November 2026: **47 checks SQL/RLS lulus**, seed **87 produk** terbaca, dan `deno check supabase/functions/team-admin/index.ts` lulus menggunakan Deno **2.9.6** serta SDK terpin **2.119.0**. Typecheck bukan bukti endpoint sudah dideploy atau SMTP undangan sudah bekerja.
 
 Pada staging nyata gunakan dua koneksi/transaksi berbeda yang mengajukan dua kegiatan beririsan dengan orang/unit sama secara bersamaan. Hanya satu boleh commit; lainnya harus gagal `23P01`. Ulangi adjacency (keduanya diterima), cancel lalu booking ulang, unit maintenance, pergantian role, serta penonaktifan sesi aktif. Simpan hasil tanpa token/password.
 
