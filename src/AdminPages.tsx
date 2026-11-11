@@ -13,7 +13,7 @@ import {
   Settings2,
   UserRound,
 } from "lucide-react";
-import { useCRM, supabase, resetDemo, unwrapFunctionError } from "./store";
+import { useCRM, supabase, resetDemo, unwrapFunctionError, friendlyError } from "./store";
 import {
   PageHead,
   Badge,
@@ -477,10 +477,12 @@ export function SettingsPage() {
             <button
               className="btn primary"
               onClick={async () => {
-                resetDemo();
-                await refresh();
-                setReset(false);
-                notify(tr("Sandbox demo direset."));
+                try {
+                  await resetDemo();
+                  await refresh();
+                  setReset(false);
+                  notify(tr("Sandbox demo direset."));
+                } catch (error) { notify(friendlyError(error)); }
               }}
             >{tr("Reset demo")}</button>
           </div>

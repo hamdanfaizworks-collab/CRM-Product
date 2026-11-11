@@ -1234,7 +1234,7 @@ export function TasksPage() {
   );
 }
 
-export function CatalogPage() {
+export function CatalogPage({ onOpenKnowledge }: { onOpenKnowledge?: (productId: string) => void } = {}) {
   const { data, profile, save } = useCRM();
   const [search, setSearch] = useState(""),
     [category, setCategory] = useState("all"),
@@ -1443,6 +1443,11 @@ export function CatalogPage() {
               {data.equipment.filter((e) => e.product_id === product.id).length}{" "}{tr("unit demo terdaftar")}</p>
             {manager && (
               <button className="btn primary" onClick={() => setForm(product)}>{tr("Edit produk")}</button>
+            )}
+            {onOpenKnowledge && (
+              <button className="btn secondary" onClick={() => onOpenKnowledge(product.id)}>
+                {tr("Lihat materi produk")} ({data.knowledge_documents.filter((document) => document.product_id === product.id && document.status === "active").length})
+              </button>
             )}
           </div>
         </Dialog>

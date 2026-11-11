@@ -4,13 +4,19 @@ Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radio
 
 ## Status pengiriman
 
-**READY FOR DIRECTOR PILOT.** Frontend Hostinger live, auto-update terbukti, dan pengguna secara eksplisit mengonfirmasi **“login Hostinger berhasil”**. Ini acceptance pengguna, bukan klaim agent melihat dashboard akun nyata atau workflow terautentikasi. Backend memiliki tiga migrasi, 11 tabel ber-RLS, 87 produk, Storage privat dan `team-admin`; **23 API hosted checks lulus**. SMTP/undangan/recovery, UAT alur bisnis nyata, onboarding tim dan backup/restore tetap tindak lanjut. Advisor Auth memberi peringatan leaked-password protection; snapshot bisnis lokal yang disetujui tidak mencakup Auth/Storage blobs, PITR off dan hosted physical backup belum tersedia.
+**ENGLISH DEFAULT + PRODUCT KNOWLEDGE BASE — FRONTEND UPDATE PENDING.** Source terbaru telah diimplementasikan dan diuji; backend Knowledge Base telah **DEPLOYED** pada proyek Supabase target. Publikasi pembaruan frontend ini ke Hostinger masih menunggu commit/CI/artifact/provider dan smoke test tersendiri. Website Hostinger dari release sebelumnya tetap live dan login director telah dikonfirmasi pengguna; bukti tersebut tidak otomatis membuktikan fitur baru sudah tersedia di Hostinger.
 
-Verifikasi final lokal: **51 tes aplikasi, 5 tes guard environment, 47 pemeriksaan SQL/RLS, dan `npm run build:hostinger` lulus**. Suite mencakup domain, alur DOM, callback Auth, bilingual, preservasi data, serta pesan error Edge. Kamus berisi 695 entri; 547 literal yang diperiksa tidak memiliki key hilang. Pemeriksaan browser sebelumnya mencakup login, dashboard, kalender, form kegiatan, dan lebar ponsel 390 px. Baca [status release bilingual](docs/RELEASE.md) untuk bukti dan pekerjaan go-live yang tersisa.
+**Verifikasi pembaruan ini:** **68 tes aplikasi, 109 pemeriksaan SQL/RLS lokal, 5 tes guard environment, dan build produksi lulus**. **39/39 pemeriksaan API hosted Knowledge Base lulus**, dengan fixture pengujian dibersihkan dan audit dipertahankan. Pemeriksaan ulang memakai Storage listing untuk menghindari hasil GET yang tersimpan cache; kegagalan awal berasal dari harness, bukan bukti kerusakan produk. Bukti sanitized tersedia di `TTM-Knowledge-Hosted-UAT.json` pada deliverable release.
 
-**Indonesia / English:** pemilih bahasa tersedia di login dan ruang kerja. Default Bahasa Indonesia, preferensi tersimpan di localStorage per origin, dan format tampilan mengikuti `id-ID`/`en-GB`; WIB, IDR, serta data pengguna tetap. / The language selector is available before and after sign-in. Indonesian is the default; the preference persists per browser origin. Display formatting changes while WIB, IDR, and user data remain unchanged.
+Browser production preview juga membuktikan default English, toggle Indonesia, unggah file demo dan reload, unduhan dengan hash identik, pintasan produk ke Knowledge Base, validasi ukuran, serta tampilan tanpa overflow halaman. Ini QA preview, bukan klaim bahwa pembaruan Hostinger telah terpublikasi atau UAT akun nyata sudah selesai.
 
-**Hostinger:** [live](https://cyan-oryx-350189.hostingersite.com), tetap pada site/domain PHP/HTML yang ada. Deployment aplikasi terakhir yang terverifikasi: source `630bf0762c5c76944d926b688d2b2b9c2219f6d0` → [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518) SUCCESS dua jobs → artifact `b41f3ce05110d9dfab3258e4a92faa41400676e3` → hPanel Completed **13:37 WIB, 4 detik**, tanpa klik Redeploy; metadata live cocok. **HTTP smoke 13/13 PASS pada 13:38 WIB**. ID/EN, persistensi bahasa, demo modul dan English CSV juga lulus. Auth primary origin Hostinger lulus verifikasi 13:35 WIB; kedua redirects/proteksi tetap. / Automatic updates and HTTP checks are proven for this verified application deployment; director sign-in is user-confirmed. No claim is made about a subsequent documentation commit or future CI. Lihat [bukti Hostinger](docs/HOSTINGER-UAT.md) dan [panduan bilingual](docs/HOSTINGER.md).
+**Backend terkini:** **4 migrasi, 12 tabel ber-RLS, 87 produk, dan 2 bucket privat**: `activity-evidence` (10 MiB) dan `product-knowledge` (25 MiB). Migrasi keempat adalah `20261111071649_product_knowledge_library.sql`. Pustaka produksi dimulai kosong; tidak ada file atau penulis dokumen fiktif yang dijadikan data produksi. Sebanyak 23 pemeriksaan hosted CRM dari release sebelumnya tetap tercatat sebagai bukti historis terpisah.
+
+**English / Indonesia:** English adalah default ketika preferensi kosong/tidak valid atau storage tidak tersedia. Pilihan Indonesia (`id`) yang tersimpan tetap dihormati. Pemilih tersedia di login dan workspace; format mengikuti `en-GB`/`id-ID`, sedangkan WIB, IDR, enum, nama, catatan dan isi file tetap. / English is the default when no valid preference is available; an explicitly saved Indonesian choice is preserved. Switching the UI does not translate user data or document contents.
+
+**Knowledge Base:** materi privat dengan produk opsional, jenis, versi, bahasa, tag, pencarian/filter, unduhan signed URL 60 detik, edit metadata dan arsip/pulihkan oleh penulis asli atau director/admin. Viewer membaca dan mengunduh. File immutable; revisi file memakai record baru. Lihat [panduan pemakaian bilingual](docs/KNOWLEDGE-BASE.md) dan [FR-15](docs/PRD.md).
+
+**Release Hostinger sebelumnya — tetap sebagai riwayat:** [live](https://cyan-oryx-350189.hostingersite.com), source `630bf0762c5c76944d926b688d2b2b9c2219f6d0` → [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518) SUCCESS → artifact `b41f3ce05110d9dfab3258e4a92faa41400676e3` → hPanel Completed **13:37 WIB**, tanpa klik Redeploy; metadata cocok, **HTTP smoke 13/13 PASS pada 13:38 WIB**. Login Hostinger diterima dari konfirmasi pengguna, bukan observasi agent atas workflow akun nyata. SMTP/rollout tim, UAT bisnis nyata, backup/restore dan advisor Auth tetap tindak lanjut. Lihat [status release](docs/RELEASE.md) dan [bukti Hostinger sebelumnya](docs/HOSTINGER-UAT.md).
 
 ## Menjalankan aplikasi
 
@@ -21,7 +27,7 @@ npm ci
 npm run dev
 ```
 
-Buka alamat localhost yang ditampilkan Vite. Tanpa konfigurasi Supabase, gunakan sandbox demo untuk meninjau alur. Data sandbox tersimpan di local storage browser dan bukan data operasional Supabase; jangan masukkan data pelanggan nyata ke sandbox. Data simulasi dapat dihapus melalui reset demo.
+Buka alamat localhost yang ditampilkan Vite. Tanpa konfigurasi Supabase, gunakan sandbox demo untuk meninjau alur. Metadata sandbox tersimpan di localStorage dan file demo Knowledge Base di IndexedDB pada browser/origin yang sama; keduanya bukan data operasional Supabase. Reset demo membersihkan metadata dan file sandbox.
 
 Untuk koneksi backend, salin `.env.example` menjadi `.env.local`, lalu isi melalui environment lokal/hosting:
 
@@ -44,7 +50,7 @@ npm run build:hostinger
 npm run preview
 ```
 
-- `test`: aturan interval, reservasi sumber daya, keamanan CSV, KPI pipeline, dan tanggal WIB.
+- `test`: aturan domain, alur DOM, callback Auth, bilingual/default English, Knowledge Base, validasi file dan kontrol upload/download.
 - `test:deploy-env`: lima tes guard target/key/secret untuk environment build tanpa memakai secret produksi.
 - `test:db`: pemeriksaan SQL/RLS lokal sesuai script backend. Keberhasilan lokal tidak menggantikan uji Auth, REST, Storage, dan Edge Function pada proyek target.
 - `build`: pemeriksaan TypeScript dan bundle produksi ke `dist/`.
@@ -62,10 +68,12 @@ CI menjalankan instalasi terkunci, tes environment/frontend/database, build guar
 | [docs/BACKEND.md](docs/BACKEND.md) | Migrasi, RLS, bootstrap admin, pengelolaan undangan, verifikasi backend |
 | [docs/HOSTINGER.md](docs/HOSTINGER.md) | Jalur actual main → CI → hostinger → public_html; Indonesia/English |
 | [docs/RELEASE.md](docs/RELEASE.md) | Bukti pengujian terkini, pilot director, dan status deployment |
+| [docs/KNOWLEDGE-BASE.md](docs/KNOWLEDGE-BASE.md) | Panduan bilingual unggah, pencarian, versi, unduh, dan arsip materi produk |
 | [docs/HOSTED-UAT.md](docs/HOSTED-UAT.md) | 23 pemeriksaan API hosted serta batas verifikasi |
 | [docs/HOSTINGER-UAT.md](docs/HOSTINGER-UAT.md) | Commit/CI/artifact/provider/HTTPS dan smoke test frontend Hostinger |
 | `src/` | UI React/TypeScript, data access, katalog, aturan dan uji domain |
 | `supabase/` | Migrasi, konfigurasi dan seed backend |
+| `src/knowledge-files.ts` | Penyimpanan file sandbox dan validasi format/ukuran Knowledge Base |
 | `public/ttm-logo.png` | Logo asli yang diekstrak dari katalog pengguna |
 | `scripts/package-static.ps1` | Build dan paket static release untuk hosting alternatif |
 | `.github/workflows/ci.yml` | Pemeriksaan CI dan publikasi artifact static ke branch hostinger |

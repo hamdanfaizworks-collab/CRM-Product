@@ -26,6 +26,7 @@ import {
   Check,
   Eye,
   EyeOff,
+  BookOpen,
 } from "lucide-react";
 import {
   CRMProvider,
@@ -49,6 +50,7 @@ import {
 import { ActivityPage } from "./ActivityPage";
 import { TeamPage, SettingsPage } from "./AdminPages";
 import { DashboardPage, ReportsPage } from "./InsightsPages";
+import { KnowledgeBasePage } from "./KnowledgeBasePage";
 const menu = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "accounts", label: "Pelanggan", icon: Building2 },
@@ -56,6 +58,7 @@ const menu = [
   { id: "activities", label: "Kalender & aktivitas", icon: CalendarDays },
   { id: "tasks", label: "Tindak lanjut", icon: CheckSquare },
   { id: "catalog", label: "Katalog produk", icon: Package },
+  { id: "knowledge", label: "Basis pengetahuan", icon: BookOpen },
   { id: "equipment", label: "Unit demo", icon: Boxes },
   { id: "team", label: "Tim produk", icon: Users },
   { id: "reports", label: "Laporan", icon: BarChart3 },
@@ -383,24 +386,27 @@ function PasswordSetup({
 }
 function Workspace({ onLogout }: { onLogout: () => void }) {
   const { data, profile, demo, refresh, notify } = useCRM();
-  const initial = location.hash.slice(1);
+  const initial = location.hash.slice(1).split("?")[0];
   const [page, setPage] = useState(
     menu.some((m) => m.id === initial) ? initial : "dashboard",
   );
   const [sidebar, setSidebar] = useState(false);
+  const [knowledgeProduct, setKnowledgeProduct] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("product") || "all");
   const [notifications, setNotifications] = useState(false);
   const [sync, setSync] = useState(false);
-  const navigate = (id: string) => {
+  const navigate = (id: string, productId = "all") => {
     if (!menu.some((m) => m.id === id)) return;
     setPage(id);
-    location.hash = id;
+    if (id === "knowledge") setKnowledgeProduct(productId);
+    location.hash = id + (id === "knowledge" && productId !== "all" ? "?product=" + encodeURIComponent(productId) : "");
     setSidebar(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   useEffect(() => {
     const f = () => {
-      const id = location.hash.slice(1);
+      const id = location.hash.slice(1).split("?")[0];
       if (menu.some((m) => m.id === id)) setPage(id);
+      if (id === "knowledge") setKnowledgeProduct(new URLSearchParams(location.hash.split("?")[1] || "").get("product") || "all");
     };
     addEventListener("hashchange", f);
     return () => removeEventListener("hashchange", f);
@@ -579,7 +585,9 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           ) : page === "tasks" ? (
             <TasksPage />
           ) : page === "catalog" ? (
-            <CatalogPage />
+            <CatalogPage onOpenKnowledge={(productId) => navigate("knowledge", productId)} />
+          ) : page === "knowledge" ? (
+            <KnowledgeBasePage initialProductId={knowledgeProduct} />
           ) : page === "equipment" ? (
             <EquipmentPage />
           ) : page === "team" ? (

@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 const root = path.resolve(import.meta.dirname, '..');
 const db = new PGlite();
 await db.exec(`
@@ -10,7 +11,7 @@ await db.exec(`
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema auth to anon,authenticated,service_role; grant execute on function auth.uid() to anon,authenticated,service_role;
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
- create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text,owner_id text default auth.uid()::text);
+ create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text,owner_id text default auth.uid()::text,metadata jsonb not null default '{}');
  alter table storage.objects enable row level security;
  grant usage on schema storage to authenticated;
  grant select,insert,update,delete on storage.objects to authenticated;
@@ -96,9 +97,131 @@ await rejects('new assignment cannot include inactive participant',`insert into 
 await actor('director');await db.exec(`insert into public.accounts(id,name,owner_id) values('10000000-0000-4000-8000-000000000002','Other hospital','${ids.ps}');insert into public.opportunities(id,account_id,title,owner_id,next_step) values('50000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','Different customer','${ids.ps}','Follow up')`);
 await actor('ps');await rejects('task cannot mismatch account and opportunity',`insert into public.tasks(title,due_date,assigned_to,account_id,opportunity_id) values('Mismatch','2026-11-20','${ids.ps}','${ids.account}','50000000-0000-4000-8000-000000000001')`,'tidak sesuai');
 await ok('task completion records actual operator',async()=>{await db.exec(`insert into public.tasks(id,title,due_date,assigned_to,account_id) values('60000000-0000-4000-8000-000000000001','Follow up','2026-11-20','${ids.ps}','${ids.account}');update public.tasks set status='done',completed_by='${ids.director}' where id='60000000-0000-4000-8000-000000000001'`);await eq("select completed_by::text v from public.tasks where id='60000000-0000-4000-8000-000000000001'",ids.ps);});
-await actor('director');await ok('audits record changes',async()=>{const r=await db.query('select count(*)::int v from public.audit_logs');if(r.rows[0].v<8)throw new Error('Audit missing');});
+// Product Knowledge Base: real SQL authorization, immutable file binding and cleanup safety.
+async function uploadKnowledge(user, extension='pdf', mime='application/pdf', size=100) {
+  await actor(user);
+  const documentId=randomUUID(),objectId=randomUUID();
+  const storagePath=`${ids[user]}/${documentId}/${randomUUID()}.${extension}`;
+  await db.query('insert into storage.objects(id,bucket_id,name,metadata) values($1,$2,$3,$4)',[objectId,'product-knowledge',storagePath,JSON.stringify({size,mimetype:mime})]);
+  return {documentId,objectId,storagePath,mime,size,fileName:`source.${extension}`};
+}
+function knowledgeInsert(file, overrides={}) {
+  const row={id:file.documentId,title:'Product materials',document_type:'datasheet',storage_path:file.storagePath,file_name:file.fileName,mime_type:file.mime,size_bytes:file.size,...overrides};
+  const columns=Object.keys(row),values=Object.values(row);
+  return db.query(`insert into public.knowledge_documents(${columns.join(',')}) values(${columns.map((_,i)=>'$'+(i+1)).join(',')}) returning id,created_by,storage_object_id,created_at`,values);
+}
+async function rejectsKnowledge(name, operation, expected) {
+  try { await operation(); } catch(error) {
+    if(!expected||error.message.includes(expected)){passes++;console.log('PASS',name);return;}
+    throw error;
+  }
+  throw new Error('Expected rejection: '+name);
+}
+await actor('director');await db.exec(`update public.profiles set active=true where id='${ids.as}'`);
+await db.exec('reset role'); // Inspect bucket configuration as an operator, not an application user.
+await ok('knowledge bucket is private and limited to 25 MiB',async()=>{
+  await eq("select (not public and file_size_limit=26214400 and cardinality(allowed_mime_types)=9) v from storage.buckets where id='product-knowledge'",true);
+  await eq("select (not public and file_size_limit=10485760) v from storage.buckets where id='activity-evidence'",true);
+});
+const knowledge=await uploadKnowledge('ps');
+await ok('specialist uploads and server stamps knowledge author/object binding',async()=>{
+  const result=await knowledgeInsert(knowledge,{created_by:ids.director,storage_object_id:randomUUID(),created_at:'2000-01-01T00:00:00Z',product_id:ids.product});
+  if(result.rows[0].created_by!==ids.ps||result.rows[0].storage_object_id!==knowledge.objectId||String(result.rows[0].created_at).startsWith('2000'))throw new Error('Knowledge binding was not server-stamped');
+});
+await actor();await rejects('anonymous cannot read knowledge metadata','select * from public.knowledge_documents','permission denied');
+await actor('outsider');await ok('nonmember cannot read knowledge metadata or blobs',async()=>{
+  await eq('select count(*)::int v from public.knowledge_documents',0);
+  await eq("select count(*)::int v from storage.objects where bucket_id='product-knowledge'",0);
+});
+await actor('inactive');await ok('inactive member cannot read knowledge',()=>eq('select count(*)::int v from public.knowledge_documents',0));
+await actor('viewer');await ok('viewer can read linked knowledge metadata and blob',async()=>{
+  await eq(`select count(*)::int v from public.knowledge_documents where id='${knowledge.documentId}'`,1);
+  await eq(`select count(*)::int v from storage.objects where id='${knowledge.objectId}'`,1);
+});
+await rejectsKnowledge('viewer cannot create knowledge metadata',()=>knowledgeInsert({...knowledge,documentId:randomUUID()}));
+await rejects('viewer cannot upload knowledge file',`insert into storage.objects(bucket_id,name,metadata) values('product-knowledge','${ids.viewer}/${randomUUID()}/${randomUUID()}.pdf','{"size":100,"mimetype":"application/pdf"}')`,'row-level security');
+await ok('viewer cannot edit or archive knowledge',async()=>{
+  await db.exec(`update public.knowledge_documents set status='archived' where id='${knowledge.documentId}'`);
+  await eq(`select status v from public.knowledge_documents where id='${knowledge.documentId}'`,'active');
+});
+await actor('as');await ok('other specialist cannot change knowledge metadata',async()=>{
+  await db.exec(`update public.knowledge_documents set title='Unauthorised change' where id='${knowledge.documentId}'`);
+  await eq(`select title v from public.knowledge_documents where id='${knowledge.documentId}'`,'Product materials');
+});
+await actor('ps');await ok('author can edit classification, general association and archive/restore',async()=>{
+  await db.exec(`update public.knowledge_documents set title='Training materials',document_type='training',description='Instructions for the team',product_id=null,version='2.0',language='multilingual',tags=array['usg','training'],status='archived' where id='${knowledge.documentId}'`);
+  await eq(`select (document_type='training' and product_id is null and language='multilingual' and status='archived') v from public.knowledge_documents where id='${knowledge.documentId}'`,true);
+  await db.exec(`update public.knowledge_documents set status='active' where id='${knowledge.documentId}'`);
+});
+await actor('director');await ok('manager can edit another author metadata',async()=>{
+  await db.exec(`update public.knowledge_documents set title='Manager revised',product_id='${ids.product}' where id='${knowledge.documentId}'`);
+  await eq(`select title v from public.knowledge_documents where id='${knowledge.documentId}'`,'Manager revised');
+});
+await rejects('manager cannot replace another author file',`update public.knowledge_documents set file_name='replacement.pdf' where id='${knowledge.documentId}'`,'tidak dapat diubah');
+await actor('ps');
+const immutableKnowledge={id:`'${randomUUID()}'`,created_by:`'${ids.director}'`,created_at:"'2000-01-01'",file_name:"'renamed.pdf'",storage_path:`'${ids.ps}/${knowledge.documentId}/${randomUUID()}.pdf'`,storage_object_id:`'${randomUUID()}'`,mime_type:"'image/png'",size_bytes:'101'};
+for(const [field,value] of Object.entries(immutableKnowledge)) await rejects('knowledge immutable field '+field,`update public.knowledge_documents set ${field}=${value} where id='${knowledge.documentId}'`,'tidak dapat diubah');
+await rejects('knowledge title length is enforced',`update public.knowledge_documents set title=repeat('x',201) where id='${knowledge.documentId}'`,'200 karakter');
+await rejects('knowledge version length is enforced',`update public.knowledge_documents set version=repeat('x',41) where id='${knowledge.documentId}'`,'40 karakter');
+await rejects('knowledge description length is enforced',`update public.knowledge_documents set description=repeat('x',5001) where id='${knowledge.documentId}'`,'5000 karakter');
+await rejects('knowledge tag count is enforced',`update public.knowledge_documents set tags=array_fill('x'::text,array[21]) where id='${knowledge.documentId}'`,'20 tag');
+await rejects('knowledge tag length is enforced',`update public.knowledge_documents set tags=array[repeat('x',61)] where id='${knowledge.documentId}'`,'20 tag');
+await rejects('knowledge type is enforced',`update public.knowledge_documents set document_type='executable' where id='${knowledge.documentId}'`,'Jenis materi');
+await rejects('knowledge language is enforced',`update public.knowledge_documents set language='xx' where id='${knowledge.documentId}'`,'Bahasa materi');
+await rejects('knowledge status is enforced',`update public.knowledge_documents set status='deleted' where id='${knowledge.documentId}'`,'Status materi');
+await rejects('knowledge cannot reference an absent product',`update public.knowledge_documents set product_id='${randomUUID()}' where id='${knowledge.documentId}'`,'foreign key constraint');
+const noObject={documentId:randomUUID(),objectId:randomUUID(),mime:'application/pdf',size:100,fileName:'missing.pdf'};
+noObject.storagePath=`${ids.ps}/${noObject.documentId}/${randomUUID()}.pdf`;
+await rejectsKnowledge('knowledge metadata requires an existing own upload',()=>knowledgeInsert(noObject),'Unggah file');
+const mismatch=await uploadKnowledge('ps');
+await rejectsKnowledge('knowledge rejects false byte size',()=>knowledgeInsert(mismatch,{size_bytes:99}),'Ukuran materi tidak sesuai');
+const mismatchedMimeUpload=await uploadKnowledge('ps','png','application/pdf');
+await rejectsKnowledge('knowledge rejects MIME mismatch with stored object',()=>knowledgeInsert(mismatchedMimeUpload,{mime_type:'image/png'}),'Tipe materi tidak sesuai');
+await rejectsKnowledge('knowledge rejects a different document UUID path',()=>knowledgeInsert(mismatch,{id:randomUUID()}),'Lokasi file');
+await rejectsKnowledge('knowledge rejects over 25 MiB metadata',()=>knowledgeInsert(mismatch,{size_bytes:26214401}),'25 MiB');
+await rejectsKnowledge('knowledge rejects zero-byte metadata',()=>knowledgeInsert(mismatch,{size_bytes:0}),'25 MiB');
+const otherUpload=await uploadKnowledge('as');
+await actor('ps');await rejectsKnowledge('knowledge cannot claim another uploader path',()=>knowledgeInsert(otherUpload),'Lokasi file');
+await rejects('knowledge upload cannot spoof Storage owner',`insert into storage.objects(bucket_id,name,owner_id,metadata) values('product-knowledge','${ids.ps}/${randomUUID()}/${randomUUID()}.pdf','${ids.as}','{"size":100,"mimetype":"application/pdf"}')`,'row-level security');
+await rejects('knowledge upload requires UUID path segments',`insert into storage.objects(bucket_id,name,metadata) values('product-knowledge','${ids.ps}/wrong/not-a-uuid.pdf','{"size":100,"mimetype":"application/pdf"}')`,'row-level security');
+await rejects('knowledge upload rejects unsupported filename extension',`insert into storage.objects(bucket_id,name,metadata) values('product-knowledge','${ids.ps}/${randomUUID()}/${randomUUID()}.exe','{"size":100,"mimetype":"application/pdf"}')`,'row-level security');
+await ok('linked knowledge blob cannot be updated or removed by author',async()=>{
+  await db.exec(`update storage.objects set name='forbidden.pdf' where id='${knowledge.objectId}';delete from storage.objects where id='${knowledge.objectId}'`);
+  await eq(`select name v from storage.objects where id='${knowledge.objectId}'`,knowledge.storagePath);
+});
+await ok('archiving retains knowledge blob',async()=>{
+  await db.exec(`update public.knowledge_documents set status='archived' where id='${knowledge.documentId}';delete from storage.objects where id='${knowledge.objectId}'`);
+  await eq(`select count(*)::int v from storage.objects where id='${knowledge.objectId}'`,1);
+});
+await rejects('knowledge metadata hard delete is unavailable',`delete from public.knowledge_documents where id='${knowledge.documentId}'`,'permission denied');
+await actor('director');await rejects('manager metadata hard delete is also unavailable',`delete from public.knowledge_documents where id='${knowledge.documentId}'`,'permission denied');
+await ok('manager cannot delete another author linked blob',async()=>{
+  await db.exec(`delete from storage.objects where id='${knowledge.objectId}'`);
+  await eq(`select count(*)::int v from storage.objects where id='${knowledge.objectId}'`,1);
+});
+await actor('viewer');await ok('viewer can still read archived knowledge',()=>eq(`select count(*)::int v from storage.objects where id='${knowledge.objectId}'`,1));
+await ok('viewer cannot read unlinked upload',()=>eq(`select count(*)::int v from storage.objects where id='${mismatch.objectId}'`,0));
+await actor('director');await ok('manager cannot clean up another uploader orphan',async()=>{
+  await db.exec(`delete from storage.objects where id='${mismatch.objectId}'`);
+  await eq(`select count(*)::int v from storage.objects where id='${mismatch.objectId}'`,0); // Not linked and not own: hidden by SELECT policy.
+});
+await actor('ps');await ok('original uploader alone can remove orphan',async()=>{
+  await eq(`select count(*)::int v from storage.objects where id='${mismatch.objectId}'`,1);
+  await db.exec(`delete from storage.objects where id='${mismatch.objectId}'`);
+  await eq(`select count(*)::int v from storage.objects where id='${mismatch.objectId}'`,0);
+});
+await db.exec('reset role');await rejects('FK prevents cleanup/attach race deleting a linked blob',`delete from storage.objects where id='${knowledge.objectId}'`,'foreign key constraint');
+for(const [extension,mime] of [
+  ['pdf','application/pdf'],['ppt','application/vnd.ms-powerpoint'],['pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+  ['doc','application/msword'],['docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  ['xls','application/vnd.ms-excel'],['xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],['png','image/png'],['jpg','image/jpeg']
+]) await ok('knowledge supports '+extension.toUpperCase(),async()=>{const file=await uploadKnowledge('ps',extension,mime);await knowledgeInsert(file);});
+await ok('knowledge accepts general material at exact 25 MiB limit',async()=>{const file=await uploadKnowledge('ps','pdf','application/pdf',26214400);await knowledgeInsert(file,{product_id:null});await eq(`select product_id is null v from public.knowledge_documents where id='${file.documentId}'`,true);});
+await actor('director');await ok('knowledge changes are audited',async()=>{const result=await db.query("select count(*)::int n from public.audit_logs where entity_type='knowledge_documents'");if(result.rows[0].n<5)throw new Error('Knowledge audits missing');});
+await ok('audits record changes',async()=>{const r=await db.query('select count(*)::int v from public.audit_logs');if(r.rows[0].v<8)throw new Error('Audit missing');});
 await db.exec('reset role');
 await ok('all public tables enable RLS',()=>eq("select count(*)::int v from pg_tables where schemaname='public' and not rowsecurity",0));
+await ok('knowledge schema adds exactly one public business table',()=>eq("select count(*)::int v from pg_tables where schemaname='public'",12));
 await ok('anonymous cannot execute pre-existing helper',()=>eq("select has_function_privilege('anon','public.rls_auto_enable()','execute') v",false));
 await ok('authenticated cannot execute pre-existing helper',()=>eq("select has_function_privilege('authenticated','public.rls_auto_enable()','execute') v",false));
 console.log(JSON.stringify({result:'PASS',checks:passes,limitation:'PGlite verifies SQL and sequential RLS/business rules; hosted Supabase integration and parallel network race require target access.'}));

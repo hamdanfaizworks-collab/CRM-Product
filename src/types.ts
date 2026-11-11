@@ -135,6 +135,22 @@ export interface Attachment extends Base {
   size_bytes: number;
   mime_type: string;
 }
+export type KnowledgeDocumentType = "datasheet" | "brochure" | "presentation" | "user_manual" | "training" | "other";
+export interface KnowledgeDocument extends Base {
+  product_id: string | null;
+  title: string;
+  document_type: KnowledgeDocumentType;
+  description: string;
+  version: string;
+  language: "en" | "id" | "multilingual";
+  tags: string[];
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  size_bytes: number;
+  status: "active" | "archived";
+  created_by: string;
+}
 export interface Audit {
   id: string | number;
   entity_type: string;
@@ -159,6 +175,7 @@ export interface Tables {
   activities: Activity;
   tasks: Task;
   activity_attachments: Attachment;
+  knowledge_documents: KnowledgeDocument;
   audit_logs: Audit;
   org_settings: OrgSettings;
 }

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from "react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
 vi.hoisted(() => {
@@ -32,6 +32,7 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 import { App } from "./App";
+import { setLanguage } from "./i18n";
 
 // CI has no production .env.local. Inject the authenticated boundary explicitly
 // while retaining the real callback capture and the real App password flow.
@@ -57,6 +58,7 @@ vi.mock("./store", async (importOriginal) => {
     },
   };
 });
+beforeEach(()=>setLanguage("id"));
 afterEach(cleanup);
 it("shows password setup even when Auth consumed the invite callback before mount", async () => {
   render(<App />);

@@ -218,6 +218,7 @@ export function demoData(): Data {
       },
     ],
     activity_attachments: [],
+    knowledge_documents: [],
     audit_logs: [],
     org_settings: [
       { id: "ttm", name: "Triputra Techno Med", timezone: "Asia/Jakarta" },

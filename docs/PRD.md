@@ -3,9 +3,9 @@
 
 **Perusahaan:** Triputra Techno Med (TTM)
 **Pemilik produk:** Product Director TTM
-**Versi:** 1.1 - baseline implementasi, bilingual, dan kontrak Hostinger
+**Versi:** 1.3 - English default dan Product Knowledge Base terimplementasi
 **Tanggal:** 11 November 2026, WIB
-**Status:** PRD disusun; status pembangunan dan go-live harus dibuktikan terpisah melalui hasil pengujian dan deployment.
+**Status:** Implementasi pembaruan dan backend Knowledge Base terverifikasi; publikasi frontend pembaruan ini ke Hostinger masih pending. Riwayat release sebelumnya tetap terpisah dari bukti pembaruan ini.
 **Repository yang diminta:** https://github.com/hamdanfaizworks-collab/CRM-Product
 **Backend yang diminta:** proyek Supabase `yqmcafgnryvsrvalbycz`
 
@@ -52,7 +52,7 @@ Release awal melayani satu organisasi TTM. Akun hanya dapat digunakan oleh pengg
 
 Asumsi awal:
 
-1. Bahasa antarmuka **Bahasa Indonesia (`id`) / English (`en`)**, dengan Bahasa Indonesia sebagai default. Nilai uang tetap rupiah (`IDR`).
+1. Bahasa antarmuka **English (`en`) / Bahasa Indonesia (`id`)**, dengan **English sebagai default** bagi browser tanpa preferensi valid. Pilihan Indonesia yang telah disimpan tetap dihormati. Nilai uang tetap rupiah (`IDR`).
 2. Tanggal/jam ditampilkan dalam `Asia/Jakarta`; penyimpanan timestamp memakai UTC. Locale tampilan mengikuti bahasa (`id-ID` / `en-GB`), tanpa mengubah zona waktu, nilai uang, atau data tersimpan.
 3. CRM berisi data organisasi dan kontak bisnis, bukan rekam medis, citra pasien, atau informasi klinis pasien.
 4. Persetujuan v1 satu tingkat oleh director/admin. Approval bertingkat berdasarkan biaya adalah pengembangan berikutnya.
@@ -77,6 +77,7 @@ Asumsi awal:
 - Laporan operasional, pipeline, produktivitas, serta ekspor CSV.
 - Pengaturan organisasi, audit perubahan penting, kontrol akses database, dan dokumentasi operasional.
 - Pemilih bahasa Indonesia/English pada login dan ruang kerja, preferensi persisten pada browser, label/validasi/CSV bilingual, serta format angka/tanggal menurut locale.
+- Product Knowledge Base: materi privat terkait produk dengan metadata jenis, versi, bahasa, tag, pencarian/filter, unduh terotorisasi dan arsip. Implementasi dan bukti pengujian tambahan ini dijelaskan pada FR-15; deployment frontend Hostinger pembaruan tetap harus dibuktikan tersendiri.
 
 ### Tidak termasuk v1
 
@@ -84,7 +85,7 @@ ERP/akuntansi, pengadaan stok komersial, invoicing resmi, pengelolaan tender len
 
 ## 5. Navigasi dan desain antarmuka
 
-Navigasi utama: **Dashboard, Pelanggan, Pipeline, Kalender & Aktivitas, Tindak Lanjut, Katalog Produk, Unit Demo, Tim, Laporan, Pengaturan**. Akses menu mengikuti role tetapi otorisasi tetap ditegakkan oleh backend.
+Navigasi utama: **Dashboard, Pelanggan, Pipeline, Kalender & Aktivitas, Tindak Lanjut, Katalog Produk, Knowledge Base, Unit Demo, Tim, Laporan, Pengaturan**. Akses menu mengikuti role tetapi otorisasi tetap ditegakkan oleh backend.
 
 - Font **Inter** untuk seluruh UI, dengan fallback sans-serif.
 - Pemilih **Bahasa Indonesia / English** tersedia sebelum dan sesudah login. Pergantian bahasa berlaku pada seluruh modul dan tidak mengubah data pengguna.
@@ -190,11 +191,29 @@ Audit bersifat append-only bagi pengguna aplikasi. Log tidak merekam password, t
 
 ### FR-14. Bahasa Indonesia / English
 
-Antarmuka menyediakan pemilih `id` dan `en` pada layar login dan ruang kerja. Default kunjungan pertama adalah Bahasa Indonesia. Preferensi tersimpan dalam localStorage browser pada key `ttm.crm.language.v1`, dipulihkan setelah reload, dan diterapkan pada tab origin yang sama melalui perubahan storage. Jika penyimpanan preferensi tidak tersedia, pilihan pada sesi berjalan tetap berfungsi. Preferensi bahasa bukan data role, bukan sesi autentikasi, dan tidak memengaruhi izin akses.
+Antarmuka menyediakan pemilih `id` dan `en` pada layar login dan ruang kerja. **Default kunjungan pertama adalah English.** Preferensi tersimpan dalam localStorage browser pada key `ttm.crm.language.v1` dan dipulihkan setelah reload; nilai `id` yang dipilih pengguna tetap menggunakan Indonesia, sedangkan nilai kosong/tidak valid atau storage yang tidak dapat dibaca memakai default `en`. Reset/clear preferensi antar-tab kembali ke English. Document language dan server snapshot awal memakai `en`. Jika penyimpanan tidak tersedia, pilihan pada sesi berjalan tetap berfungsi. Preferensi bahasa bukan data role, bukan sesi autentikasi, dan tidak memengaruhi izin akses.
 
 Label navigasi, field, opsi enum, status, dialog, tooltip/aria-label, pesan validasi yang dikenali, ringkasan dashboard, dan header/filter ekspor CSV mengikuti bahasa. Interpolasi nama/jumlah mempertahankan nilai aslinya. Locale `id-ID` atau `en-GB` digunakan untuk tanggal, angka, dan singkatan nilai besar; timezone tetap WIB/Asia-Jakarta, mata uang tetap IDR, enum tetap, dan timestamp/date tersimpan tetap ISO/UTC sesuai kontrak data.
 
 Nama orang, pelanggan, produk/brand/model, judul kegiatan/peluang, catatan, laporan, deskripsi, serta spesifikasi/kategori dari data pengguna tidak diterjemahkan otomatis. Label tampilan pilihan referensi UUID harus mempertahankan nama sumber walaupun namanya kebetulan sama dengan key terjemahan. Konten pengguna pada CSV tetap sama; hanya struktur dan label laporan yang bilingual. Preferensi antarorigin (Sites dan Hostinger) berdiri sendiri karena localStorage mengikuti origin.
+
+### FR-15. Product Knowledge Base
+
+**Status implementasi terkini:** frontend selesai, backend telah **DEPLOYED**, dan **39/39 pemeriksaan API hosted Knowledge Base lulus**. Proyek target kini mempunyai **4 migrasi, 12 tabel ber-RLS, dan 2 bucket privat**. Migrasi keempat `20261111071649_product_knowledge_library.sql` menambahkan `knowledge_documents` dan bucket `product-knowledge` (25 MiB), terpisah dari `activity-evidence` (10 MiB). Pembaruan frontend ke Hostinger **masih pending** sampai jejak source/CI/artifact/provider dan smoke test origin final tersedia. Status tersebut tidak mengubah bukti historis Hostinger sebelumnya.
+
+Knowledge Base menyimpan materi pendukung PS/AS dengan **produk opsional**; materi umum/lintas produk memakai `product_id = null`. Metadata mencakup judul, jenis, deskripsi, versi, bahasa materi, tag, penulis, waktu, nama/path/MIME/ukuran file, dan status `active`/`archived`. Jenis materi: `datasheet`, `brochure`, `presentation`, `user_manual`, `training`, `other`. Bahasa: `en`, `id`, `multilingual`. Record baru mengisi versi `1.0` dan bahasa English yang dapat diubah sesuai isi materi. Ini label metadata, bukan sistem penggabungan atau riwayat revisi otomatis.
+
+Pengguna mencari **judul, tag, atau nama file** dan memfilter produk, jenis, bahasa, serta status. Menu Knowledge Base membuka seluruh pustaka; tombol **View product materials** pada detail katalog membuka `#knowledge?product=<UUID>` dan memfilter produk terkait. Daftar/detail menampilkan informasi materi, konteks produk, versi, bahasa, penulis, ukuran dan pembaruan. Bahasa UI maupun metadata bahasa tidak menerjemahkan isi file, nama produk, judul, atau catatan pengguna.
+
+Anggota aktif termasuk viewer dapat membaca/mengunduh materi yang diizinkan. Viewer tidak dapat menulis. Anggota dengan hak tulis mengunggah sebagai penulis sendiri; **penulis asli atau director/admin** dapat mengedit metadata, mengarsipkan, dan memulihkan. Author serta relasi objek dikontrol backend. Arsip tidak menghapus file, metadata, atau audit. File asli immutable: penggantian file menggunakan **record baru** dengan label versi yang sesuai, bukan upsert ke objek lama.
+
+Batas upload **25 MiB per file (26.214.400 byte)** ditegakkan frontend dan backend. Allowlist terdiri dari **10 ekstensi / 9 MIME kanonik**: PDF (`.pdf`), PPT (`.ppt`), PPTX (`.pptx`), DOC (`.doc`), DOCX (`.docx`), XLS (`.xls`), XLSX (`.xlsx`), PNG (`.png`), JPEG (`.jpg`/`.jpeg`). File kosong, ukuran berlebih, MIME/metadata yang tidak sesuai, serta path yang tidak sah ditolak. Objek privat memakai path `<author_uuid>/<document_uuid>/<random_uuid>.<safe_extension>` dan terikat ke record metadata; objek yang direferensikan dilindungi dari penghapusan bersamaan melalui constraint backend.
+
+Unduhan menggunakan signed URL **60 detik** dengan nama file asli; tidak ada bucket publik/URL permanen. Upload object diikuti simpan metadata. Jika metadata gagal, cleanup hanya menghapus objek baru yang telah dipastikan belum direferensikan. Hasil ambigu mempertahankan file dan meminta rekonsiliasi administrator; jangan menghapus file yang mungkin sudah terikat atau memberi konfirmasi palsu.
+
+Pustaka produksi **dimulai kosong**. Katalog tidak menghasilkan file atau penulis fiktif. File produksi tidak masuk repository publik/source archive. Demo memakai metadata localStorage dan file IndexedDB pada origin/perangkat/profil browser yang sama; tidak mengirim file ke Supabase. Reload dan masuk demo kembali mempertahankan unduhan selama storage masih ada; reset demo membersihkan keduanya.
+
+**Bukti saat ini:** 68 tes aplikasi, 109 SQL/RLS lokal, 5 guard environment dan build lulus; hosted Knowledge Base 39/39 lulus dengan fixture dibersihkan dan audit dipertahankan. Browser production preview membuktikan default English/toggle Indonesia, upload demo, reload, unduh berhash identik, pintasan/filter produk serta layout tanpa overflow. Bukti preview ini bukan publikasi frontend Hostinger atau UAT bisnis akun nyata. Panduan pengguna: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md).
 
 ## 7. Model data konseptual
 
@@ -204,6 +223,7 @@ Nama orang, pelanggan, produk/brand/model, judul kegiatan/peluang, catatan, lapo
 | Accounts | Satu instansi, pemilik akun; banyak contacts/opportunities/activities |
 | Contacts | PIC milik account; data kontak bisnis |
 | Products | Katalog; brand/category/model/source_page |
+| Knowledge documents (`knowledge_documents`) | Produk terkait, jenis, versi, bahasa, tag, penulis, objek privat maksimum 25 MiB, status arsip |
 | Opportunities | Account, product, owner, stage, value, probability, next action |
 | Activities | Account/opportunity opsional, products, owner, type, interval, status |
 | Activity assignees | Penghubung activity dan member; dasar deteksi konflik personel |
@@ -271,11 +291,20 @@ Target kecepatan dan volume pengguna perlu ditetapkan setelah jumlah anggota ser
 | AC-20 | Backend gagal atau environment belum diatur | Pesan koneksi jelas; tidak ada klaim sukses/persistensi produksi palsu |
 | AC-21 | Uji UI desktop dan ponsel | Navigasi, form, modal, tabel/agenda dapat digunakan tanpa kontrol terpotong |
 | AC-22 | Build, migrasi, dan deployment dari checkout bersih | Prosedur dapat diulang; versi/source state diketahui |
-| AC-23 | Kunjungan awal dan pergantian bahasa pada login/ruang kerja | Default Indonesia; pilihan English memperbarui UI modul, status, dialog dan validasi tanpa logout |
+| AC-23 | Browser baru/tanpa preferensi valid membuka login/ruang kerja | Default English; pemilih dapat beralih ke Indonesia tanpa logout; pilihan `id` tersimpan tetap dihormati |
 | AC-24 | Reload dan tab lain pada origin sama | Preferensi bahasa dipulihkan dan sinkron tanpa memengaruhi sesi/role |
 | AC-25 | Nama referensi UUID sama dengan teks kamus; catatan/brand dibuka | Data pengguna tetap persis; hanya label antarmuka diterjemahkan |
 | AC-26 | Format English untuk waktu, nilai pipeline, dan CSV | Locale berubah; WIB, IDR, jumlah, timestamp, enum dan konten pengguna tetap |
 | AC-27 | Build Hostinger dengan target salah atau secret pada variabel VITE | Build ditolak sebelum bundle dibuat; pesan tidak mencetak secret |
+| AC-28 | Preferensi tidak valid/storage tidak tersedia/reset antar-tab | Default English dipakai; document language `en`; pilihan Indonesia tetap berfungsi selama sesi dan dapat dipulihkan bila storage tersedia |
+| AC-29 | Unggah materi valid dan pilih produk, jenis, versi, bahasa, tag | Metadata dan objek privat terhubung, daftar/detail/pencarian menampilkan record yang sama setelah reload |
+| AC-30 | Uji file kosong, melebihi 25 MiB, tipe/path tidak sah | Ditolak frontend/backend; kegagalan metadata tidak diklaim sukses |
+| AC-31 | Viewer/nonanggota mengunggah, pengguna lain mengubah/arsip, author memalsukan penulis | Operasi tidak sah ditolak melalui API langsung; author asli dan director/admin mengikuti izin yang tepat |
+| AC-32 | Unduh materi privat lalu arsip oleh author/admin | Akses terotorisasi berhasil, anonim ditolak, URL 60 detik, arsip mempertahankan file/metadata/audit dan dapat dipulihkan |
+| AC-33 | Detail katalog → View product materials | Hash/pintasan membuka Knowledge Base dengan filter UUID produk yang benar; menu utama membuka seluruh pustaka |
+| AC-34 | Upload demo → reload → masuk demo kembali → download | Byte/hash file sama, metadata tetap terkait; tidak ada upload Supabase dari mode demo |
+| AC-35 | Edit metadata lalu unggah revisi file | File lama tidak ditimpa; revisi memakai record baru dengan versi yang dipilih |
+| AC-36 | Pustaka produksi baru dibuka | Daftar kosong yang jujur; tidak ada dokumen, penulis, atau file produksi fiktif |
 
 Pengujian minimal mencakup unit business rules (waktu/KPI/CSV), integration/RLS untuk role dan perubahan status, konflik konkurensi, serta smoke test browser untuk login dan satu alur pelanggan → peluang → kegiatan → laporan → follow-up. Hasil uji harus dicatat sebagai lulus/gagal/belum diuji, bukan hanya daftar rencana.
 
@@ -289,7 +318,7 @@ Pengujian minimal mencakup unit business rules (waktu/KPI/CSV), integration/RLS 
 6. **Deployment:** konfigurasi environment, jalankan migrasi pada target yang telah diperiksa, pasang build, konfigurasi URL auth, dan lakukan smoke test.
 7. **Pilot dan go-live:** buat administrator pertama, undang anggota nyata, review master katalog, masukkan data operasional, konfirmasi backup, lakukan UAT dan onboarding, lalu nyatakan status go-live berdasarkan bukti.
 
-Roadmap setelah v1: approval bertingkat dan budget, file library privat, reminder email/WhatsApp, kalender eksternal, territory/target tim, evaluasi kompetensi training, forecasting lanjutan, serta integrasi ERP. Prioritas ditentukan menggunakan temuan pilot.
+Knowledge Base privat kini menjadi tambahan scope yang sedang dibangun, bukan sekadar roadmap. Roadmap berikutnya: approval bertingkat dan budget, reminder email/WhatsApp, kalender eksternal, territory/target tim, evaluasi kompetensi training, forecasting lanjutan, serta integrasi ERP. Prioritas ditentukan menggunakan temuan pilot.
 
 ## 12. Definisi siap deploy dan go-live
 
@@ -303,7 +332,7 @@ Situs demo atau antarmuka dengan local storage bukan bukti bahwa backend yang di
 - Kedua koneksi Supabase yang tersedia menolak akses ke proyek target.
 - Katalog lokal dapat dibaca untuk pekerjaan kebutuhan dan inventaris produk.
 
-Catatan di atas adalah riwayat awal, bukan status akses terbaru. Akses kemudian diperbaiki: source berada pada GitHub `main`, backend target telah diterapkan dan menjalani 23 pemeriksaan API hosted, dan director mengonfirmasi login pilot. Status terkini beserta batas pengujian berada pada `RELEASE.md` dan `HOSTED-UAT.md`. Jangan menyalin secret melalui chat/repository; gunakan koneksi aplikasi atau environment penyedia yang aman.
+Catatan di atas adalah riwayat awal, bukan status akses terbaru. Akses kemudian diperbaiki: source berada pada GitHub `main`, backend target telah diterapkan, CRM menjalani 23 pemeriksaan API hosted pada release sebelumnya, dan director mengonfirmasi login pilot. Pembaruan Knowledge Base menambahkan migrasi keempat serta 39 pemeriksaan hosted yang lulus; frontend Hostinger pembaruan masih mengikuti gerbang release terpisah. Status terkini beserta batas pengujian berada pada `RELEASE.md` dan `HOSTED-UAT.md`. Jangan menyalin secret melalui chat/repository; gunakan koneksi aplikasi atau environment penyedia yang aman.
 
 ### Kontrak deployment Hostinger
 
@@ -311,7 +340,7 @@ Target yang diminta adalah `https://cyan-oryx-350189.hostingersite.com`. Inspeks
 
 Script build memvalidasi URL proyek Supabase yang diizinkan dan publishable key serta menolak secret administratif dalam variabel browser. Hanya public build variables yang tersedia bagi bundle. Source React tetap pada `main`, sedangkan branch `hostinger` hanya berisi artifact static; source backend, `.env`, `node_modules`, serta credential server tidak ikut ke web root.
 
-Pengaturan origin/redirect Auth dan allowlist `team-admin` adalah persiapan backend, bukan bukti Hostinger telah live. Status deployment Hostinger tetap **pending** sampai provider melaporkan sukses dari commit release yang diketahui dan smoke test HTTPS, login, bilingual, asset, serta alur bisnis berhasil pada origin target. Detail operasional dan alternatif fallback terdapat pada `HOSTINGER.md`.
+Release Hostinger sebelumnya telah live dan mempunyai bukti provider/HTTPS sendiri. **Pembaruan frontend default English + Knowledge Base ini masih pending** sampai provider melaporkan sukses dari commit release pembaruan yang diketahui, metadata cocok, dan smoke test origin final lulus. Bukti preview/lokal serta deployment backend tidak otomatis membuktikan pembaruan frontend sudah tersedia. Detail operasional terdapat pada `HOSTINGER.md` dan status terkini pada `RELEASE.md`.
 
 ## 13. Data dan keputusan yang diperlukan saat onboarding
 

@@ -2,9 +2,38 @@
 
 Tanggal / Date: **11 November 2026, Asia/Jakarta**.
 
-**Status: READY FOR DIRECTOR PILOT.** Frontend Hostinger live, auto-update terbukti, dan pengguna mengonfirmasi “login Hostinger berhasil”. Konfirmasi login berasal dari pengguna, bukan observasi agent atas dashboard terautentikasi. SMTP/rollout tim, UAT alur bisnis nyata, dan backup/restore masih tindak lanjut. / **Ready for the director pilot:** Hostinger is live, automatic updates are proven, and the user confirmed successful Hostinger sign-in. This is user acceptance, not an agent-observed authenticated workflow. Team/email, business-workflow UAT and recovery acceptance remain follow-ups.
+## Pembaruan terkini / Current update — publication pending
 
-## Bukti terkini / Current evidence
+**DEFAULT ENGLISH + PRODUCT KNOWLEDGE BASE: IMPLEMENTED; BACKEND DEPLOYED; HOSTINGER FRONTEND UPDATE PENDING.** Source dan backend pembaruan ini telah diuji. Hostinger dari release sebelumnya tetap live, tetapi fitur baru belum dinyatakan terpublikasi di origin tersebut sampai bukti source/CI/artifact/provider dan smoke test pembaruan tersedia. / The new source and backend are verified. The earlier Hostinger release remains live; publication of this frontend update requires its own deployment and origin verification.
+
+| Area | Hasil terkini / Current result | Bukti dan batas / Evidence and limit |
+| --- | --- | --- |
+| English default / Indonesia | **IMPLEMENTED; PREVIEW VERIFIED** | Preferensi baru/tidak valid default `en`; pilihan `id` tersimpan dihormati. Native browser preview membuktikan default English dan toggle Indonesia. / New or invalid preferences default to English; saved Indonesian is respected. |
+| Product Knowledge Base | **IMPLEMENTED** | Produk opsional, shortcut katalog, metadata/type/version/language/tags, filter, private download, edit author/admin, archive/restore; tanpa hard delete atau file fiktif produksi. / Optional product, catalog shortcut, metadata and filters, private downloads, author/admin editing and archival. |
+| Supabase backend | **DEPLOYED — 4 MIGRATIONS** | 12 tabel ber-RLS, 87 produk, 2 bucket privat: activity-evidence 10 MiB dan product-knowledge 25 MiB. Migrasi baru: `20261111071649_product_knowledge_library.sql`. |
+| Tes aplikasi / App tests | **68 PASS** | Domain, Auth, bilingual/default language, Knowledge Base dan UI sandbox. / Domain, Auth, bilingual/default behavior, Knowledge Base and sandbox UI. |
+| SQL/RLS lokal / Local SQL/RLS | **109 PASS** | Termasuk ownership, immutable file linkage, format/size, archive dan akses Knowledge Base. / Includes Knowledge Base ownership, immutable linkage, limits, archive and access. |
+| Guard environment | **5 PASS** | Target/key dan perlindungan secret browser. / Target/key and browser-secret guards. |
+| Production build | **PASS** | TypeScript serta build produksi terverifikasi lokal. / TypeScript and production build verified locally. |
+| Knowledge Base hosted API | **39 / 39 PASS** | Fixture pengujian dibersihkan: 5 Auth users, 4 profiles, 2 tracked document IDs dan 3 object paths; audit dipertahankan. Tidak ada data pengguna asli yang diubah. / Test fixtures cleaned; original user data unchanged; audit retained. |
+| Native browser production preview | **PASS** | File demo diunggah → reload → masuk demo → download dengan hash identik; pintasan produk, bahasa, batas file, dan layout tanpa horizontal overflow lulus. / Demo file persistence/download hash, product shortcut, language, limits and page width passed. |
+| Hostinger frontend update | **PENDING** | Belum ada klaim commit/CI/artifact/provider/HTTPS untuk pembaruan ini. Bukti release sebelumnya dipertahankan di bawah. / This update has not yet received its own commit/CI/artifact/provider/origin acceptance record. |
+
+Pemeriksaan hosted Knowledge Base awal mempunyai false failure pada harness akibat GET/CDN cache. Verifikasi diulang menggunakan Storage listing, dan hasil final **39/39 PASS**; kesalahan harness awal tidak dijadikan klaim bug produk. Laporan sanitized: deliverable `TTM-Knowledge-Hosted-UAT.json`. / The initial hosted harness encountered a cached-GET false failure; rerunning with Storage listing produced the final 39/39 pass.
+
+Panduan bilingual: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md). Produksi dimulai dengan Knowledge Base kosong; tidak ada file demo otomatis di backend. Data sandbox localStorage/IndexedDB tidak menjadi data produksi. Label bahasa dan isi file tetap hal berbeda. / The production library starts empty. Browser sandbox files are separate from production, and UI/document-language labels do not translate file contents.
+
+SMTP/rollout tim, UAT workflow bisnis dari akun nyata, kebijakan backup/restore, dan tindak lanjut advisor tetap mengikuti acceptance tersendiri. Konfirmasi login director sebelumnya tidak diperluas menjadi klaim observasi agent atas workflow tersebut.
+
+## Riwayat release sebelumnya / Previous release record
+
+**Bagian berikut adalah catatan release sebelumnya yang dipertahankan. Angka 51/47, tiga migrasi/11 tabel, default `id`, serta commit dan deployment di dalamnya merujuk snapshot historis tersebut; bukan status source/backend pembaruan ini.** / The following record is historical. Its 51/47 test counts, three migrations/11 tables, Indonesian default, commits and deployment identify that prior release, not this update.
+
+Tanggal / Date: **11 November 2026, Asia/Jakarta**.
+
+**Historical status: READY FOR DIRECTOR PILOT.** Frontend Hostinger live, auto-update terbukti, dan pengguna mengonfirmasi “login Hostinger berhasil”. Konfirmasi login berasal dari pengguna, bukan observasi agent atas dashboard terautentikasi. SMTP/rollout tim, UAT alur bisnis nyata, dan backup/restore masih tindak lanjut. / **Ready for the director pilot:** Hostinger is live, automatic updates are proven, and the user confirmed successful Hostinger sign-in. This is user acceptance, not an agent-observed authenticated workflow. Team/email, business-workflow UAT and recovery acceptance remain follow-ups.
+
+### Bukti terkini / Current evidence
 
 | Area | Status | Bukti dan batas / Evidence and limit |
 | --- | --- | --- |
@@ -25,7 +54,7 @@ Tanggal / Date: **11 November 2026, Asia/Jakarta**.
 
 Hasil final lokal: 51 tes aplikasi, 5 tes guard environment, 47 tes SQL/RLS, dan build Hostinger lulus. Kamus memuat 695 entri; pemeriksaan 547 literal tidak menemukan key hilang; 42 pesan DB/Edge dipetakan secara tepat. Bukti tersebut tidak menggantikan hasil deployment Hostinger. / Final local checks passed: 51 application tests, 5 environment tests, 47 SQL/RLS checks, and the Hostinger build. The dictionary contains 695 entries; 547 checked literals had no missing keys; 42 DB/Edge messages have exact translations. These checks do not prove Hostinger deployment.
 
-## Riwayat deployment awal / Initial deployment history
+### Riwayat deployment awal / Initial deployment history
 
 - Source `main`: [`b4cebfd9578c2960e3ca40167a24b5905316fb6e`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/b4cebfd9578c2960e3ca40167a24b5905316fb6e).
 - [GitHub Actions run `42971963802`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42971963802): **SUCCESS**, jobs verify dan publish / verify and publish jobs.
@@ -36,7 +65,7 @@ Hasil final lokal: 51 tes aplikasi, 5 tes guard environment, 47 tes SQL/RLS, dan
 
 Rincian sanitized terdapat pada `HOSTINGER-UAT.md`. Screenshot deployment disimpan sebagai deliverable `TTM-Hostinger-deployment.png`; tidak memuat credential. / Sanitized details are in HOSTINGER-UAT; the deployment screenshot is a separate deliverable without credentials.
 
-### Deployment aplikasi terakhir yang telah diverifikasi / Latest verified application deployment
+#### Deployment aplikasi terakhir yang telah diverifikasi / Latest verified application deployment
 
 - Source: [`630bf0762c5c76944d926b688d2b2b9c2219f6d0`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/630bf0762c5c76944d926b688d2b2b9c2219f6d0).
 - [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518): **SUCCESS**, kedua jobs / both jobs.
@@ -46,7 +75,7 @@ Rincian sanitized terdapat pada `HOSTINGER-UAT.md`. Screenshot deployment disimp
 
 Record ini menunjuk deployment yang telah diperiksa, bukan commit dokumentasi berikutnya atau CI yang belum berjalan. / This record identifies the deployment already verified, not a subsequent documentation commit or a future CI run.
 
-## Backend dan data / Backend and data
+### Backend dan data / Backend and data
 
 Target Supabase `yqmcafgnryvsrvalbycz` telah menerima **tiga migrasi**: initial schema, hardening helper, serta indeks FK/policy. Tersedia 87 produk, 11 tabel ber-RLS, bucket bukti privat maksimum 10 MiB, serta `team-admin` dengan verifikasi JWT. Hasil nol temuan keamanan setelah hardening adalah snapshot historis; advisor Auth terbaru memberi peringatan leaked-password protection. Perincian riwayat deployment ada di `BACKEND-DEPLOYMENT.md`; hasil layanan nyata ada di `HOSTED-UAT.md`.
 
@@ -54,7 +83,7 @@ The target Supabase project has three migrations (initial schema, helper hardeni
 
 Fixture hosted dibersihkan dengan ID yang dibuat penguji; audit append-only tetap menjadi jejak pengujian. Tidak ada data pasien atau identitas anggota fiktif yang dijadikan data produksi. / Hosted test fixtures were cleaned using their generated IDs; append-only audit events remain as the test trace. No patient data or fictitious team identities were promoted to production.
 
-## Jalur Hostinger yang digunakan / Actual Hostinger path
+### Jalur Hostinger yang digunakan / Actual Hostinger path
 
 Inspeksi hPanel menunjukkan target saat ini berupa **PHP/HTML**, dengan Git deployment branch dan direktori `public_html`; tidak tersedia build command pada wizard tersebut. Jalur release mempertahankan site/domain yang ada:
 
@@ -66,7 +95,7 @@ Frontend publik telah disetujui pengguna; akses CRM tetap invitation-only melalu
 
 Hanya URL Supabase dan publishable key publik yang masuk browser; secret administratif tetap pada backend/operator. Repository variables atau public defaults workflow tidak boleh diganti dengan `service_role`, `sb_secret_...`, password, atau access token. / Only the public Supabase URL and publishable key enter the browser; administrative credentials remain server-side.
 
-## Verifikasi tersisa dan rollout / Remaining verification and rollout
+### Verifikasi tersisa dan rollout / Remaining verification and rollout
 
 1. Pertahankan jejak source/CI/artifact/deployment yang telah terbukti; setiap release berikutnya memperoleh bukti sendiri. / Retain the verified provenance; each subsequent release requires its own evidence.
 2. Login director Hostinger telah diterima berdasarkan konfirmasi pengguna; jangan memperluas konfirmasi itu menjadi klaim observasi agent atas alur akun nyata. / Director sign-in is user-confirmed; do not extend that acceptance into an agent-observed real-account workflow claim.

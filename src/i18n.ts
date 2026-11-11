@@ -4,8 +4,9 @@ import english from "./locales/en.json";
 export type Language = "id" | "en";
 const STORAGE_KEY = "ttm.crm.language.v1";
 const listeners = new Set<() => void>();
-let language: Language = "id";
-try { if (typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY) === "en") language = "en"; } catch { /* Preference storage is optional. */ }
+const preferredLanguage = (value: string | null): Language => value === "id" ? "id" : "en";
+let language: Language = "en";
+try { if (typeof localStorage !== "undefined") language = preferredLanguage(localStorage.getItem(STORAGE_KEY)); } catch { /* English remains the default when preference storage is unavailable. */ }
 const dictionary = english as Record<string,string>;
 const reverse = new Map(Object.entries(dictionary).map(([key,value])=>[value,key]));
 const missing = new Set<string>();
@@ -18,8 +19,8 @@ export function setLanguage(next:Language){
   language=next;try{localStorage.setItem(STORAGE_KEY,next)}catch{/* Keep the in-memory preference. */}
   updateDocument();for(const callback of listeners)callback();
 }
-if(typeof window!=="undefined")window.addEventListener("storage",event=>{if(event.key===STORAGE_KEY)setLanguage(event.newValue==="en"?"en":"id")});
-export function useLanguage(){return useSyncExternalStore(callback=>{listeners.add(callback);return()=>listeners.delete(callback)},getLanguage,()=>"id" as Language)}
+if(typeof window!=="undefined")window.addEventListener("storage",event=>{if(event.key===STORAGE_KEY||event.key===null)setLanguage(preferredLanguage(event.newValue))});
+export function useLanguage(){return useSyncExternalStore(callback=>{listeners.add(callback);return()=>listeners.delete(callback)},getLanguage,()=>"en" as Language)}
 function interpolate(text:string,values:Record<string,unknown>){return text.replace(/\{\{\s*([^{}]+)\s*\}\}/g,(whole,key)=>key in values?String(values[key]??""):whole)}
 export function tr(input:string,values:Record<string,unknown>={}){
   if(!input)return input;

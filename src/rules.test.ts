@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLanguage } from "./i18n";
+beforeEach(() => setLanguage("id"));
 import {
   conflictFor,
   csvText,

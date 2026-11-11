@@ -1,5 +1,6 @@
 // localized-ui-v1
 import { tr } from "./i18n";
+import { clearDemoKnowledgeFiles } from "./knowledge-files";
 import React, {
   createContext,
   useContext,
@@ -33,6 +34,7 @@ const TABLES: Table[] = [
   "activities",
   "tasks",
   "activity_attachments",
+  "knowledge_documents",
   "audit_logs",
   "org_settings",
 ];
@@ -146,8 +148,8 @@ export function CRMProvider({
         const raw = localStorage.getItem(DEMO_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
         d =
-          parsed && TABLES.every((k) => Array.isArray(parsed[k]))
-            ? parsed
+          parsed && TABLES.every((k) => k === "knowledge_documents" && parsed[k] === undefined || Array.isArray(parsed[k]))
+            ? { ...parsed, knowledge_documents: parsed.knowledge_documents || [] }
             : demoData();
       } catch {
         d = demoData();
@@ -223,6 +225,8 @@ export function CRMProvider({
     }
     const id = String(row.id || crypto.randomUUID());
     const before = current[table].find((x) => x.id === id);
+    if (table === "knowledge_documents" && before && "created_by" in before && !isManager(actor.role) && before.created_by !== actor.id)
+      throw Error(tr("Hanya penulis atau administrator yang dapat mengubah dokumen."));
     let result: Tables[K];
     if (demo) {
       result = {
@@ -234,6 +238,7 @@ export function CRMProvider({
             ? before.created_at
             : new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        ...(table === "knowledge_documents" ? { created_by: before && "created_by" in before ? before.created_by : userId } : {}),
       } as Tables[K];
       const next = {
         ...current,
@@ -352,6 +357,7 @@ export function CRMProvider({
     </Context.Provider>
   );
 }
-export function resetDemo() {
+export async function resetDemo() {
+  await clearDemoKnowledgeFiles();
   localStorage.removeItem(DEMO_KEY);
 }

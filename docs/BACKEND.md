@@ -1,12 +1,13 @@
 # Backend Supabase TTM CRM
 
-Backend target: `yqmcafgnryvsrvalbycz`. Schema, seed katalog, private Storage dan Edge Function telah dideploy. Auth invitation-only telah dikonfigurasi, administrator director telah login, dan 23 pemeriksaan hosted termasuk 3 race tests paralel telah lulus dengan fixture dibersihkan. Status yang disepakati adalah pilot director; SMTP tim dan deployment Hostinger mempunyai langkah release tersendiri.
+Backend target: `yqmcafgnryvsrvalbycz`. **Empat migrasi telah diterapkan**, mencakup **12 tabel bisnis ber-RLS** dan dua bucket privat: evidence **10 MiB** serta Knowledge Base **25 MiB**. Suite SQL/RLS lokal lulus **109/109**, dan hosted Knowledge Base API lulus **39/39** dengan fixture dibersihkan. Hostinger telah live dan login director dikonfirmasi pengguna; status yang disepakati tetap pilot director. SMTP tim, workflow bisnis nyata dan backup/restore mempunyai tindak lanjut tersendiri. Bukti KB: `KNOWLEDGE-UAT.md`.
 
 ## Artefak dan kontrak
 
 - `supabase/migrations/20261110222856_ttm_crm_initial.sql`: schema tambahan, RLS, constraints, trigger, indeks, audit, dan bucket privat.
 - `supabase/migrations/20261110222904_ttm_crm_revoke_rls_auto_enable_execute.sql`: hardening helper event trigger target yang telah diverifikasi.
 - `supabase/migrations/20261111015854_ttm_crm_policy_and_fk_indexes.sql`: policy write-only manager yang setara dan 12 indeks FK tambahan.
+- `supabase/migrations/20261111071649_product_knowledge_library.sql`: library materi produk/umum, private Storage 25 MiB, file binding immutable, archive/restore dan audit.
 - `supabase/seed.sql`: 87 model/produk hasil pembacaan visual katalog; tidak memuat pelanggan, anggota, unit demo, atau penjualan fiktif. `source_page` berarti nomor halaman fisik PDF berbasis 1. Nomor halaman tercetak disimpan pada `specs.source_printed_page`.
 - `supabase/functions/team-admin/index.ts`: endpoint administratif undangan/profil.
 - `scripts/test-db.mjs`: verifikasi PostgreSQL lokal melalui PGlite. Membuat database sementara in-memory, tidak menghubungi target.
@@ -16,6 +17,10 @@ Seluruh data bisnis dapat dibaca anggota aktif dalam satu organisasi TTM. Viewer
 Tabel `audit_logs` memakai `id bigint`, `entity_type`, `entity_id`, `action`, `actor_id`, `occurred_at`, `old_data`, `new_data`. Tidak ada grant insert/update/delete untuk pengguna. Actor dari JWT pemanggil dicatat oleh trigger; maintenance SQL operator dapat memiliki actor null.
 
 Lampiran memakai `activity_attachments(id,activity_id,file_name,storage_path,mime_type,size_bytes,created_at,updated_at,created_by)`. Bucket `activity-evidence` privat, maksimum 10 MiB; PDF, PNG, JPEG, DOCX. Path `<activity_uuid>/<random_filename>`; upload immutable, tanpa upsert. Unggah objek dahulu, simpan metadata sesudah sukses; hapus objek baru jika metadata gagal. Unduhan harus melalui authenticated Storage/signed URL berumur pendek. Batas file tetap ditegakkan bucket, bukan hanya form browser.
+
+Knowledge Base memakai `knowledge_documents`, dengan `product_id` nullable untuk materi umum. Bucket `product-knowledge` privat, maksimum 25 MiB; PDF/PPT/PPTX/DOC/DOCX/XLS/XLSX/PNG/JPEG. Path adalah `<author_uuid>/<document_uuid>/<random_uuid.ext>`. Server menetapkan creator dan binding internal `storage_object_id`, memeriksa owner objek dan metadata size/MIME bila tersedia, serta menegakkan FK `ON DELETE RESTRICT` agar attach dan cleanup tidak menghasilkan referensi file yang hilang.
+
+Anggota aktif termasuk viewer dapat membaca materi; hanya nonviewer dapat mengunggah/membuat. Author atau director/admin dapat mengedit metadata, mengarsipkan dan memulihkan. **Gunakan Archive/Restore, bukan hard delete**, untuk materi yang sudah tercatat. File, path, creator, MIME dan ukuran tidak dapat diganti; file revisi diunggah sebagai record baru dengan versi yang sesuai. Blob yang sudah terhubung tetap disimpan, termasuk ketika materi diarsipkan. Cleanup hanya untuk orphan upload milik pengunggah sendiri bila penyimpanan metadata gagal; gunakan Storage API, bukan penghapusan SQL langsung. Konfirmasi cleanup dengan Storage.list, karena GET yang pernah diunduh dapat terkena CDN cache.
 
 ## Status dan reservasi
 
@@ -75,7 +80,7 @@ Periksa tepat satu baris tersimpan. Terakhir director/admin aktif tidak dapat di
 
 Jalankan `npm run test:db` setelah dependency PGlite terpasang. Tes mencakup schema/seed, anon, nonmember, inactive, viewer, self escalation, ownership, nilai peluang, workflow, approval actor, overlap/adjacency, laporan, cancellation, audit, dan evidence storage RLS.
 
-Hasil verifikasi lokal 11 November 2026: **47 checks SQL/RLS lulus**, seed **87 produk** terbaca, dan `deno check supabase/functions/team-admin/index.ts` lulus menggunakan Deno **2.9.6** serta SDK terpin **2.119.0**. Typecheck bukan bukti SMTP undangan sudah bekerja.
+Hasil verifikasi lokal 11 November 2026: **109 checks SQL/RLS lulus** (47 baseline dan 62 Knowledge Base), seed **87 produk** terbaca, dan typecheck `team-admin` yang telah dilakukan sebelumnya lulus menggunakan Deno **2.9.6** serta SDK terpin **2.119.0**. Hosted KB API lulus **39/39**, memakai PDF nyata dan fixture sementara yang dibersihkan. Rincian cakupan dan batas signed-URL/cache berada di `KNOWLEDGE-UAT.md`. Typecheck bukan bukti SMTP undangan sudah bekerja.
 
 Pada staging nyata gunakan dua koneksi/transaksi berbeda yang mengajukan dua kegiatan beririsan dengan orang/unit sama secara bersamaan. Hanya satu boleh commit; lainnya harus gagal `23P01`. Ulangi adjacency (keduanya diterima), cancel lalu booking ulang, unit maintenance, pergantian role, serta penonaktifan sesi aktif. Simpan hasil tanpa token/password.
 
@@ -105,11 +110,11 @@ Referensi: [RLS Supabase](https://supabase.com/docs/guides/database/postgres/row
 
 ## Deployment target yang telah terverifikasi
 
-Ketiga migration version/name pada inventaris artefak di atas sesuai history remote. Initial SQL diterapkan utuh, seed berisi 87 produk dengan provenance pada 24 halaman sumber, seluruh 11 tabel CRM ber-RLS, anon tidak mempunyai grant tabel bisnis, dan pengguna aplikasi tidak mempunyai grant tulis/truncate audit. Helper event trigger public telah dicabut hak execute client-nya tanpa mengganti body/event trigger.
+Keempat migration version/name pada inventaris artefak di atas sesuai history remote. Initial SQL diterapkan utuh, seed berisi 87 produk dengan provenance pada 24 halaman sumber, seluruh 12 tabel bisnis ber-RLS, anon tidak mempunyai grant tabel bisnis, dan pengguna aplikasi tidak mempunyai grant tulis/truncate audit. Helper event trigger public telah dicabut hak execute client-nya tanpa mengganti body/event trigger. Migrasi KB tidak mengubah evidence policy atau Auth/config/function yang sudah berjalan.
 
 Bucket evidence telah diverifikasi public=false, batas 10 MiB, tipe PDF/PNG/JPEG/DOCX. team-admin terbaru berstatus ACTIVE versi 2 dengan verify_jwt=true. Setelah penambahan Hostinger, live preflight memberikan 204 dengan ACAO exact untuk Sites dan Hostinger, serta 403 tanpa ACAO untuk origin asing. Tes ini tidak mengirim undangan atau menulis data.
 
-Setelah migrasi optimasi, advisor tidak lagi melaporkan multiple-permissive-policy atau missing-FK-index untuk tabel CRM. Sebanyak 21 unused-index notices dipertahankan karena database baru belum mempunyai workload representatif. Advisor keamanan terbaru juga menampilkan warning pengamanan password bocor pada konfigurasi Auth; konfigurasi dan dukungan paket perlu diverifikasi operator. Snapshot akses awal pada bagian sebelumnya adalah riwayat pemeriksaan, bukan keadaan deployment terakhir.
+Setelah migrasi optimasi, advisor tidak lagi melaporkan multiple-permissive-policy atau missing-FK-index untuk tabel CRM. Snapshot sebelum/sesudah migrasi KB mencatat unused-index **INFO** 21 menjadi 24, dengan tiga tambahan indeks pada tabel KB baru; indeks dipertahankan untuk workload nyata. Warning pengamanan password bocor pada konfigurasi Auth sudah ada sebelumnya dan tidak berubah; tidak ada finding keamanan baru dari KB. Snapshot akses awal pada bagian sebelumnya adalah riwayat pemeriksaan, bukan keadaan deployment terakhir.
 
 Root telah memverifikasi pilot director: akun director berhasil membuat password dan login, Sites versi 2 berhasil, signup publik nonaktif, minimum password 10, serta 23 pemeriksaan hosted termasuk 3 race tests paralel lulus dan seluruh fixture dibersihkan. Jumlah data bisnis sesudah pembersihan: profiles 1, products 87, accounts 0. SMTP tim belum dikonfigurasi. Pemeriksaan backup menunjukkan backup 0 dan PITR false; pengguna menyetujui snapshot JSON lokal yang sudah dihasilkan sebagai artefak outputs. Snapshot tersebut tidak menggantikan kebijakan backup terjadwal.
 

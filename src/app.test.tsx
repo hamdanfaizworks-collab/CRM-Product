@@ -25,9 +25,11 @@ vi.mock("./store", async (importOriginal) => {
 });
 
 import { App } from "./App";
+import { setLanguage } from "./i18n";
 
 beforeEach(() => {
   localStorage.clear();
+  setLanguage("id");
   location.hash = "";
 });
 
