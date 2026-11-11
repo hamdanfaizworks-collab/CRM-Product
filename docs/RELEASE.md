@@ -2,28 +2,30 @@
 
 Tanggal / Date: **11 November 2026, Asia/Jakarta**.
 
-## Pembaruan terkini / Current update — publication pending
+## Pembaruan terkini / Current update — LIVE
 
-**DEFAULT ENGLISH + PRODUCT KNOWLEDGE BASE: IMPLEMENTED; BACKEND DEPLOYED; HOSTINGER FRONTEND UPDATE PENDING.** Source dan backend pembaruan ini telah diuji. Hostinger dari release sebelumnya tetap live, tetapi fitur baru belum dinyatakan terpublikasi di origin tersebut sampai bukti source/CI/artifact/provider dan smoke test pembaruan tersedia. / The new source and backend are verified. The earlier Hostinger release remains live; publication of this frontend update requires its own deployment and origin verification.
+**DEFAULT ENGLISH + PRODUCT KNOWLEDGE BASE: DONE, LIVE, VERIFIED.** Frontend fitur ini tersedia pada [Hostinger](https://cyan-oryx-350189.hostingersite.com); backend telah deployed. Workspace director produksi terhubung dan halaman/form Knowledge Base telah diperiksa tanpa mode demo atau penulisan data pelanggan. / This feature is live on Hostinger with its backend deployed. The connected director's Knowledge Base page and upload form were inspected without demo mode or customer-data writes.
 
 | Area | Hasil terkini / Current result | Bukti dan batas / Evidence and limit |
 | --- | --- | --- |
-| English default / Indonesia | **IMPLEMENTED; PREVIEW VERIFIED** | Preferensi baru/tidak valid default `en`; pilihan `id` tersimpan dihormati. Native browser preview membuktikan default English dan toggle Indonesia. / New or invalid preferences default to English; saved Indonesian is respected. |
-| Product Knowledge Base | **IMPLEMENTED** | Produk opsional, shortcut katalog, metadata/type/version/language/tags, filter, private download, edit author/admin, archive/restore; tanpa hard delete atau file fiktif produksi. / Optional product, catalog shortcut, metadata and filters, private downloads, author/admin editing and archival. |
-| Supabase backend | **DEPLOYED — 4 MIGRATIONS** | 12 tabel ber-RLS, 87 produk, 2 bucket privat: activity-evidence 10 MiB dan product-knowledge 25 MiB. Migrasi baru: `20261111071649_product_knowledge_library.sql`. |
-| Tes aplikasi / App tests | **68 PASS** | Domain, Auth, bilingual/default language, Knowledge Base dan UI sandbox. / Domain, Auth, bilingual/default behavior, Knowledge Base and sandbox UI. |
-| SQL/RLS lokal / Local SQL/RLS | **109 PASS** | Termasuk ownership, immutable file linkage, format/size, archive dan akses Knowledge Base. / Includes Knowledge Base ownership, immutable linkage, limits, archive and access. |
-| Guard environment | **5 PASS** | Target/key dan perlindungan secret browser. / Target/key and browser-secret guards. |
-| Production build | **PASS** | TypeScript serta build produksi terverifikasi lokal. / TypeScript and production build verified locally. |
-| Knowledge Base hosted API | **39 / 39 PASS** | Fixture pengujian dibersihkan: 5 Auth users, 4 profiles, 2 tracked document IDs dan 3 object paths; audit dipertahankan. Tidak ada data pengguna asli yang diubah. / Test fixtures cleaned; original user data unchanged; audit retained. |
-| Native browser production preview | **PASS** | File demo diunggah → reload → masuk demo → download dengan hash identik; pintasan produk, bahasa, batas file, dan layout tanpa horizontal overflow lulus. / Demo file persistence/download hash, product shortcut, language, limits and page width passed. |
-| Hostinger frontend update | **PENDING** | Belum ada klaim commit/CI/artifact/provider/HTTPS untuk pembaruan ini. Bukti release sebelumnya dipertahankan di bawah. / This update has not yet received its own commit/CI/artifact/provider/origin acceptance record. |
+| Feature source | **VERIFIED** | [`b8396896966c0c123ecac06001f1a0852ee3c12f`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/b8396896966c0c123ecac06001f1a0852ee3c12f) — source fitur yang diuji, bukan commit dokumentasi berikutnya. / The verified feature source, not a future documentation commit. |
+| CI | **SUCCESS** | [Run `43014085080`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/43014085080), verify + publish. |
+| Hostinger artifact | **LIVE** | `hostinger` commit `349fdec5acde88f06a6b70289990d029fc4ab086`; live `/release.json` cocok source fitur. / Live metadata matches the feature source. |
+| HTTP smoke | **13 / 13 PASS** | **18:43 WIB, 11 November 2026**, pada origin Hostinger. |
+| Director production UI | **PASS — READ-ONLY INSPECTION** | Halaman `#knowledge` dan form unggah English terbuka melalui sesi terhubung, tanpa MODE DEMO; 12 tabel dimuat, 0 dokumen saat inspeksi. Tidak ada upload produksi atau penulisan data pelanggan. / Connected non-demo page/form, no production uploads or customer-data writes. |
+| English default / Indonesia | **LIVE; VERIFIED** | Preferensi kosong/tidak valid default `en`; pilihan `id` tersimpan tetap dihormati. / English default; saved Indonesian respected. |
+| Product Knowledge Base | **LIVE; VERIFIED** | Produk opsional, shortcut katalog, metadata/filters, signed download 60 detik, author/admin metadata edit, archive/restore; file immutable dan tidak ada file fiktif produksi. |
+| Supabase backend | **DEPLOYED — 4 MIGRATIONS** | 12 tabel ber-RLS, 87 produk; activity-evidence privat 10 MiB dan product-knowledge privat 25 MiB. |
+| App tests | **68 PASS** | Domain, Auth, bilingual/default language, Knowledge Base dan UI sandbox. |
+| Local SQL/RLS | **109 PASS** | Termasuk ownership, immutable linkage, limits, archive dan akses Knowledge Base. |
+| Environment guard | **5 PASS** | Target/key dan perlindungan secret browser. |
+| Production build | **PASS** | TypeScript dan build produksi. |
+| Knowledge Base hosted API | **39 / 39 PASS** | Fixture dibersihkan: 5 Auth users, 4 profiles, 2 tracked document IDs, 3 object paths. Audit dipertahankan dan data pengguna asli tidak diubah. |
+| Native production preview | **PASS** | Upload demo → reload → download berhash identik, product shortcut/filter, toggle bahasa, file-size guard dan layout tanpa overflow. |
 
-Pemeriksaan hosted Knowledge Base awal mempunyai false failure pada harness akibat GET/CDN cache. Verifikasi diulang menggunakan Storage listing, dan hasil final **39/39 PASS**; kesalahan harness awal tidak dijadikan klaim bug produk. Laporan sanitized: deliverable `TTM-Knowledge-Hosted-UAT.json`. / The initial hosted harness encountered a cached-GET false failure; rerunning with Storage listing produced the final 39/39 pass.
+Screenshot terverifikasi: deliverable **`TTM-Knowledge-Base.png`**. Hosted API report sanitized: **`TTM-Knowledge-Hosted-UAT.json`**. Panduan pengguna: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md); detail deployment: [HOSTINGER-UAT.md](HOSTINGER-UAT.md).
 
-Panduan bilingual: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md). Produksi dimulai dengan Knowledge Base kosong; tidak ada file demo otomatis di backend. Data sandbox localStorage/IndexedDB tidak menjadi data produksi. Label bahasa dan isi file tetap hal berbeda. / The production library starts empty. Browser sandbox files are separate from production, and UI/document-language labels do not translate file contents.
-
-SMTP/rollout tim, UAT workflow bisnis dari akun nyata, kebijakan backup/restore, dan tindak lanjut advisor tetap mengikuti acceptance tersendiri. Konfirmasi login director sebelumnya tidak diperluas menjadi klaim observasi agent atas workflow tersebut.
+Feature ini selesai sesuai scope yang diminta. **SMTP/onboarding tim, UAT workflow bisnis tim penuh, backup/restore dan tindak lanjut advisor tetap terpisah.** Pemeriksaan UI director membuktikan halaman/form terhubung; tidak diperluas menjadi klaim bahwa agent telah menjalankan upload produksi atau seluruh workflow bisnis akun nyata. / This requested feature is complete. Team email/onboarding, full business-workflow UAT and backup/restore remain separate; the observed page/form check is not a claim of production upload or full real-account workflow completion.
 
 ## Riwayat release sebelumnya / Previous release record
 

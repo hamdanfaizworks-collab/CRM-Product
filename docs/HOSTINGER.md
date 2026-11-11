@@ -1,8 +1,16 @@
 # Hostinger deployment / Panduan deployment TTM Product CRM
 
-**Target:** `https://cyan-oryx-350189.hostingersite.com`  
-**Source:** `hamdanfaizworks-collab/CRM-Product`, branch `main`  
-**Artifact branch:** `hostinger`  
+## Pembaruan terkini / Current update — Knowledge Base LIVE
+
+**Default English + Product Knowledge Base telah LIVE.** Source [`b8396896966c0c123ecac06001f1a0852ee3c12f`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/b8396896966c0c123ecac06001f1a0852ee3c12f) → [CI `43014085080`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/43014085080) SUCCESS (verify + publish) → artifact `hostinger` `349fdec5acde88f06a6b70289990d029fc4ab086` → live metadata cocok. HTTP smoke **13/13 PASS pada 18:43 WIB, 11 November 2026**.
+
+Browser pada origin produksi membuktikan workspace director terhubung tanpa demo, halaman Knowledge Base English dan form unggah terbuka, 12 tabel dimuat dan 0 dokumen saat inspeksi. Ini pemeriksaan baca/form tanpa upload atau perubahan data pelanggan. Screenshot: `TTM-Knowledge-Base.png`. Local checks: **68 app, 109 SQL/RLS, 5 environment + build PASS**; hosted Knowledge Base **39/39 PASS**. Backend: **4 migrasi, 12 tabel RLS, 2 bucket privat**. Panduan fitur: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md).
+
+The new feature is live and verified through CI, live release metadata, 13 HTTP checks, and a connected director page/form inspection. No production upload or customer-data change was made during that UI inspection. Full team business-workflow UAT, SMTP/onboarding and recovery acceptance remain separate. The historical records below identify earlier releases; their defaults and test counts do not override this current record.
+
+**Target:** `https://cyan-oryx-350189.hostingersite.com`
+**Source:** `hamdanfaizworks-collab/CRM-Product`, branch `main`
+**Artifact branch:** `hostinger`
 **Status: READY FOR DIRECTOR PILOT.** Frontend live; auto-update terbukti; login Hostinger dikonfirmasi pengguna. SMTP tim dan UAT alur bisnis nyata/backup-restore tetap tindak lanjut. / Live frontend; proven automatic updates; user-confirmed Hostinger sign-in. Team email and real-workflow/recovery acceptance remain follow-ups.
 
 ## Bukti deployment awal / Initial deployment evidence
@@ -11,7 +19,7 @@ Source `main` **`b4cebfd9578c2960e3ca40167a24b5905316fb6e`** diproses oleh [CI r
 
 The initial deployment is verified. Hostinger-origin browser checks passed for ID/EN login UI, language persistence after reload, demo Dashboard, 87-entry Catalog, Calendar, Reports and an English CSV download. These were demo/UI checks. The user subsequently confirmed successful Hostinger sign-in; the agent does not claim to have observed an authenticated business workflow.
 
-**Auto-update terbukti:** source `630bf0762c5c76944d926b688d2b2b9c2219f6d0` → [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518) **SUCCESS** dua jobs → artifact `b41f3ce05110d9dfab3258e4a92faa41400676e3` → hPanel **Completed 13:37 WIB, 4 detik**, tanpa klik Redeploy → live `release.json` cocok source baru. HTTP smoke **13/13 PASS pada 13:38 WIB**, termasuk HTTPS redirect, asset/header, PRD, proteksi `.env`/`.git`, SPA dan missing asset. Ini deployment aplikasi terakhir yang telah diperiksa, bukan klaim atas commit dokumentasi berikutnya. / Automatic updates are proven for that verified application source, not for a future documentation commit. Detail: `HOSTINGER-UAT.md`, deliverable `TTM-Hostinger-checks.json`.
+**Auto-update terbukti:** source `630bf0762c5c76944d926b688d2b2b9c2219f6d0` → [CI `42973665518`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42973665518) **SUCCESS** dua jobs → artifact `b41f3ce05110d9dfab3258e4a92faa41400676e3` → hPanel **Completed 13:37 WIB, 4 detik**, tanpa klik Redeploy → live `release.json` cocok source baru. HTTP smoke **13/13 PASS pada 13:38 WIB**, termasuk HTTPS redirect, asset/header, PRD, proteksi `.env`/`.git`, SPA dan missing asset. Ini snapshot deployment aplikasi sebelumnya yang dipertahankan, bukan klaim atas release fitur terbaru atau commit dokumentasi berikutnya. / Automatic updates are proven for that verified application source, not for a future documentation commit. Detail: `HOSTINGER-UAT.md`, deliverable `TTM-Hostinger-checks.json`.
 
 ## Jalur aktual / Actual deployment path
 
@@ -55,7 +63,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<publishable key proyek yang sama>
 
 Use the repository variables consumed by the workflow, or reviewed public defaults, for these browser values. The publishable key is public by design. **Do not use `service_role`, `sb_secret_...`, database passwords, access tokens, or administrative secrets in `VITE_` variables, the artifact branch, or the frontend.**
 
-`build:hostinger` menjalankan `scripts/verify-deploy-env.mjs` sebelum TypeScript/Vite. Guard menolak URL proyek salah, key yang bukan modern publishable key, serta credential istimewa pada variabel browser, tanpa mencetak nilai key/token. Perubahan konfigurasi build memerlukan build dan deployment ulang. Validasi final: 51 tes aplikasi, 5 tes guard environment, 47 pemeriksaan SQL/RLS, dan `npm run build:hostinger` lulus.
+`build:hostinger` menjalankan `scripts/verify-deploy-env.mjs` sebelum TypeScript/Vite. Guard menolak URL proyek salah, key yang bukan modern publishable key, serta credential istimewa pada variabel browser, tanpa mencetak nilai key/token. Perubahan konfigurasi build memerlukan build dan deployment ulang. Validasi pembaruan terkini: 68 tes aplikasi, 5 tes guard environment, 109 pemeriksaan SQL/RLS, dan build produksi lulus.
 
 The Hostinger build script validates the authorized project and public-key configuration before building. A changed build environment requires a new build and deployment. Five environment-guard tests passed at the recorded release snapshot.
 

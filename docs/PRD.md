@@ -5,7 +5,7 @@
 **Pemilik produk:** Product Director TTM
 **Versi:** 1.3 - English default dan Product Knowledge Base terimplementasi
 **Tanggal:** 11 November 2026, WIB
-**Status:** Implementasi pembaruan dan backend Knowledge Base terverifikasi; publikasi frontend pembaruan ini ke Hostinger masih pending. Riwayat release sebelumnya tetap terpisah dari bukti pembaruan ini.
+**Status:** Default English dan Product Knowledge Base LIVE di Hostinger; source fitur `b8396896966c0c123ecac06001f1a0852ee3c12f` terverifikasi melalui CI, metadata live, HTTP smoke, serta halaman/form director produksi tanpa penulisan data pelanggan. UAT tim penuh dan SMTP tetap terpisah.
 **Repository yang diminta:** https://github.com/hamdanfaizworks-collab/CRM-Product
 **Backend yang diminta:** proyek Supabase `yqmcafgnryvsrvalbycz`
 
@@ -77,7 +77,7 @@ Asumsi awal:
 - Laporan operasional, pipeline, produktivitas, serta ekspor CSV.
 - Pengaturan organisasi, audit perubahan penting, kontrol akses database, dan dokumentasi operasional.
 - Pemilih bahasa Indonesia/English pada login dan ruang kerja, preferensi persisten pada browser, label/validasi/CSV bilingual, serta format angka/tanggal menurut locale.
-- Product Knowledge Base: materi privat terkait produk dengan metadata jenis, versi, bahasa, tag, pencarian/filter, unduh terotorisasi dan arsip. Implementasi dan bukti pengujian tambahan ini dijelaskan pada FR-15; deployment frontend Hostinger pembaruan tetap harus dibuktikan tersendiri.
+- Product Knowledge Base: materi privat terkait produk dengan metadata jenis, versi, bahasa, tag, pencarian/filter, unduh terotorisasi dan arsip. Implementasi dan deployment pembaruan ini telah diverifikasi; bukti serta batas pengujian dijelaskan pada FR-15 dan release status.
 
 ### Tidak termasuk v1
 
@@ -199,7 +199,7 @@ Nama orang, pelanggan, produk/brand/model, judul kegiatan/peluang, catatan, lapo
 
 ### FR-15. Product Knowledge Base
 
-**Status implementasi terkini:** frontend selesai, backend telah **DEPLOYED**, dan **39/39 pemeriksaan API hosted Knowledge Base lulus**. Proyek target kini mempunyai **4 migrasi, 12 tabel ber-RLS, dan 2 bucket privat**. Migrasi keempat `20261111071649_product_knowledge_library.sql` menambahkan `knowledge_documents` dan bucket `product-knowledge` (25 MiB), terpisah dari `activity-evidence` (10 MiB). Pembaruan frontend ke Hostinger **masih pending** sampai jejak source/CI/artifact/provider dan smoke test origin final tersedia. Status tersebut tidak mengubah bukti historis Hostinger sebelumnya.
+**Status implementasi terkini:** frontend selesai, backend telah **DEPLOYED**, dan **39/39 pemeriksaan API hosted Knowledge Base lulus**. Proyek target kini mempunyai **4 migrasi, 12 tabel ber-RLS, dan 2 bucket privat**. Migrasi keempat `20261111071649_product_knowledge_library.sql` menambahkan `knowledge_documents` dan bucket `product-knowledge` (25 MiB), terpisah dari `activity-evidence` (10 MiB). Pembaruan frontend telah **LIVE dan terverifikasi**: source `b8396896966c0c123ecac06001f1a0852ee3c12f`, CI `43014085080` SUCCESS (verify + publish), artifact `349fdec5acde88f06a6b70289990d029fc4ab086`, metadata live cocok dan HTTP smoke 13/13 PASS pada 18:43 WIB. Bukti tersebut menunjuk release fitur ini, terpisah dari commit dokumentasi berikutnya dan riwayat release sebelumnya.
 
 Knowledge Base menyimpan materi pendukung PS/AS dengan **produk opsional**; materi umum/lintas produk memakai `product_id = null`. Metadata mencakup judul, jenis, deskripsi, versi, bahasa materi, tag, penulis, waktu, nama/path/MIME/ukuran file, dan status `active`/`archived`. Jenis materi: `datasheet`, `brochure`, `presentation`, `user_manual`, `training`, `other`. Bahasa: `en`, `id`, `multilingual`. Record baru mengisi versi `1.0` dan bahasa English yang dapat diubah sesuai isi materi. Ini label metadata, bukan sistem penggabungan atau riwayat revisi otomatis.
 
@@ -213,7 +213,7 @@ Unduhan menggunakan signed URL **60 detik** dengan nama file asli; tidak ada buc
 
 Pustaka produksi **dimulai kosong**. Katalog tidak menghasilkan file atau penulis fiktif. File produksi tidak masuk repository publik/source archive. Demo memakai metadata localStorage dan file IndexedDB pada origin/perangkat/profil browser yang sama; tidak mengirim file ke Supabase. Reload dan masuk demo kembali mempertahankan unduhan selama storage masih ada; reset demo membersihkan keduanya.
 
-**Bukti saat ini:** 68 tes aplikasi, 109 SQL/RLS lokal, 5 guard environment dan build lulus; hosted Knowledge Base 39/39 lulus dengan fixture dibersihkan dan audit dipertahankan. Browser production preview membuktikan default English/toggle Indonesia, upload demo, reload, unduh berhash identik, pintasan/filter produk serta layout tanpa overflow. Bukti preview ini bukan publikasi frontend Hostinger atau UAT bisnis akun nyata. Panduan pengguna: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md).
+**Bukti saat ini:** 68 tes aplikasi, 109 SQL/RLS lokal, 5 guard environment dan build lulus; hosted Knowledge Base 39/39 lulus dengan fixture dibersihkan dan audit dipertahankan. Browser production preview membuktikan default English/toggle Indonesia, upload demo, reload, unduh berhash identik, pintasan/filter produk serta layout tanpa overflow. Secara terpisah, browser pada origin Hostinger membuktikan workspace director terhubung tanpa mode demo, halaman Knowledge Base English dan form unggah terbuka, 12 tabel dimuat, serta 0 dokumen saat inspeksi. Tidak ada file produksi diunggah atau data pelanggan diubah dalam pemeriksaan UI itu. Ini bukan UAT workflow bisnis tim penuh. Screenshot sanitized: `TTM-Knowledge-Base.png`. Panduan pengguna: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md).
 
 ## 7. Model data konseptual
 
@@ -332,7 +332,7 @@ Situs demo atau antarmuka dengan local storage bukan bukti bahwa backend yang di
 - Kedua koneksi Supabase yang tersedia menolak akses ke proyek target.
 - Katalog lokal dapat dibaca untuk pekerjaan kebutuhan dan inventaris produk.
 
-Catatan di atas adalah riwayat awal, bukan status akses terbaru. Akses kemudian diperbaiki: source berada pada GitHub `main`, backend target telah diterapkan, CRM menjalani 23 pemeriksaan API hosted pada release sebelumnya, dan director mengonfirmasi login pilot. Pembaruan Knowledge Base menambahkan migrasi keempat serta 39 pemeriksaan hosted yang lulus; frontend Hostinger pembaruan masih mengikuti gerbang release terpisah. Status terkini beserta batas pengujian berada pada `RELEASE.md` dan `HOSTED-UAT.md`. Jangan menyalin secret melalui chat/repository; gunakan koneksi aplikasi atau environment penyedia yang aman.
+Catatan di atas adalah riwayat awal, bukan status akses terbaru. Akses kemudian diperbaiki: source berada pada GitHub `main`, backend target telah diterapkan, CRM menjalani 23 pemeriksaan API hosted pada release sebelumnya, dan director mengonfirmasi login pilot. Pembaruan Knowledge Base menambahkan migrasi keempat serta 39 pemeriksaan hosted yang lulus; frontend Hostinger pembaruan kemudian diverifikasi live melalui source `b8396896966c0c123ecac06001f1a0852ee3c12f` dan CI `43014085080`. Status terkini beserta batas pengujian berada pada `RELEASE.md` dan `HOSTED-UAT.md`. Jangan menyalin secret melalui chat/repository; gunakan koneksi aplikasi atau environment penyedia yang aman.
 
 ### Kontrak deployment Hostinger
 
@@ -340,7 +340,7 @@ Target yang diminta adalah `https://cyan-oryx-350189.hostingersite.com`. Inspeks
 
 Script build memvalidasi URL proyek Supabase yang diizinkan dan publishable key serta menolak secret administratif dalam variabel browser. Hanya public build variables yang tersedia bagi bundle. Source React tetap pada `main`, sedangkan branch `hostinger` hanya berisi artifact static; source backend, `.env`, `node_modules`, serta credential server tidak ikut ke web root.
 
-Release Hostinger sebelumnya telah live dan mempunyai bukti provider/HTTPS sendiri. **Pembaruan frontend default English + Knowledge Base ini masih pending** sampai provider melaporkan sukses dari commit release pembaruan yang diketahui, metadata cocok, dan smoke test origin final lulus. Bukti preview/lokal serta deployment backend tidak otomatis membuktikan pembaruan frontend sudah tersedia. Detail operasional terdapat pada `HOSTINGER.md` dan status terkini pada `RELEASE.md`.
+**Pembaruan default English + Knowledge Base telah live di Hostinger** dari source `b8396896966c0c123ecac06001f1a0852ee3c12f` melalui CI `43014085080` SUCCESS dan artifact `349fdec5acde88f06a6b70289990d029fc4ab086`. Live `release.json` cocok; HTTP smoke 13/13 PASS pada 18:43 WIB. Browser director produksi berhasil membuka halaman Knowledge Base serta form unggah tanpa mode demo dan tanpa penulisan data pelanggan. Setiap release berikutnya tetap memerlukan bukti tersendiri. Detail operasional terdapat pada `HOSTINGER.md`, `HOSTINGER-UAT.md`, dan `RELEASE.md`.
 
 ## 13. Data dan keputusan yang diperlukan saat onboarding
 
