@@ -30,6 +30,7 @@ import {
   supabase,
   configured,
   friendlyError,
+  initialAuthFlow,
 } from "./store";
 import { DEMO_USER } from "./demo";
 import { ROLE_LABEL } from "./types";
@@ -62,7 +63,7 @@ export function App() {
   const [userId, setUserId] = useState("");
   const [authReady, setAuthReady] = useState(!supabase);
   const [passwordFlow, setPasswordFlow] = useState(
-    /type=(invite|recovery)/.test(location.hash),
+    initialAuthFlow === "invite" || initialAuthFlow === "recovery",
   );
   const [error, setError] = useState("");
   useEffect(() => {

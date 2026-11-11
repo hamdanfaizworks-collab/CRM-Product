@@ -4,9 +4,9 @@ Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radio
 
 ## Status pengiriman
 
-Source tersedia pada branch `feat/ttm-crm-v1` di repository GitHub yang diminta. Backend telah diterapkan pada proyek Supabase `yqmcafgnryvsrvalbycz`: 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan Edge Function `team-admin`. Advisor keamanan setelah deployment tidak menemukan isu. Konfigurasi Auth, bootstrap director, serta uji login/persistensi target tetap dicatat terpisah dan belum boleh dianggap selesai hanya karena schema terpasang.
+Source tersedia pada branch `main` di repository GitHub yang diminta. Backend telah diterapkan pada proyek Supabase `yqmcafgnryvsrvalbycz`: 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan Edge Function `team-admin`. Advisor keamanan setelah deployment tidak menemukan isu. Konfigurasi Auth, bootstrap director, serta uji login/persistensi target tetap dicatat terpisah dan belum boleh dianggap selesai hanya karena schema terpasang.
 
-Verifikasi lokal: **39 tes aplikasi lulus** (36 aturan domain dan 3 alur DOM) serta **47 pemeriksaan SQL/RLS lulus**. TypeScript dan build produksi lulus. Login, dashboard, kalender, dan form kegiatan telah ditinjau di browser, termasuk lebar ponsel 390 px. Baca [status release](docs/RELEASE.md) untuk bukti deployment dan pekerjaan go-live yang masih tertunda.
+Verifikasi lokal: **40 tes aplikasi lulus** (36 aturan domain, 3 alur DOM, dan 1 regresi callback undangan) serta **47 pemeriksaan SQL/RLS lulus**. TypeScript dan build produksi lulus. Login, dashboard, kalender, dan form kegiatan telah ditinjau di browser, termasuk lebar ponsel 390 px. Baca [status release](docs/RELEASE.md) untuk bukti deployment dan pekerjaan go-live yang masih tertunda.
 
 ## Menjalankan aplikasi
 

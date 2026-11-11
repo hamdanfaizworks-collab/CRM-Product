@@ -11,6 +11,10 @@ import type { Data, Table, Tables, Profile, Activity } from "./types";
 import { demoData, DEMO_USER } from "./demo";
 import { conflictFor, isManager } from "./rules";
 const env = (import.meta as unknown as { env: Record<string, string> }).env;
+// Capture the callback before Supabase initialization consumes/cleans its hash.
+export const initialAuthFlow = new URLSearchParams(
+  typeof window === "undefined" ? "" : window.location.hash.slice(1),
+).get("type");
 export const configured =
   !!env.VITE_SUPABASE_URL && !!env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const supabase: SupabaseClient | null = configured
