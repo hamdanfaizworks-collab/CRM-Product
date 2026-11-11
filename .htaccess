@@ -19,6 +19,8 @@ DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  # Deny hidden files/directories, including nested .git metadata.
+  RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} !^/assets/
