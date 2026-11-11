@@ -3,7 +3,13 @@
 **Target:** `https://cyan-oryx-350189.hostingersite.com`  
 **Source:** `hamdanfaizworks-collab/CRM-Product`, branch `main`  
 **Artifact branch:** `hostinger`  
-**Status:** persiapan release; deployment Hostinger belum terverifikasi / release preparation; Hostinger deployment is not yet verified.
+**Status:** **frontend Hostinger live**; login director pada origin baru dan bukti auto-update masih pending / **Hostinger frontend live**; new-origin director sign-in and automatic-update proof remain pending.
+
+## Bukti deployment awal / Initial deployment evidence
+
+Source `main` **`b4cebfd9578c2960e3ca40167a24b5905316fb6e`** diproses oleh [CI run `42971963802`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42971963802), verify dan publish **SUCCESS**, menghasilkan artifact commit **`f315da4e2da9c701ef4086771d76e480167b921d`** pada branch `hostinger`. Deployment manual awal di hPanel berstatus **Completed**, **13:24 WIB**, durasi **3 detik**. HTTPS [`release.json`](https://cyan-oryx-350189.hostingersite.com/release.json) mengembalikan **200** dan source commit yang cocok.
+
+The initial deployment is verified. Hostinger-origin browser checks passed for ID/EN login UI, language persistence after reload, demo Dashboard, 87-entry Catalog, Calendar, Reports and an English CSV download. These demo checks do not authenticate the real director. The auto-deploy setting is ON/green; a later push-to-live update still requires proof. Details are recorded in `HOSTINGER-UAT.md`.
 
 ## Jalur aktual / Actual deployment path
 
@@ -69,11 +75,11 @@ Data bisnis hanya dapat dibaca akun Supabase Auth dengan profil TTM aktif. Halam
 
 Business data requires a valid Auth session and active TTM membership. The user approved a public frontend protected by invitation-only CRM sign-in; no additional hosting password gate is required. Sites' owner-private hosting gate does not transfer to Hostinger.
 
-Persiapan Auth telah menambahkan origin Hostinger pada allowed redirects sambil mempertahankan origin Sites. Site URL utama tetap Sites sampai Hostinger siap. Perubahan allowlist/redirect adalah persiapan backend, bukan bukti deployment frontend. `team-admin` membatasi origin yang diizinkan melalui konfigurasi server (`APP_ORIGINS`/legacy `APP_ORIGIN`), memvalidasi sesi dan role, serta memakai redirect yang telah lolos allowlist. Jangan mengirim URL redirect bebas dari browser.
+Primary Auth Site URL telah dipindahkan ke Hostinger dan diverifikasi pada 13:35 WIB. Kedua origin Hostinger dan Sites tetap pada allowed redirects. Diff sebelum push hanya mengubah `auth.site_url`; diff sesudahnya nol. Signup publik/anon tetap nonaktif dan minimum password tetap 10. `team-admin` memvalidasi origin, sesi, role, serta redirect melalui allowlist server. Jangan mengirim URL redirect bebas dari browser.
 
-The Hostinger origin has been prepared in the Auth redirect allowlist while retaining Sites. The primary Site URL remains Sites until Hostinger is ready. Verify function origin configuration and invitation/recovery on the actual target; allowlist preparation alone is not deployment evidence.
+The primary Auth Site URL is now Hostinger, verified at 13:35 WIB. Both redirect origins and existing Auth protections were retained. The post-push diff is zero. Verify invitation/recovery on the actual target after email configuration is ready.
 
-Director telah mengonfirmasi login pilot. SMTP/deliverability undangan dan recovery serta onboarding tim masih pending; jangan menyatakan rollout tim penuh hanya dari login director. Tidak ada password bawaan pada source.
+Director sebelumnya telah mengonfirmasi login pilot di Sites. Handoff login director nyata pada origin Hostinger masih pending. SMTP/deliverability undangan dan recovery serta onboarding tim juga pending; frontend live bukan rollout tim penuh. Tidak ada password bawaan pada source.
 
 ## Indonesia / English
 
@@ -83,8 +89,8 @@ The language selector is available before and after sign-in. Indonesian is the d
 
 ## Verifikasi dan rollback / Verification and rollback
 
-Sebelum menyatakan **Hostinger live**, buktikan provider deployment sukses, asset/HTTPS dan route reload benar, login director bekerja, bahasa persisten, dan satu alur pelanggan → peluang → kegiatan → approval → laporan → tindak lanjut tersimpan di Supabase. Uji akses nonanggota/viewer, upload privat, CSV, serta invitation/recovery setelah SMTP siap. Catat hasil dan commit pada `RELEASE.md`.
+**Frontend Hostinger live** telah dibuktikan untuk deployment awal. Langkah tersisa: konfirmasi login director nyata pada origin baru dan satu alur pelanggan → peluang → kegiatan → approval → laporan → tindak lanjut; buktikan siklus push berikutnya memperbarui origin secara otomatis. Uji invitation/recovery setelah SMTP siap dan lengkapi UAT tim. Catat hasil dan commit pada `RELEASE.md`/`HOSTINGER-UAT.md`.
 
-Before declaring **Hostinger live**, confirm provider success, HTTPS/assets/routes, director sign-in, language persistence, and a complete business workflow on that origin. Finish team/email acceptance before full rollout. Roll back to the previous compatible static artifact/deployment if needed; do not reset the production database.
+The initial **Hostinger frontend is live**. Real director sign-in and automatic-update proof remain pending. Finish authenticated workflow, team/email and backup acceptance before full rollout. Roll back to the previous compatible static artifact/deployment if needed; do not reset the production database.
 
 Panduan platform / Platform references: [Hostinger Git deployment](https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/), [Vite static output](https://vite.dev/guide/static-deploy). Hostinger juga mendukung native Node.js pada paket tertentu, tetapi itu bukan wizard PHP/HTML yang telah diinspeksi untuk target ini. / Hostinger also supports native Node.js on eligible plans; that is separate from the inspected target wizard. [Native Node.js reference](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).

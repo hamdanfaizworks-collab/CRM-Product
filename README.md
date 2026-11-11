@@ -4,13 +4,13 @@ Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radio
 
 ## Status pengiriman
 
-Source tersedia pada branch `main` di repository GitHub yang diminta. Backend memiliki tiga migrasi (schema, helper hardening, indeks FK/policy), 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan `team-admin`. **23 pemeriksaan API hosted lulus dan pengguna mengonfirmasi director dapat login pilot.** SMTP/undangan/recovery serta rollout tim tetap pending. Advisor Auth terakhir memberi peringatan leaked-password protection; hasil nol temuan sebelumnya adalah snapshot historis. Snapshot bisnis lokal yang disetujui tidak mencakup Auth/Storage blobs; PITR off dan hosted physical backup belum tersedia. **Deployment Hostinger belum dinyatakan live.**
+Source tersedia pada branch `main` di repository GitHub yang diminta. Backend memiliki tiga migrasi (schema, helper hardening, indeks FK/policy), 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan `team-admin`. **23 pemeriksaan API hosted lulus dan pengguna mengonfirmasi login pilot director di Sites. Frontend Hostinger kini live; login director pada origin baru dan bukti auto-update masih pending.** SMTP/undangan/recovery serta rollout tim tetap pending. Advisor Auth terakhir memberi peringatan leaked-password protection; hasil nol temuan sebelumnya adalah snapshot historis. Snapshot bisnis lokal yang disetujui tidak mencakup Auth/Storage blobs; PITR off dan hosted physical backup belum tersedia.
 
 Verifikasi final lokal: **51 tes aplikasi, 5 tes guard environment, 47 pemeriksaan SQL/RLS, dan `npm run build:hostinger` lulus**. Suite mencakup domain, alur DOM, callback Auth, bilingual, preservasi data, serta pesan error Edge. Kamus berisi 695 entri; 547 literal yang diperiksa tidak memiliki key hilang. Pemeriksaan browser sebelumnya mencakup login, dashboard, kalender, form kegiatan, dan lebar ponsel 390 px. Baca [status release bilingual](docs/RELEASE.md) untuk bukti dan pekerjaan go-live yang tersisa.
 
 **Indonesia / English:** pemilih bahasa tersedia di login dan ruang kerja. Default Bahasa Indonesia, preferensi tersimpan di localStorage per origin, dan format tampilan mengikuti `id-ID`/`en-GB`; WIB, IDR, serta data pengguna tetap. / The language selector is available before and after sign-in. Indonesian is the default; the preference persists per browser origin. Display formatting changes while WIB, IDR, and user data remain unchanged.
 
-**Hostinger:** target `https://cyan-oryx-350189.hostingersite.com` adalah site PHP/HTML yang telah ada. GitHub Actions membangun source `main` dengan Node 24 dan memublikasikan hanya isi `dist` ke branch `hostinger`; hPanel Git mengambil artifact ke `public_html`. Site/domain tetap; frontend publik disetujui dengan login CRM invitation-only. Provider deployment masih harus diverifikasi. / GitHub Actions builds the existing source and publishes static output for the existing Hostinger site. Deployment is not yet confirmed. Lihat [panduan Hostinger bilingual](docs/HOSTINGER.md).
+**Hostinger:** [frontend live](https://cyan-oryx-350189.hostingersite.com) pada site PHP/HTML yang sudah ada. Source `b4cebfd9578c2960e3ca40167a24b5905316fb6e` diproses oleh [CI run `42971963802`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/42971963802) SUCCESS ke artifact `f315da4e2da9c701ef4086771d76e480167b921d`. hPanel deployment awal Completed **13:24 WIB**, **3 detik**; HTTPS release metadata cocok. ID/EN, reload bahasa, demo Dashboard/Catalog87/Calendar/Reports dan CSV English lulus. / The initial Hostinger frontend is live and smoke-tested. Real director sign-in on this origin and a subsequent push-to-live automatic update remain pending. Auto-deploy is ON/green, not yet proven by a new push. Lihat [bukti Hostinger](docs/HOSTINGER-UAT.md) dan [panduan bilingual](docs/HOSTINGER.md).
 
 ## Menjalankan aplikasi
 
@@ -63,6 +63,7 @@ CI menjalankan instalasi terkunci, tes environment/frontend/database, build guar
 | [docs/HOSTINGER.md](docs/HOSTINGER.md) | Jalur actual main → CI → hostinger → public_html; Indonesia/English |
 | [docs/RELEASE.md](docs/RELEASE.md) | Bukti pengujian terkini, pilot director, dan status deployment |
 | [docs/HOSTED-UAT.md](docs/HOSTED-UAT.md) | 23 pemeriksaan API hosted serta batas verifikasi |
+| [docs/HOSTINGER-UAT.md](docs/HOSTINGER-UAT.md) | Commit/CI/artifact/provider/HTTPS dan smoke test frontend Hostinger |
 | `src/` | UI React/TypeScript, data access, katalog, aturan dan uji domain |
 | `supabase/` | Migrasi, konfigurasi dan seed backend |
 | `public/ttm-logo.png` | Logo asli yang diekstrak dari katalog pengguna |

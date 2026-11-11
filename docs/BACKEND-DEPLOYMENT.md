@@ -1,3 +1,9 @@
+# Backend deployment record — historical initial snapshot
+
+**Current update, 11 November 2026:** the target now has **three migrations**, including `20261111015854_ttm_crm_policy_and_fk_indexes`; 23 hosted API checks passed and the director confirmed pilot login. Signup is invitation-only. The latest Auth advisor warns about leaked-password protection; the zero-finding result below was an earlier snapshot. PITR is off and no hosted physical backup is available. An approved local business snapshot excludes Auth and Storage blobs. SMTP/team onboarding and Hostinger deployment remain pending. See `BACKEND.md`, `HOSTED-UAT.md`, and `RELEASE.md` for current evidence.
+
+The following paragraphs preserve the **initial deployment record**; their pending Auth/bootstrap items and original performance findings are historical, not the current status.
+
 Deployed through `supabase-deploy` to the confirmed target: `https://yqmcafgnryvsrvalbycz.supabase.co`. Initial inspection found no public tables or migrations. The read-only server was untouched.
 
 Exact remote migration history:

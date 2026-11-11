@@ -87,7 +87,7 @@ jobs:
               }
             }
             await walk('website');
-            for (const required of ['index.html', '.htaccess', 'release.json', 'ttm-logo.png']) {
+            for (const required of ['index.html', '.htaccess', 'release.json', 'ttm-logo.png', 'PRD.md']) {
               if (!files.some(file => file.relative === required)) throw new Error('Missing artifact: ' + required);
             }
             const tree = [];

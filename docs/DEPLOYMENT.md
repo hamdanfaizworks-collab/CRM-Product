@@ -2,19 +2,22 @@
 
 Runbook ini membedakan verifikasi lokal, publikasi frontend, dan go-live operasional. Jangan menandai pekerjaan selesai sebelum bukti pada lingkungan target tersedia.
 
-## Status akses awal
+## Status terkini / Current status
 
 | Komponen | Temuan 11 November 2026 | Dampak |
 | --- | --- | --- |
-| GitHub `hamdanfaizworks-collab/CRM-Product` | Repository publik; koneksi hanya dapat membaca; push ditolak 403 | Commit/CI pada repository target belum terbukti |
-| Supabase `yqmcafgnryvsrvalbycz` | Kedua koneksi tersedia ditolak saat akses proyek | Schema, Auth, publishable key, migrasi, akun dan persistensi target belum terbukti |
-| Frontend | Bisa dibangun/ditinjau dari source lokal | Sandbox atau URL frontend sendiri bukan CRM operasional |
+| GitHub `hamdanfaizworks-collab/CRM-Product` | Source pada `main`; CI menyiapkan artifact branch `hostinger` | Hasil CI/artifact dan deployment provider dicatat per commit |
+| Supabase `yqmcafgnryvsrvalbycz` | Tiga migrasi, 11 tabel ber-RLS, 87 produk, Storage privat dan fungsi admin; 23 pemeriksaan API hosted lulus | Director mengonfirmasi login pilot; SMTP dan onboarding tim masih pending |
+| Hostinger | Frontend live; hPanel Completed 13:24 WIB (3 detik), release metadata HTTPS 200 cocok source commit; Git branch `hostinger` ke `public_html` | Login director origin baru dan verifikasi auto-update masih pending |
+| Validasi lokal | 51 tes aplikasi, 5 tes environment, 47 SQL/RLS, serta build guarded lulus | Bukan bukti provider Hostinger telah live |
 
-Jika akses diperbaiki, catat akun/koneksi yang berhak dan ulangi inspeksi target sebelum melakukan perubahan. Tidak perlu menyalin credential melalui chat; gunakan koneksi aplikasi atau secret/environment penyedia.
+Penolakan akses awal telah diselesaikan dan merupakan riwayat pekerjaan. Status final dipelihara pada `RELEASE.md`; hasil layanan target pada `HOSTED-UAT.md`. Pengguna menyetujui frontend publik dengan login CRM invitation-only, tanpa hosting password gate tambahan. Gunakan environment penyedia untuk credential; jangan menyalin secret ke chat/repository.
+
+Initial access failures are historical. Current evidence is recorded in RELEASE, HOSTED-UAT and HOSTINGER-UAT. The user approved a public frontend with invitation-only CRM authentication. The initial Hostinger frontend deployment and demo smoke tests are verified; real director sign-in on the new origin and a subsequent automatic-update cycle remain pending.
 
 ## Kontrak release
 
-Release mempunyai commit source, hasil `npm ci`, `npm test`, `npm run test:db`, dan `npm run build`; daftar migrasi; environment publik; URL frontend; serta hasil UAT pada Supabase target. Simpan bukti tanpa token, password, atau data pelanggan.
+Release mempunyai commit source, hasil `npm ci`, `npm test`, `npm run test:deploy-env`, `npm run test:db`, dan `npm run build:hostinger`; daftar migrasi; environment publik; URL frontend; serta hasil UAT pada Supabase target. Simpan bukti tanpa token, password, atau data pelanggan.
 
 | Variabel | Tempat | Isi |
 | --- | --- | --- |
@@ -44,8 +47,9 @@ Jalankan dari root checkout dengan Node.js 24 dan environment build yang sudah b
 ```sh
 npm ci
 npm test
+npm run test:deploy-env
 npm run test:db
-npm run build
+npm run build:hostinger
 ```
 
 Periksa hasil build menggunakan `npm run preview`, lalu jalankan UAT browser desktop dan mobile. `vite preview` hanya untuk pemeriksaan lokal. [Dokumentasi Vite](https://vite.dev/guide/static-deploy) menjelaskan bahwa output produksi berada di `dist/` dan harus disajikan oleh hosting static.
@@ -53,6 +57,12 @@ Periksa hasil build menggunakan `npm run preview`, lalu jalankan UAT browser des
 ### Hosting Sites
 
 Konfigurasi `.openai/hosting.json` memetakan Site ke `dist/`. Simpan versi source dan archive yang sesuai, deploy versi yang tersimpan, kemudian catat URL serta status terminal sukses dari provider. Publikasi private hanya memberi akses audience yang ditetapkan provider; akses tim TTM memerlukan audience/hosting yang sesuai dan Auth CRM tetap berlaku. Jangan mengganti audience tanpa keputusan pemilik.
+
+### Hostinger target yang dipilih
+
+Target yang diinspeksi adalah website PHP/HTML yang sudah ada; tidak dilakukan migrasi site/domain. CI membangun source `main` menggunakan Node 24 dan memublikasikan hanya isi `dist` (termasuk metadata release) ke branch `hostinger`. hPanel Git mengambil branch tersebut ke `public_html`; wizard PHP/HTML tidak menjalankan build React. Deployment awal telah Completed 13:24 WIB, durasi 3 detik; CI `42971963802` SUCCESS dan `/release.json` HTTPS 200 cocok source `b4cebfd9578c2960e3ca40167a24b5905316fb6e`. ID/EN/reload dan demo modul/CSV pada origin nyata lulus. Ikuti `HOSTINGER-UAT.md` untuk bukti; login director baru dan auto-update dari push berikutnya masih pending.
+
+The selected Hostinger target uses an artifact branch: main → GitHub Actions → dist contents on hostinger → hPanel Git → public_html. Keep the existing site/domain. A published artifact branch alone is not a verified Hostinger deployment.
 
 ### Alternatif hosting static
 
@@ -89,6 +99,7 @@ Gunakan akun uji berhak director/admin, PS, AS, dan viewer. Labeli data uji dan 
 | Follow-up | Tugas tertunda/selesai sesuai penanggung jawab dan tenggat |
 | Undangan/role | Admin mengundang anggota; nonadmin dan request tanpa sesi ditolak; role tidak berasal dari metadata yang dapat diedit user |
 | Audit dan ekspor | Perubahan tercatat; audit hanya terbaca pihak berhak; CSV menangani formula, petik dan multiline |
+| Indonesia / English | Pilihan bahasa pada login/ruang kerja persisten per origin; label dan CSV berubah, nama/catatan/produk tetap; WIB dan IDR tidak berubah |
 | Gangguan koneksi | Error jelas; input tidak diklaim tersimpan sebelum server mengonfirmasi |
 | Backup/restore | Jadwal backup terbukti dan satu restore drill berhasil pada lingkungan terpisah |
 
@@ -97,6 +108,7 @@ Simpan tanggal, versi/commit, penguji, hasil, dan bukti per skenario pada catata
 ## 4. Backup, pemulihan, dan rollback
 
 - **Sebelum migrasi:** verifikasi fasilitas backup/PITR yang benar-benar tersedia pada paket Supabase proyek target. Ambil backup schema/data yang dapat dipulihkan dan inventaris Storage sesuai kebutuhan. Simpan terenkripsi di tempat privat di luar repository publik.
+- **Snapshot saat ini:** snapshot bisnis lokal telah dibuat dengan persetujuan pengguna dan tidak mencakup Auth maupun file Storage. PITR off dan belum ada hosted physical backup. Snapshot ini bukan bukti pemulihan lengkap; retensi dan restore drill masih harus ditetapkan/diuji. Advisor Auth terakhir memberi peringatan leaked-password protection.
 - **Storage:** backup database tidak otomatis menjadi salinan file lampiran. Pastikan objek, metadata, dan kebijakan pemulihan lampiran tercakup. Dokumentasikan retensi dan penanggung jawab.
 - **Sasaran pemulihan:** Product Director/operator menetapkan RPO dan RTO sebelum go-live; belum ada target layanan yang dianggap disetujui hanya karena script tersedia. Rekam hasil restore drill dan lama pemulihannya.
 - **Rollback frontend:** hentikan rollout, kembali ke versi static/provider sebelumnya yang sudah diketahui baik, lalu uji login dan operasi baca/tulis. Pastikan versi lama kompatibel dengan schema saat ini; jangan mengembalikan frontend ke schema yang tidak kompatibel.
@@ -113,7 +125,8 @@ Simpan tanggal, versi/commit, penguji, hasil, dan bukti per skenario pada catata
 - [ ] UAT empat role, persistensi lintas sesi dan konflik concurrent lulus pada target.
 - [ ] Master produk, anggota, wilayah, unit demo, dan data awal disetujui TTM.
 - [ ] Backup, restore drill, pemantauan, pemilik support, dan rollback siap.
-- [ ] Provider memberi status deployment sukses dan URL final dapat dipakai audience tim yang disepakati.
+- [x] Provider memberi status deployment awal sukses; frontend publik dan smoke test demo pada URL final telah terverifikasi.
+- [ ] Director mengonfirmasi login nyata pada origin Hostinger dan auto-update dibuktikan melalui push berikutnya.
 - [ ] Product Director mencatat keputusan go-live/pilot dan tanggal rollout.
 
 Sampai checklist itu terbukti, gunakan status yang tepat: implementasi lokal, frontend terpublikasi, atau pilot backend; bukan go-live CRM lengkap.
