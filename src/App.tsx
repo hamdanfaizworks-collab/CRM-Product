@@ -54,13 +54,13 @@ import { KnowledgeBasePage } from "./KnowledgeBasePage";
 const menu = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "accounts", label: "Pelanggan", icon: Building2 },
-  { id: "pipeline", label: "Pipeline peluang", icon: GitBranch },
-  { id: "activities", label: "Kalender & aktivitas", icon: CalendarDays },
-  { id: "tasks", label: "Tindak lanjut", icon: CheckSquare },
-  { id: "catalog", label: "Katalog produk", icon: Package },
-  { id: "knowledge", label: "Basis pengetahuan", icon: BookOpen },
-  { id: "equipment", label: "Unit demo", icon: Boxes },
-  { id: "team", label: "Tim produk", icon: Users },
+  { id: "pipeline", label: "Pipeline Peluang", icon: GitBranch },
+  { id: "activities", label: "Kalender & Aktivitas", icon: CalendarDays },
+  { id: "tasks", label: "Tindak Lanjut", icon: CheckSquare },
+  { id: "catalog", label: "Katalog Produk", icon: Package },
+  { id: "knowledge", label: "Basis Pengetahuan", icon: BookOpen },
+  { id: "equipment", label: "Unit Demo", icon: Boxes },
+  { id: "team", label: "Team", icon: Users },
   { id: "reports", label: "Laporan", icon: BarChart3 },
   { id: "settings", label: "Pengaturan", icon: Settings },
 ];
@@ -440,7 +440,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="sidebar-logo">
             <img src="/ttm-logo.png" alt="TTM Triputra Techno Med" />
           </div>
-          <div className="workspace-label">{tr("Product workspace")}<span>{tr("CRM & TEAM OPERATIONS")}</span>
+          <div className="workspace-label">{tr("Product Management Workspace")}<span>{tr("CUSTOMER RELATIONSHIP MANAGEMENT")}</span>
           </div>
           <button
             className="mobile-close icon-btn"
@@ -476,7 +476,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="sidebar-status">
             <span className={demo ? "status-dot demo" : "status-dot"} />
             <div>
-              {demo ? (tr("Sandbox demo")) : (tr("Workspace terhubung"))}
+              {demo ? (tr("Sandbox demo")) : (tr("Workspace Terhubung"))}
               <small>
                 {demo ? (tr("Data simulasi di browser")) : (tr("Supabase · Akses internal"))}
               </small>
