@@ -1,3 +1,5 @@
+// localized-ui-v1
+import { getLocale, localizedLabel, tr } from "./i18n";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   ArrowRight,
@@ -72,10 +74,10 @@ const equipmentStatuses = [
 ];
 const includes = (text: unknown, q: string) =>
   String(text ?? "")
-    .toLocaleLowerCase("id-ID")
-    .includes(q.toLocaleLowerCase("id-ID"));
+    .toLocaleLowerCase(getLocale())
+    .includes(q.toLocaleLowerCase(getLocale()));
 const labelFor = (options: { value: string; label: string }[], value: string) =>
-  options.find((o) => o.value === value)?.label || value || "—";
+  tr(options.find((o) => o.value === value)?.label || value || "—");
 const textValue = (value: unknown) =>
   typeof value === "object" ? JSON.stringify(value) : String(value ?? "—");
 const accountDefaults = {
@@ -143,7 +145,7 @@ const equipmentDefaults = {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="metric-item">
-      <span className="muted">{label}</span>
+      <span className="muted">{tr(label)}</span>
       <strong>{value}</strong>
     </div>
   );
@@ -227,9 +229,9 @@ export function AccountsPage() {
   return (
     <>
       <PageHead
-        eyebrow="CUSTOMER RELATIONSHIP"
-        title="Pelanggan"
-        description="Bangun hubungan yang kuat dengan setiap mitra layanan kesehatan."
+        eyebrow={tr("CUSTOMER RELATIONSHIP")}
+        title={tr("Pelanggan")}
+        description={tr("Bangun hubungan yang kuat dengan setiap mitra layanan kesehatan.")}
         action={
           <AddButton
             onClick={() =>
@@ -240,36 +242,34 @@ export function AccountsPage() {
               })
             }
             disabled={!canCreate}
-          >
-            Tambah pelanggan
-          </AddButton>
+          >{tr("Tambah pelanggan")}</AddButton>
         }
       />
       <div className="metrics-strip">
-        <Stat label="Seluruh instansi" value={data.accounts.length} />
+        <Stat label={tr("Seluruh instansi")} value={data.accounts.length} />
         <Stat
-          label="Hubungan aktif"
+          label={tr("Hubungan aktif")}
           value={data.accounts.filter((a) => a.status === "active").length}
         />
-        <Stat label="Kontak / PIC" value={data.contacts.length} />
-        <Stat label="Peluang terkait" value={data.opportunities.length} />
+        <Stat label={tr("Kontak / PIC")} value={data.contacts.length} />
+        <Stat label={tr("Peluang terkait")} value={data.opportunities.length} />
       </div>
       <div className="card">
         <SearchToolbar
           search={search}
           setSearch={setSearch}
-          placeholder="Cari instansi, kota, atau wilayah…"
+          placeholder={tr("Cari instansi, kota, atau wilayah…")}
         >
           <select
             className="filter-select"
-            aria-label="Filter status pelanggan"
+            aria-label={tr("Filter status pelanggan")}
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="all">Semua status</option>
+            <option value="all">{tr("Semua status")}</option>
             {accountStatuses.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {localizedLabel(o)}
               </option>
             ))}
           </select>
@@ -279,11 +279,11 @@ export function AccountsPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Instansi</th>
-                  <th>Kota / wilayah</th>
-                  <th>PIC</th>
-                  <th>Penanggung jawab</th>
-                  <th>Status</th>
+                  <th>{tr("Instansi")}</th>
+                  <th>{tr("Kota / wilayah")}</th>
+                  <th>{tr("PIC")}</th>
+                  <th>{tr("Penanggung jawab")}</th>
+                  <th>{tr("Status")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -314,9 +314,7 @@ export function AccountsPage() {
                       {
                         data.contacts.filter((c) => c.account_id === a.id)
                           .length
-                      }{" "}
-                      kontak
-                    </td>
+                      }{" "}{tr("kontak")}</td>
                     <td>
                       {data.profiles.find((p) => p.id === a.owner_id)
                         ?.full_name || "—"}
@@ -331,7 +329,7 @@ export function AccountsPage() {
                       <button
                         className="btn secondary small"
                         onClick={() => setSelected(a.id)}
-                        aria-label={"Lihat " + a.name}
+                        aria-label={tr("Lihat {{value0}}", { value0: (a.name) })}
                       >
                         <ChevronRight size={16} />
                       </button>
@@ -344,14 +342,10 @@ export function AccountsPage() {
         ) : (
           <Empty
             title={
-              search
-                ? "Pelanggan tidak ditemukan"
-                : "Mulai dari pelanggan pertama"
+              search ? (tr("Pelanggan tidak ditemukan")) : (tr("Mulai dari pelanggan pertama"))
             }
             description={
-              search
-                ? "Coba kata kunci atau filter lain."
-                : "Catat rumah sakit, klinik, dan mitra untuk menghubungkan peluang serta kegiatan."
+              search ? (tr("Coba kata kunci atau filter lain.")) : (tr("Catat rumah sakit, klinik, dan mitra untuk menghubungkan peluang serta kegiatan."))
             }
             action={
               canCreate ? (
@@ -363,9 +357,7 @@ export function AccountsPage() {
                       owner_id: profile.id,
                     })
                   }
-                >
-                  Tambah pelanggan
-                </AddButton>
+                >{tr("Tambah pelanggan")}</AddButton>
               ) : undefined
             }
           />
@@ -382,20 +374,19 @@ export function AccountsPage() {
                 />
                 <p className="muted">
                   {labelFor(accountTypes, account.type)} ·{" "}
-                  {account.city || "Kota belum diisi"}
+                  {account.city || (tr("Kota belum diisi"))}
                   {account.province ? ", " + account.province : ""}
                 </p>
                 <p>
-                  <MapPin size={15} /> {account.address || "Alamat belum diisi"}
+                  <MapPin size={15} /> {account.address || (tr("Alamat belum diisi"))}
                 </p>
-                <p>
-                  Penanggung jawab:{" "}
+                <p>{tr("Penanggung jawab:")}{" "}
                   <strong>
                     {data.profiles.find((p) => p.id === account.owner_id)
                       ?.full_name || "—"}
                   </strong>
                 </p>
-                {account.territory && <p>Wilayah: {account.territory}</p>}
+                {account.territory && <p>{tr("Wilayah: ")}{account.territory}</p>}
                 {account.notes && (
                   <p className="preserve-lines">{account.notes}</p>
                 )}
@@ -403,13 +394,11 @@ export function AccountsPage() {
                   className="btn secondary"
                   onClick={() => setAccountForm(account)}
                   disabled={!canEdit(account)}
-                >
-                  Edit pelanggan
-                </button>
+                >{tr("Edit pelanggan")}</button>
               </div>
               <div className="detail-section">
                 <div className="section-heading">
-                  <h3>PIC & kontak</h3>
+                  <h3>{tr("PIC & kontak")}</h3>
                   <button
                     className="btn secondary small"
                     disabled={!canEdit(account)}
@@ -422,9 +411,7 @@ export function AccountsPage() {
                       })
                     }
                   >
-                    <Plus size={14} />
-                    Tambah PIC
-                  </button>
+                    <Plus size={14} />{tr("Tambah PIC")}</button>
                 </div>
                 {data.contacts
                   .filter((c) => c.account_id === account.id)
@@ -433,12 +420,12 @@ export function AccountsPage() {
                       <div>
                         <strong>{c.full_name}</strong>
                         {c.is_primary && (
-                          <Badge value="active" label="PIC utama" />
+                          <Badge value="active" label={tr("PIC utama")} />
                         )}
                         <p className="muted">
                           {[c.job_title, c.department]
                             .filter(Boolean)
-                            .join(" · ") || "Jabatan belum diisi"}
+                            .join(" · ") || (tr("Jabatan belum diisi"))}
                         </p>
                         {c.email && (
                           <p>
@@ -459,21 +446,17 @@ export function AccountsPage() {
                         className="btn secondary small"
                         disabled={!canEdit(account)}
                         onClick={() => setContactForm(c)}
-                      >
-                        Edit
-                      </button>
+                      >{tr("Edit")}</button>
                     </div>
                   ))}
                 {!data.contacts.some((c) => c.account_id === account.id) && (
-                  <p className="muted">
-                    Belum ada PIC. Tambahkan kontak utama untuk koordinasi.
-                  </p>
+                  <p className="muted">{tr("Belum ada PIC. Tambahkan kontak utama untuk koordinasi.")}</p>
                 )}
               </div>
             </div>
             <div>
               <div className="detail-section">
-                <h3>Peluang bisnis</h3>
+                <h3>{tr("Peluang bisnis")}</h3>
                 {data.opportunities
                   .filter((o) => o.account_id === account.id)
                   .map((o) => (
@@ -487,10 +470,10 @@ export function AccountsPage() {
                   ))}
                 {!data.opportunities.some(
                   (o) => o.account_id === account.id,
-                ) && <p className="muted">Belum ada peluang terkait.</p>}
+                ) && <p className="muted">{tr("Belum ada peluang terkait.")}</p>}
               </div>
               <div className="detail-section">
-                <h3>Aktivitas terkait</h3>
+                <h3>{tr("Aktivitas terkait")}</h3>
                 {data.activities
                   .filter((a) => a.account_id === account.id)
                   .sort((a, b) => b.start_at.localeCompare(a.start_at))
@@ -507,7 +490,7 @@ export function AccountsPage() {
                     </div>
                   ))}
                 {!data.activities.some((a) => a.account_id === account.id) && (
-                  <p className="muted">Belum ada kegiatan terkait.</p>
+                  <p className="muted">{tr("Belum ada kegiatan terkait.")}</p>
                 )}
               </div>
             </div>
@@ -516,7 +499,7 @@ export function AccountsPage() {
       )}
       {accountForm && (
         <EntityForm
-          title={accountForm.id ? "Edit pelanggan" : "Tambah pelanggan"}
+          title={accountForm.id ? (tr("Edit pelanggan")) : (tr("Tambah pelanggan"))}
           initial={{ ...accountDefaults, ...accountForm }}
           fields={fields}
           onClose={() => setAccountForm(null)}
@@ -528,7 +511,7 @@ export function AccountsPage() {
       )}
       {contactForm && (
         <EntityForm
-          title={contactForm.id ? "Edit PIC" : "Tambah PIC"}
+          title={contactForm.id ? (tr("Edit PIC")) : (tr("Tambah PIC"))}
           initial={{ ...contactDefaults, ...contactForm }}
           fields={contactFields}
           onClose={() => setContactForm(null)}
@@ -543,7 +526,7 @@ export function AccountsPage() {
               )
             )
               throw new Error(
-                "Instansi ini sudah memiliki PIC utama. Ubah PIC utama sebelumnya terlebih dahulu.",
+                tr("Instansi ini sudah memiliki PIC utama. Ubah PIC utama sebelumnya terlebih dahulu."),
               );
             await save("contacts", { ...contactForm, ...row });
             setContactForm(null);
@@ -672,9 +655,9 @@ export function PipelinePage() {
         stage,
         ...(stage === "won" ? { probability: 100 } : {}),
       });
-      notify("Tahap peluang diperbarui.");
+      notify(tr("Tahap peluang diperbarui."));
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Tahap gagal disimpan.");
+      notify(error instanceof Error ? (error.message) : (tr("Tahap gagal disimpan.")));
     } finally {
       setBusy(null);
     }
@@ -682,61 +665,57 @@ export function PipelinePage() {
   return (
     <>
       <PageHead
-        eyebrow="SALES & PRODUCT PIPELINE"
-        title="Pipeline peluang"
-        description="Dari percakapan pertama hingga kemitraan yang bertumbuh."
+        eyebrow={tr("SALES & PRODUCT PIPELINE")}
+        title={tr("Pipeline peluang")}
+        description={tr("Dari percakapan pertama hingga kemitraan yang bertumbuh.")}
         action={
           <AddButton
             disabled={!canCreate || !accounts.length || !products.length}
             onClick={newOpportunity}
-          >
-            Tambah peluang
-          </AddButton>
+          >{tr("Tambah peluang")}</AddButton>
         }
       />
       <div className="metrics-strip">
-        <Stat label="Peluang aktif" value={active.length} />
-        <Stat label="Nilai pipeline aktif" value={shortMoney(total)} />
-        <Stat label="Pipeline tertimbang" value={shortMoney(weighted)} />
-        <Stat label="Nilai Won" value={shortMoney(won)} />
+        <Stat label={tr("Peluang aktif")} value={active.length} />
+        <Stat label={tr("Nilai pipeline aktif")} value={shortMoney(total)} />
+        <Stat label={tr("Pipeline tertimbang")} value={shortMoney(weighted)} />
+        <Stat label={tr("Nilai Won")} value={shortMoney(won)} />
       </div>
       <SearchToolbar
         search={search}
         setSearch={setSearch}
-        placeholder="Cari peluang, pelanggan, atau produk…"
+        placeholder={tr("Cari peluang, pelanggan, atau produk…")}
       >
         <select
           className="filter-select"
-          aria-label="Filter pemilik peluang"
+          aria-label={tr("Filter pemilik peluang")}
           value={owner}
           onChange={(e) => setOwner(e.target.value)}
         >
-          <option value="all">Seluruh pemilik</option>
+          <option value="all">{tr("Seluruh pemilik")}</option>
           {members.map((m) => (
             <option value={m.value} key={m.value}>
-              {m.label}
+              {localizedLabel(m)}
             </option>
           ))}
         </select>
       </SearchToolbar>
       {!data.accounts.length || !data.products.length ? (
         <Empty
-          title="Lengkapi pelanggan dan katalog"
-          description="Peluang menghubungkan satu pelanggan dengan produk. Tambahkan data master melalui menu Pelanggan dan Katalog Produk."
+          title={tr("Lengkapi pelanggan dan katalog")}
+          description={tr("Peluang menghubungkan satu pelanggan dengan produk. Tambahkan data master melalui menu Pelanggan dan Katalog Produk.")}
         />
       ) : !rows.length ? (
         <Empty
           title={
-            search ? "Peluang tidak ditemukan" : "Pipeline Anda dimulai di sini"
+            search ? (tr("Peluang tidak ditemukan")) : (tr("Pipeline Anda dimulai di sini"))
           }
           description={
-            search
-              ? "Coba kata kunci atau pemilik lain."
-              : "Catat peluang pertama dan tentukan langkah berikutnya."
+            search ? (tr("Coba kata kunci atau pemilik lain.")) : (tr("Catat peluang pertama dan tentukan langkah berikutnya."))
           }
           action={
             canCreate ? (
-              <AddButton onClick={newOpportunity}>Tambah peluang</AddButton>
+              <AddButton onClick={newOpportunity}>{tr("Tambah peluang")}</AddButton>
             ) : undefined
           }
         />
@@ -779,13 +758,13 @@ export function PipelinePage() {
                       </button>
                       <p className="muted">
                         {data.accounts.find((a) => a.id === o.account_id)
-                          ?.name || "Pelanggan tidak tersedia"}
+                          ?.name || (tr("Pelanggan tidak tersedia"))}
                       </p>
                       <p className="pipeline-value">{money(o.value)}</p>
                       <p className="muted">
                         <Package size={13} />{" "}
                         {data.products.find((p) => p.id === o.product_id)
-                          ?.name || "Produk tidak tersedia"}
+                          ?.name || (tr("Produk tidak tersedia"))}
                       </p>
                       <div className="pipeline-probability">
                         <span
@@ -797,12 +776,12 @@ export function PipelinePage() {
                         />
                       </div>
                       <div className="relation-item">
-                        <span className="muted">Probabilitas</span>
+                        <span className="muted">{tr("Probabilitas")}</span>
                         <strong>{o.probability}%</strong>
                       </div>
                       <p className="next-action">
                         <ArrowRight size={13} />{" "}
-                        {o.next_step || "Next action belum diisi"}
+                        {o.next_step || (tr("Next action belum diisi"))}
                       </p>
                       <div className="relation-item">
                         <small className="muted">
@@ -817,7 +796,7 @@ export function PipelinePage() {
                         </small>
                       </div>
                       <select
-                        aria-label={"Ubah tahap " + o.title}
+                        aria-label={tr("Ubah tahap {{value0}}", { value0: (o.title) })}
                         className="filter-select"
                         value={o.stage}
                         disabled={!canEdit(o) || busy === o.id}
@@ -834,7 +813,7 @@ export function PipelinePage() {
                     </article>
                   ))}
                   {!items.length && (
-                    <div className="pipeline-empty">Belum ada peluang</div>
+                    <div className="pipeline-empty">{tr("Belum ada peluang")}</div>
                   )}
                 </div>
               </section>
@@ -854,43 +833,35 @@ export function PipelinePage() {
               {data.products.find((p) => p.id === selected.product_id)?.name}
             </p>
             <div className="detail-grid">
-              <p>
-                Probabilitas
-                <br />
+              <p>{tr("Probabilitas")}<br />
                 <strong>{selected.probability}%</strong>
               </p>
-              <p>
-                Target closing
-                <br />
+              <p>{tr("Target closing")}<br />
                 <strong>{displayDate(selected.expected_close)}</strong>
               </p>
-              <p>
-                Pemilik
-                <br />
+              <p>{tr("Pemilik")}<br />
                 <strong>
                   {data.profiles.find((p) => p.id === selected.owner_id)
                     ?.full_name || "—"}
                 </strong>
               </p>
-              <p>
-                Tenggat next action
-                <br />
+              <p>{tr("Tenggat next action")}<br />
                 <strong>{displayDate(selected.next_action_due_date)}</strong>
               </p>
             </div>
-            <h3>Next action</h3>
+            <h3>{tr("Next action")}</h3>
             <p className="preserve-lines">
-              {selected.next_step || "Belum diisi"}
+              {selected.next_step || (tr("Belum diisi"))}
             </p>
             {selected.stage === "lost" && (
               <>
-                <h3>Alasan lost</h3>
+                <h3>{tr("Alasan lost")}</h3>
                 <p>{selected.lost_reason}</p>
               </>
             )}
             {selected.notes && (
               <>
-                <h3>Catatan</h3>
+                <h3>{tr("Catatan")}</h3>
                 <p className="preserve-lines">{selected.notes}</p>
               </>
             )}
@@ -898,15 +869,13 @@ export function PipelinePage() {
               className="btn primary"
               disabled={!canEdit(selected)}
               onClick={() => setForm(selected)}
-            >
-              Edit peluang
-            </button>
+            >{tr("Edit peluang")}</button>
           </div>
         </Dialog>
       )}
       {form && (
         <EntityForm
-          title={form.id ? "Edit peluang" : "Tambah peluang"}
+          title={form.id ? (tr("Edit peluang")) : (tr("Tambah peluang"))}
           initial={{ ...opportunityDefaults, ...form }}
           fields={fields}
           onClose={() => setForm(null)}
@@ -926,7 +895,7 @@ export function PipelinePage() {
               result.stage === "lost" &&
               !String(result.lost_reason || "").trim()
             )
-              throw new Error("Alasan lost wajib diisi.");
+              throw new Error(tr("Alasan lost wajib diisi."));
             if (
               !Number.isFinite(result.value) ||
               !Number.isFinite(result.probability) ||
@@ -935,7 +904,7 @@ export function PipelinePage() {
               result.probability > 100
             )
               throw new Error(
-                "Nilai dan probabilitas berada di luar rentang yang diizinkan.",
+                tr("Nilai dan probabilitas berada di luar rentang yang diizinkan."),
               );
             await save("opportunities", result);
             setForm(null);
@@ -1034,10 +1003,10 @@ export function TasksPage() {
     setBusy(t.id);
     try {
       await save("tasks", { id: t.id, status: "done" });
-      notify("Tindak lanjut diselesaikan.");
+      notify(tr("Tindak lanjut diselesaikan."));
     } catch (error) {
       notify(
-        error instanceof Error ? error.message : "Tugas gagal diperbarui.",
+        error instanceof Error ? (error.message) : (tr("Tugas gagal diperbarui.")),
       );
     } finally {
       setBusy(null);
@@ -1046,26 +1015,24 @@ export function TasksPage() {
   return (
     <>
       <PageHead
-        eyebrow="TEAM FOLLOW-UP"
-        title="Tindak lanjut"
-        description="Pastikan setiap percakapan memiliki langkah berikutnya."
+        eyebrow={tr("TEAM FOLLOW-UP")}
+        title={tr("Tindak lanjut")}
+        description={tr("Pastikan setiap percakapan memiliki langkah berikutnya.")}
         action={
-          <AddButton onClick={newTask} disabled={!canCreate}>
-            Tambah tugas
-          </AddButton>
+          <AddButton onClick={newTask} disabled={!canCreate}>{tr("Tambah tugas")}</AddButton>
         }
       />
       <div className="metrics-strip">
         <Stat
-          label="Tugas terbuka"
+          label={tr("Tugas terbuka")}
           value={
             data.tasks.filter((t) => !["done", "cancelled"].includes(t.status))
               .length
           }
         />
-        <Stat label="Terlambat" value={data.tasks.filter(overdue).length} />
+        <Stat label={tr("Terlambat")} value={data.tasks.filter(overdue).length} />
         <Stat
-          label="Tugas saya"
+          label={tr("Tugas saya")}
           value={
             data.tasks.filter(
               (t) =>
@@ -1075,7 +1042,7 @@ export function TasksPage() {
           }
         />
         <Stat
-          label="Selesai"
+          label={tr("Selesai")}
           value={data.tasks.filter((t) => t.status === "done").length}
         />
       </div>
@@ -1083,31 +1050,31 @@ export function TasksPage() {
         <SearchToolbar
           search={search}
           setSearch={setSearch}
-          placeholder="Cari tindak lanjut atau pelanggan…"
+          placeholder={tr("Cari tindak lanjut atau pelanggan…")}
         >
           <select
-            aria-label="Filter status tugas"
+            aria-label={tr("Filter status tugas")}
             className="filter-select"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="open">Tugas terbuka</option>
-            <option value="overdue">Terlambat</option>
-            <option value="all">Semua status</option>
+            <option value="open">{tr("Tugas terbuka")}</option>
+            <option value="overdue">{tr("Terlambat")}</option>
+            <option value="all">{tr("Semua status")}</option>
             {taskStatuses.map((s) => (
               <option key={s.value} value={s.value}>
-                {s.label}
+                {localizedLabel(s)}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter penanggung jawab tugas"
+            aria-label={tr("Filter penanggung jawab tugas")}
             className="filter-select"
             value={scope}
             onChange={(e) => setScope(e.target.value)}
           >
-            <option value="all">Seluruh tim</option>
-            <option value="mine">Tugas saya</option>
+            <option value="all">{tr("Seluruh tim")}</option>
+            <option value="mine">{tr("Tugas saya")}</option>
           </select>
         </SearchToolbar>
         {rows.length ? (
@@ -1115,12 +1082,12 @@ export function TasksPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Tindak lanjut</th>
-                  <th>Penanggung jawab</th>
-                  <th>Tenggat</th>
-                  <th>Prioritas</th>
-                  <th>Status</th>
-                  <th>Aksi</th>
+                  <th>{tr("Tindak lanjut")}</th>
+                  <th>{tr("Penanggung jawab")}</th>
+                  <th>{tr("Tenggat")}</th>
+                  <th>{tr("Prioritas")}</th>
+                  <th>{tr("Status")}</th>
+                  <th>{tr("Aksi")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1138,8 +1105,7 @@ export function TasksPage() {
                         {data.accounts.find((a) => a.id === t.account_id)
                           ?.name ||
                           data.activities.find((a) => a.id === t.activity_id)
-                            ?.title ||
-                          "Tugas internal"}
+                            ?.title || (tr("Tugas internal"))}
                       </small>
                       {t.notes && <small className="muted">{t.notes}</small>}
                     </td>
@@ -1152,7 +1118,7 @@ export function TasksPage() {
                         {displayDate(t.due_date)}
                       </span>
                       {overdue(t) && (
-                        <small className="overdue-text">Terlambat</small>
+                        <small className="overdue-text">{tr("Terlambat")}</small>
                       )}
                     </td>
                     <td>
@@ -1173,19 +1139,15 @@ export function TasksPage() {
                           className="btn secondary small"
                           onClick={() => setForm(t)}
                           disabled={!canEdit(t)}
-                        >
-                          Edit
-                        </button>
+                        >{tr("Edit")}</button>
                         {!["done", "cancelled"].includes(t.status) && (
                           <button
                             className="btn secondary small"
-                            aria-label={"Selesaikan " + t.title}
+                            aria-label={tr("Selesaikan {{value0}}", { value0: (t.title) })}
                             disabled={!canEdit(t) || busy === t.id}
                             onClick={() => void complete(t)}
                           >
-                            <Check size={15} />
-                            Selesai
-                          </button>
+                            <Check size={15} />{tr("Selesai")}</button>
                         )}
                       </div>
                     </td>
@@ -1197,14 +1159,12 @@ export function TasksPage() {
         ) : (
           <Empty
             title={
-              search
-                ? "Tugas tidak ditemukan"
-                : "Tidak ada tugas pada filter ini"
+              search ? (tr("Tugas tidak ditemukan")) : (tr("Tidak ada tugas pada filter ini"))
             }
-            description="Tambahkan tindak lanjut atau pilih filter lain untuk melihat pekerjaan tim."
+            description={tr("Tambahkan tindak lanjut atau pilih filter lain untuk melihat pekerjaan tim.")}
             action={
               canCreate ? (
-                <AddButton onClick={newTask}>Tambah tugas</AddButton>
+                <AddButton onClick={newTask}>{tr("Tambah tugas")}</AddButton>
               ) : undefined
             }
           />
@@ -1212,7 +1172,7 @@ export function TasksPage() {
       </div>
       {form && (
         <EntityForm
-          title={form.id ? "Edit tindak lanjut" : "Tambah tindak lanjut"}
+          title={form.id ? (tr("Edit tindak lanjut")) : (tr("Tambah tindak lanjut"))}
           initial={{ ...taskDefaults, ...form }}
           fields={fields}
           onClose={() => setForm(null)}
@@ -1232,11 +1192,11 @@ export function TasksPage() {
               );
             if (payload.opportunity_id && !opportunity)
               throw new Error(
-                "Peluang terkait tidak ditemukan. Pilih kembali peluang.",
+                tr("Peluang terkait tidak ditemukan. Pilih kembali peluang."),
               );
             if (payload.activity_id && !activity)
               throw new Error(
-                "Kegiatan terkait tidak ditemukan. Pilih kembali kegiatan.",
+                tr("Kegiatan terkait tidak ditemukan. Pilih kembali kegiatan."),
               );
             if (
               opportunity &&
@@ -1244,7 +1204,7 @@ export function TasksPage() {
               opportunity.account_id !== payload.account_id
             )
               throw new Error(
-                "Peluang tugas tidak sesuai dengan pelanggan yang dipilih.",
+                tr("Peluang tugas tidak sesuai dengan pelanggan yang dipilih."),
               );
             if (
               activity &&
@@ -1252,7 +1212,7 @@ export function TasksPage() {
               activity.account_id !== payload.account_id
             )
               throw new Error(
-                "Kegiatan tugas tidak sesuai dengan pelanggan yang dipilih.",
+                tr("Kegiatan tugas tidak sesuai dengan pelanggan yang dipilih."),
               );
             if (
               activity &&
@@ -1263,7 +1223,7 @@ export function TasksPage() {
                   activity.account_id !== opportunity.account_id))
             )
               throw new Error(
-                "Kegiatan dan peluang tugas berasal dari konteks pelanggan atau peluang yang berbeda.",
+                tr("Kegiatan dan peluang tugas berasal dari konteks pelanggan atau peluang yang berbeda."),
               );
             await save("tasks", payload);
             setForm(null);
@@ -1307,7 +1267,7 @@ export function CatalogPage() {
     )
     .sort(
       (a, b) =>
-        a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
+        a.category.localeCompare(b.category, getLocale()) || a.name.localeCompare(b.name, getLocale()),
     );
   const product = data.products.find((p) => p.id === selected);
   const fields: Field[] = [
@@ -1333,44 +1293,38 @@ export function CatalogPage() {
   return (
     <>
       <PageHead
-        eyebrow="TTM PRODUCT LIBRARY"
-        title="Katalog produk"
-        description="Satu referensi untuk portofolio produk dan solusi TTM."
+        eyebrow={tr("TTM PRODUCT LIBRARY")}
+        title={tr("Katalog produk")}
+        description={tr("Satu referensi untuk portofolio produk dan solusi TTM.")}
         action={
           manager ? (
             <AddButton
               onClick={() =>
                 setForm({ brand: "TechnoMed", active: true, source_page: 1 })
               }
-            >
-              Tambah produk
-            </AddButton>
+            >{tr("Tambah produk")}</AddButton>
           ) : undefined
         }
       />
       <div className="catalog-source card">
         <div>
-          <strong>Katalog TTM 2026</strong>
-          <p className="muted">
-            Data model, family, dan varian dari katalog resmi yang dilampirkan.
-            Jumlah entri bukan jumlah SKU final; referensi halaman menggunakan
-            urutan halaman PDF.
-          </p>
+          <strong>{tr("Katalog TTM 2026")}</strong>
+          <p className="muted">{tr("Data model, family, dan varian dari katalog resmi yang dilampirkan. Jumlah entri bukan jumlah SKU final; referensi halaman menggunakan urutan halaman PDF.")}</p>
         </div>
-        <Badge value="active" label={data.products.length + " entri"} />
+        <Badge value="active" label={tr("{{value0}} entri", { value0: (data.products.length) })} />
       </div>
       <SearchToolbar
         search={search}
         setSearch={setSearch}
-        placeholder="Cari nama produk, brand, atau modalitas…"
+        placeholder={tr("Cari nama produk, brand, atau modalitas…")}
       >
         <select
           className="filter-select"
-          aria-label="Filter kategori produk"
+          aria-label={tr("Filter kategori produk")}
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="all">Semua kategori</option>
+          <option value="all">{tr("Semua kategori")}</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -1379,11 +1333,11 @@ export function CatalogPage() {
         </select>
         <select
           className="filter-select"
-          aria-label="Filter brand produk"
+          aria-label={tr("Filter brand produk")}
           value={brand}
           onChange={(e) => setBrand(e.target.value)}
         >
-          <option value="all">Semua brand</option>
+          <option value="all">{tr("Semua brand")}</option>
           {brands.map((b) => (
             <option key={b} value={b}>
               {b}
@@ -1391,7 +1345,7 @@ export function CatalogPage() {
           ))}
         </select>
       </SearchToolbar>
-      <p className="muted result-count">Menampilkan {rows.length} produk</p>
+      <p className="muted result-count">{tr("Menampilkan {{value0}} produk", { value0: rows.length })}</p>
       {rows.length ? (
         <div
           className="product-grid"
@@ -1416,26 +1370,24 @@ export function CatalogPage() {
                 <p className="muted product-description">{p.description}</p>
               )}
               <div className="relation-item">
-                <small className="muted">
-                  Sumber PDF · hal. {p.source_page || "—"}
+                <small className="muted">{tr("Sumber PDF · hal. ")}{p.source_page || "—"}
                 </small>
                 {p.active === false && (
-                  <Badge value="inactive" label="Tidak aktif" />
+                  <Badge value="inactive" label={tr("Tidak aktif")} />
                 )}
               </div>
               <button
                 className="btn secondary product-detail-button"
                 onClick={() => setSelected(p.id)}
-              >
-                Detail produk <ArrowRight size={15} />
+              >{tr("Detail produk ")}<ArrowRight size={15} />
               </button>
             </article>
           ))}
         </div>
       ) : (
         <Empty
-          title="Produk tidak ditemukan"
-          description="Coba kata kunci, kategori, atau brand lain."
+          title={tr("Produk tidak ditemukan")}
+          description={tr("Coba kata kunci, kategori, atau brand lain.")}
         />
       )}
       {product && (
@@ -1447,7 +1399,7 @@ export function CatalogPage() {
               </span>
               <Badge
                 value={product.active === false ? "inactive" : "active"}
-                label={product.active === false ? "Tidak aktif" : "Aktif"}
+                label={product.active === false ? (tr("Tidak aktif")) : (tr("Aktif"))}
               />
             </div>
             <p className="eyebrow">
@@ -1458,7 +1410,7 @@ export function CatalogPage() {
             )}
             {Object.keys(product.specs || {}).length > 0 && (
               <>
-                <h3>Informasi produk</h3>
+                <h3>{tr("Informasi produk")}</h3>
                 <dl className="spec-list">
                   {Object.entries(product.specs).map(([key, value]) => (
                     <div className="relation-item" key={key}>
@@ -1470,46 +1422,34 @@ export function CatalogPage() {
               </>
             )}
             <div className="source-note">
-              <strong>Referensi katalog</strong>
-              <p>
-                Katalog TTM 2026 · halaman PDF{" "}
-                {product.source_page || "belum dicatat"}
-                {product.source_page > 1
-                  ? " (halaman tercetak " + (product.source_page - 1) + ")"
-                  : ""}
+              <strong>{tr("Referensi katalog")}</strong>
+              <p>{tr("Katalog TTM 2026 · halaman PDF")}{" "}
+                {product.source_page || (tr("belum dicatat"))}
+                {product.source_page > 1 ? (tr(" (halaman tercetak {{value0}})", { value0: ((product.source_page - 1)) })) : ("")}
                 .
               </p>
-              <p className="muted">
-                Spesifikasi, izin edar, harga, dan ketersediaan perlu
-                dikonfirmasi sebelum penawaran.
-              </p>
+              <p className="muted">{tr("Spesifikasi, izin edar, harga, dan ketersediaan perlu dikonfirmasi sebelum penawaran.")}</p>
             </div>
-            <h3>Penggunaan di CRM</h3>
+            <h3>{tr("Penggunaan di CRM")}</h3>
             <p>
               {
                 data.opportunities.filter((o) => o.product_id === product.id)
                   .length
-              }{" "}
-              peluang ·{" "}
+              }{" "}{tr("peluang ·")}{" "}
               {
                 data.activities.filter((a) => a.product_id === product.id)
                   .length
-              }{" "}
-              kegiatan ·{" "}
-              {data.equipment.filter((e) => e.product_id === product.id).length}{" "}
-              unit demo terdaftar
-            </p>
+              }{" "}{tr("kegiatan ·")}{" "}
+              {data.equipment.filter((e) => e.product_id === product.id).length}{" "}{tr("unit demo terdaftar")}</p>
             {manager && (
-              <button className="btn primary" onClick={() => setForm(product)}>
-                Edit produk
-              </button>
+              <button className="btn primary" onClick={() => setForm(product)}>{tr("Edit produk")}</button>
             )}
           </div>
         </Dialog>
       )}
       {form && (
         <EntityForm
-          title={form.id ? "Edit produk" : "Tambah produk"}
+          title={form.id ? (tr("Edit produk")) : (tr("Tambah produk"))}
           initial={{ ...productDefaults, ...form }}
           fields={fields}
           onClose={() => setForm(null)}
@@ -1582,34 +1522,32 @@ export function EquipmentPage() {
   return (
     <>
       <PageHead
-        eyebrow="DEMO RESOURCE MANAGEMENT"
-        title="Unit demo"
-        description="Kelola kesiapan unit dan lihat reservasi kegiatan tim."
+        eyebrow={tr("DEMO RESOURCE MANAGEMENT")}
+        title={tr("Unit demo")}
+        description={tr("Kelola kesiapan unit dan lihat reservasi kegiatan tim.")}
         action={
           manager ? (
             <AddButton
               disabled={!data.products.length}
               onClick={() => setForm({ status: "available" })}
-            >
-              Tambah unit
-            </AddButton>
+            >{tr("Tambah unit")}</AddButton>
           ) : undefined
         }
       />
       <div className="metrics-strip">
-        <Stat label="Unit terdaftar" value={data.equipment.length} />
+        <Stat label={tr("Unit terdaftar")} value={data.equipment.length} />
         <Stat
-          label="Operasional"
+          label={tr("Operasional")}
           value={data.equipment.filter((e) => e.status === "available").length}
         />
         <Stat
-          label="Pemeliharaan"
+          label={tr("Pemeliharaan")}
           value={
             data.equipment.filter((e) => e.status === "maintenance").length
           }
         />
         <Stat
-          label="Unit dengan reservasi"
+          label={tr("Unit dengan reservasi")}
           value={data.equipment.filter((e) => reservations(e.id).length).length}
         />
       </div>
@@ -1617,18 +1555,18 @@ export function EquipmentPage() {
         <SearchToolbar
           search={search}
           setSearch={setSearch}
-          placeholder="Cari unit, kode, produk, atau lokasi…"
+          placeholder={tr("Cari unit, kode, produk, atau lokasi…")}
         >
           <select
             className="filter-select"
-            aria-label="Filter status unit"
+            aria-label={tr("Filter status unit")}
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="all">Semua status</option>
+            <option value="all">{tr("Semua status")}</option>
             {equipmentStatuses.map((s) => (
               <option value={s.value} key={s.value}>
-                {s.label}
+                {localizedLabel(s)}
               </option>
             ))}
           </select>
@@ -1638,11 +1576,11 @@ export function EquipmentPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Unit demo</th>
-                  <th>Produk</th>
-                  <th>Lokasi</th>
-                  <th>Status</th>
-                  <th>Reservasi berikutnya</th>
+                  <th>{tr("Unit demo")}</th>
+                  <th>{tr("Produk")}</th>
+                  <th>{tr("Lokasi")}</th>
+                  <th>{tr("Status")}</th>
+                  <th>{tr("Reservasi berikutnya")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1660,7 +1598,7 @@ export function EquipmentPage() {
                         </button>
                         <small className="muted">
                           {e.code}
-                          {e.serial_number ? " · SN " + e.serial_number : ""}
+                          {e.serial_number ? (tr(" · SN {{value0}}", { value0: (e.serial_number) })) : ("")}
                         </small>
                       </td>
                       <td>
@@ -1687,16 +1625,14 @@ export function EquipmentPage() {
                             <small className="muted">{next.title}</small>
                           </>
                         ) : (
-                          <span className="muted">Belum ada reservasi</span>
+                          <span className="muted">{tr("Belum ada reservasi")}</span>
                         )}
                       </td>
                       <td>
                         <button
                           className="btn secondary small"
                           onClick={() => setSelected(e.id)}
-                        >
-                          Detail
-                        </button>
+                        >{tr("Detail")}</button>
                       </td>
                     </tr>
                   );
@@ -1706,17 +1642,13 @@ export function EquipmentPage() {
           </div>
         ) : (
           <Empty
-            title={search ? "Unit tidak ditemukan" : "Belum ada unit demo"}
+            title={search ? (tr("Unit tidak ditemukan")) : (tr("Belum ada unit demo"))}
             description={
-              search
-                ? "Coba kata kunci atau status lain."
-                : "Daftarkan unit fisik untuk mulai mengelola reservasi. Katalog produk tidak otomatis menjadi stok unit."
+              search ? (tr("Coba kata kunci atau status lain.")) : (tr("Daftarkan unit fisik untuk mulai mengelola reservasi. Katalog produk tidak otomatis menjadi stok unit."))
             }
             action={
               manager && data.products.length ? (
-                <AddButton onClick={() => setForm({ status: "available" })}>
-                  Tambah unit
-                </AddButton>
+                <AddButton onClick={() => setForm({ status: "available" })}>{tr("Tambah unit")}</AddButton>
               ) : undefined
             }
           />
@@ -1731,12 +1663,12 @@ export function EquipmentPage() {
             />
             <p className="eyebrow">{unit.code}</p>
             <h3>{data.products.find((p) => p.id === unit.product_id)?.name}</h3>
-            <p>Serial number: {unit.serial_number || "—"}</p>
+            <p>{tr("Serial number: ")}{unit.serial_number || "—"}</p>
             <p>
-              <MapPin size={14} /> {unit.location || "Lokasi belum diisi"}
+              <MapPin size={14} /> {unit.location || (tr("Lokasi belum diisi"))}
             </p>
             {unit.notes && <p className="preserve-lines">{unit.notes}</p>}
-            <h3>Reservasi aktif / mendatang</h3>
+            <h3>{tr("Reservasi aktif / mendatang")}</h3>
             {reservations(unit.id).map((a) => (
               <div className="relation-item" key={a.id}>
                 <div>
@@ -1755,23 +1687,18 @@ export function EquipmentPage() {
               </div>
             ))}
             {!reservations(unit.id).length && (
-              <p className="muted">Tidak ada reservasi aktif atau mendatang.</p>
+              <p className="muted">{tr("Tidak ada reservasi aktif atau mendatang.")}</p>
             )}
-            <p className="source-note muted">
-              Reservasi dibuat melalui Kalender & Aktivitas. Sistem memeriksa
-              bentrok waktu sebelum pengajuan disimpan.
-            </p>
+            <p className="source-note muted">{tr("Reservasi dibuat melalui Kalender & Aktivitas. Sistem memeriksa bentrok waktu sebelum pengajuan disimpan.")}</p>
             {manager && (
-              <button className="btn primary" onClick={() => setForm(unit)}>
-                Edit unit
-              </button>
+              <button className="btn primary" onClick={() => setForm(unit)}>{tr("Edit unit")}</button>
             )}
           </div>
         </Dialog>
       )}
       {form && (
         <EntityForm
-          title={form.id ? "Edit unit demo" : "Tambah unit demo"}
+          title={form.id ? (tr("Edit unit demo")) : (tr("Tambah unit demo"))}
           initial={{ ...equipmentDefaults, ...form }}
           fields={fields}
           onClose={() => setForm(null)}
@@ -1784,7 +1711,7 @@ export function EquipmentPage() {
                   e.code.toLowerCase() === code.toLowerCase(),
               )
             )
-              throw new Error("Kode unit sudah digunakan. Gunakan kode unik.");
+              throw new Error(tr("Kode unit sudah digunakan. Gunakan kode unik."));
             await save("equipment", { ...form, ...row, code });
             setForm(null);
           }}

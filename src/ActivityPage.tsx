@@ -1,3 +1,5 @@
+// localized-ui-v1
+import { tr, localizedLabel, useLanguage } from "./i18n";
 import React, { useState } from "react";
 import {
   Plus,
@@ -42,8 +44,9 @@ import {
   money,
 } from "./rules";
 const options = (o: Record<string, string>) =>
-  Object.entries(o).map(([value, label]) => ({ value, label }));
+  Object.entries(o).map(([value, label]) => ({ value, label: tr(label) }));
 export function ActivityPage() {
+  useLanguage();
   const { data, profile, demo, save, notify, refresh } = useCRM();
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
@@ -67,7 +70,7 @@ export function ActivityPage() {
   const person = (id: string) =>
     data.profiles.find((p) => p.id === id)?.full_name || "—";
   const account = (id: string | null) =>
-    data.accounts.find((a) => a.id === id)?.name || "Internal / tanpa instansi";
+    data.accounts.find((a) => a.id === id)?.name || tr("Internal / tanpa instansi");
   const product = (id: string | null) =>
     data.products.find((p) => p.id === id)?.name || "—";
   const activePeople = data.profiles
@@ -143,68 +146,68 @@ export function ActivityPage() {
       outcome: "",
     });
   const fields: Field[] = [
-    { key: "title", label: "Nama kegiatan", required: true },
+    { key: "title", label: tr("Nama kegiatan"), required: true },
     {
       key: "type",
-      label: "Jenis kegiatan",
+      label: tr("Jenis kegiatan"),
       type: "select",
       options: options(ACTIVITY_LABEL),
       required: true,
     },
     {
       key: "start_at",
-      label: "Mulai (WIB)",
+      label: tr("Mulai (WIB)"),
       type: "datetime-local",
       required: true,
     },
     {
       key: "end_at",
-      label: "Selesai (WIB)",
+      label: tr("Selesai (WIB)"),
       type: "datetime-local",
       required: true,
     },
     {
       key: "account_id",
-      label: "Pelanggan / instansi",
+      label: tr("Pelanggan / instansi"),
       type: "select",
       options: relation(data.accounts),
     },
     {
       key: "product_id",
-      label: "Produk",
+      label: tr("Produk"),
       type: "select",
       options: relation(data.products.filter((p) => p.active !== false)),
     },
     {
       key: "opportunity_id",
-      label: "Peluang terkait",
+      label: tr("Peluang terkait"),
       type: "select",
       options: relation(data.opportunities),
     },
     {
       key: "owner_id",
-      label: "Koordinator",
+      label: tr("Koordinator"),
       type: "select",
       required: true,
       options: activePeople,
     },
-    { key: "location", label: "Lokasi / tautan meeting" },
+    { key: "location", label: tr("Lokasi / tautan meeting") },
     {
       key: "priority",
-      label: "Prioritas",
+      label: tr("Prioritas"),
       type: "select",
       required: true,
       options: options({ low: "Rendah", medium: "Sedang", high: "Tinggi" }),
     },
     {
       key: "participant_ids",
-      label: "Anggota yang ditugaskan",
+      label: tr("Anggota yang ditugaskan"),
       type: "multiselect",
       options: activePeople,
     },
     {
       key: "equipment_ids",
-      label: "Unit demo",
+      label: tr("Unit demo"),
       type: "multiselect",
       options: data.equipment
         .filter(
@@ -213,22 +216,22 @@ export function ActivityPage() {
         )
         .map((e) => ({
           value: e.id,
-          label: `${e.code} • ${e.name}${e.status !== "available" ? " (tidak tersedia)" : ""}`,
+          label: `${e.code} • ${e.name}${e.status !== "available" ? tr(" (tidak tersedia)") : ""}`,
         })),
     },
     {
       key: "objective",
-      label: "Tujuan kegiatan",
+      label: tr("Tujuan kegiatan"),
       type: "textarea",
       required: true,
     },
     {
       key: "notes",
-      label: "Konteks / catatan",
+      label: tr("Konteks / catatan"),
       type: "textarea",
-      help: "Wajib diisi jika kegiatan pelanggan tanpa instansi. Jangan masukkan data pasien.",
+      help: tr("Wajib diisi jika kegiatan pelanggan tanpa instansi. Jangan masukkan data pasien."),
     },
-    { key: "budget", label: "Anggaran (Rp)", type: "number", min: 0 },
+    { key: "budget", label: tr("Anggaran (Rp)"), type: "number", min: 0 },
   ];
   async function statusChange(next: ActivityStatus, note?: string) {
     if (!detail) return;
@@ -254,7 +257,7 @@ export function ActivityPage() {
     if (!detail) return;
     if (demo) {
       notify(
-        "Unggah bukti tersedia pada lingkungan Supabase aktif; file tidak diunggah pada demo.",
+        tr("Unggah bukti tersedia pada lingkungan Supabase aktif; file tidak diunggah pada demo."),
       );
       return;
     }
@@ -268,7 +271,7 @@ export function ActivityPage() {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       ];
       if (!allowed.includes(file.type) || file.size > 10485760 || !file.size)
-        throw Error("Pilih PDF, JPG, PNG, atau DOCX, maksimum 10 MB.");
+        throw Error(tr("Pilih PDF, JPG, PNG, atau DOCX, maksimum 10 MB."));
       const path = `${detail.id}/${crypto.randomUUID()}.${
         file.name
           .split(".")
@@ -289,7 +292,7 @@ export function ActivityPage() {
         });
       } catch (metadataError) {
         throw Error(
-          `File telah diunggah, tetapi metadata gagal disimpan. Hubungi admin untuk rekonsiliasi object ${path}. ${friendlyError(metadataError)}`,
+          tr("File telah diunggah, tetapi metadata gagal disimpan. Hubungi admin untuk rekonsiliasi object {{value0}}. {{value1}}", { value0: (path), value1: (friendlyError(metadataError)) }),
         );
       }
       await refresh();
@@ -302,56 +305,54 @@ export function ActivityPage() {
   return (
     <>
       <PageHead
-        eyebrow="TEAM OPERATIONS"
-        title="Kalender & aktivitas"
-        description="Rencanakan kegiatan, atur penugasan, dan jaga setiap tindak lanjut."
+        eyebrow={tr("TEAM OPERATIONS")}
+        title={tr("Kalender & aktivitas")}
+        description={tr("Rencanakan kegiatan, atur penugasan, dan jaga setiap tindak lanjut.")}
         action={
           writable && (
             <button className="btn primary" onClick={newActivity}>
-              <Plus size={17} />
-              Tambah kegiatan
-            </button>
+              <Plus size={17} />{tr("Tambah kegiatan")}</button>
           )
         }
       />
       <SearchToolbar
         search={search}
         setSearch={setSearch}
-        placeholder="Cari kegiatan, pelanggan, lokasi…"
+        placeholder={tr("Cari kegiatan, pelanggan, lokasi…")}
       >
         <select
-          aria-label="Jenis kegiatan"
+          aria-label={tr("Jenis kegiatan")}
           value={type}
           onChange={(e) => setType(e.target.value)}
         >
-          <option value="">Semua jenis</option>
+          <option value="">{tr("Semua jenis")}</option>
           {options(ACTIVITY_LABEL).map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {localizedLabel(o)}
             </option>
           ))}
         </select>
         <select
-          aria-label="Status kegiatan"
+          aria-label={tr("Status kegiatan")}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
-          <option value="">Semua status</option>
+          <option value="">{tr("Semua status")}</option>
           {options(STATUS_LABEL).map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {localizedLabel(o)}
             </option>
           ))}
         </select>
         <select
-          aria-label="Anggota tim"
+          aria-label={tr("Anggota tim")}
           value={member}
           onChange={(e) => setMember(e.target.value)}
         >
-          <option value="">Seluruh tim</option>
+          <option value="">{tr("Seluruh tim")}</option>
           {activePeople.map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {localizedLabel(o)}
             </option>
           ))}
         </select>
@@ -361,7 +362,7 @@ export function ActivityPage() {
           <div className="month-switch">
             <button
               className="icon-btn"
-              aria-label="Bulan sebelumnya"
+              aria-label={tr("Bulan sebelumnya")}
               onClick={() => changeMonth(-1)}
             >
               <ChevronLeft size={18} />
@@ -371,7 +372,7 @@ export function ActivityPage() {
             </h2>
             <button
               className="icon-btn"
-              aria-label="Bulan berikutnya"
+              aria-label={tr("Bulan berikutnya")}
               onClick={() => changeMonth(1)}
             >
               <ChevronRight size={18} />
@@ -382,25 +383,19 @@ export function ActivityPage() {
                 setMonth(dateOnly().slice(0, 7));
                 setSelectedDay(dateOnly());
               }}
-            >
-              Hari ini
-            </button>
+            >{tr("Hari ini")}</button>
           </div>
           <div className="segmented">
             <button
               className={view === "month" ? "selected" : ""}
               onClick={() => setView("month")}
             >
-              <CalendarDays size={16} />
-              Bulan
-            </button>
+              <CalendarDays size={16} />{tr("Bulan")}</button>
             <button
               className={view === "list" ? "selected" : ""}
               onClick={() => setView("list")}
             >
-              <List size={16} />
-              Agenda
-            </button>
+              <List size={16} />{tr("Agenda")}</button>
           </div>
         </div>
         {view === "month" ? (
@@ -408,7 +403,7 @@ export function ActivityPage() {
             <div className="calendar-grid">
               {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((d) => (
                 <div key={d} className="weekday">
-                  {d}
+                  {tr(d)}
                 </div>
               ))}
               {Array.from({ length: startOffset + days }, (_, i) => {
@@ -426,7 +421,7 @@ export function ActivityPage() {
                   >
                     <button
                       className="day-number"
-                      aria-label={`Lihat ${displayDate(date)}`}
+                      aria-label={tr("Lihat {{value0}}", { value0: (displayDate(date)) })}
                       onClick={() => {
                         setSelectedDay(date);
                         setView("list");
@@ -456,8 +451,7 @@ export function ActivityPage() {
                           setView("list");
                         }}
                       >
-                        +{events.length - 3} kegiatan
-                      </button>
+                        {tr("+{{value0}} kegiatan", {value0: events.length - 3})}</button>
                     )}
                   </div>
                 );
@@ -467,11 +461,8 @@ export function ActivityPage() {
         ) : (
           <>
             {selectedDay && (
-              <div className="filter-note">
-                Agenda {displayDate(selectedDay)}
-                <button className="text-btn" onClick={() => setSelectedDay("")}>
-                  Tampilkan sebulan
-                </button>
+              <div className="filter-note">{tr("Agenda {{value0}}", {value0: displayDate(selectedDay)})}
+                <button className="text-btn" onClick={() => setSelectedDay("")}>{tr("Tampilkan sebulan")}</button>
               </div>
             )}
             {agenda.length ? (
@@ -501,8 +492,7 @@ export function ActivityPage() {
                     <div className="agenda-time">
                       <span>
                         <Clock size={14} />
-                        {displayTime(a.start_at)}–{displayTime(a.end_at)} WIB
-                      </span>
+                        {displayTime(a.start_at)}–{displayTime(a.end_at)} WIB</span>
                       <Badge value={a.status} label={STATUS_LABEL[a.status]} />
                     </div>
                     <ArrowRight size={16} />
@@ -511,20 +501,20 @@ export function ActivityPage() {
               </div>
             ) : (
               <Empty
-                title="Belum ada kegiatan"
-                description="Tambahkan rencana kegiatan atau sesuaikan filter."
+                title={tr("Belum ada kegiatan")}
+                description={tr("Tambahkan rencana kegiatan atau sesuaikan filter.")}
               />
             )}
           </>
         )}
         <div className="card-foot">
-          {inMonth.length} kegiatan pada bulan ini{" "}
-          <span>Seluruh jadwal ditampilkan dalam WIB (UTC+7).</span>
+          {tr("{{value0}} kegiatan pada bulan ini", {value0: inMonth.length})}{" "}
+          <span>{tr("Seluruh jadwal ditampilkan dalam WIB (UTC+7).")}</span>
         </div>
       </div>
       {edit && (
         <EntityForm
-          title={edit.id ? "Edit kegiatan" : "Rencanakan kegiatan"}
+          title={edit.id ? (tr("Edit kegiatan")) : (tr("Rencanakan kegiatan"))}
           initial={{
             ...edit,
             start_at: localInput(edit.start_at!),
@@ -540,20 +530,20 @@ export function ActivityPage() {
               timezone: "Asia/Jakarta",
             };
             if (new Date(payload.end_at) <= new Date(payload.start_at))
-              throw Error("Waktu selesai harus setelah mulai.");
+              throw Error(tr("Waktu selesai harus setelah mulai."));
             if (
               !payload.account_id &&
               payload.type !== "internal" &&
               !payload.notes?.trim()
             )
               throw Error(
-                "Pilih instansi atau isi konteks kegiatan pada catatan.",
+                tr("Pilih instansi atau isi konteks kegiatan pada catatan."),
               );
             const op = data.opportunities.find(
               (o) => o.id === payload.opportunity_id,
             );
             if (op && payload.account_id !== op.account_id)
-              throw Error("Peluang yang dipilih berasal dari instansi lain.");
+              throw Error(tr("Peluang yang dipilih berasal dari instansi lain."));
             if (edit.id && ["approved", "in_progress"].includes(edit.status!)) {
               if (
                 [
@@ -577,7 +567,7 @@ export function ActivityPage() {
         />
       )}
       {detail && !edit && !action && !report && !task && (
-        <Dialog title="Detail kegiatan" onClose={() => setDetailId("")} wide>
+        <Dialog title={tr("Detail kegiatan")} onClose={() => setDetailId("")} wide>
           <div className="dialog-body">
             <div className="detail-title">
               <div>
@@ -596,83 +586,62 @@ export function ActivityPage() {
             <div className="detail-grid">
               <div>
                 <span className="detail-label">
-                  <CalendarDays size={15} />
-                  Jadwal
-                </span>
+                  <CalendarDays size={15} />{tr("Jadwal")}</span>
                 <strong>
-                  {displayDate(detail.start_at)}, {displayTime(detail.start_at)}{" "}
-                  WIB
-                </strong>
+                  {displayDate(detail.start_at)}, {displayTime(detail.start_at)} WIB</strong>
+                <p>{tr("s.d. ")}{displayDate(detail.end_at)},{" "}
+                  {displayTime(detail.end_at)} WIB</p>
+              </div>
+              <div>
+                <span className="detail-label">
+                  <MapPin size={15} />{tr("Lokasi")}</span>
+                <strong>{detail.location || (tr("Belum ditentukan"))}</strong>
+              </div>
+              <div>
+                <span className="detail-label">
+                  <Users size={15} />{tr("Tim pelaksana")}</span>
+                <strong>{tr("{{value0}} (koordinator)", {value0: person(detail.owner_id)})}</strong>
                 <p>
-                  s.d. {displayDate(detail.end_at)},{" "}
-                  {displayTime(detail.end_at)} WIB
+                  {detail.participant_ids.map(person).join(", ") || (tr("Tanpa anggota tambahan"))}
                 </p>
               </div>
               <div>
                 <span className="detail-label">
-                  <MapPin size={15} />
-                  Lokasi
-                </span>
-                <strong>{detail.location || "Belum ditentukan"}</strong>
-              </div>
-              <div>
-                <span className="detail-label">
-                  <Users size={15} />
-                  Tim pelaksana
-                </span>
-                <strong>{person(detail.owner_id)} (koordinator)</strong>
-                <p>
-                  {detail.participant_ids.map(person).join(", ") ||
-                    "Tanpa anggota tambahan"}
-                </p>
-              </div>
-              <div>
-                <span className="detail-label">
-                  <Box size={15} />
-                  Produk & unit
-                </span>
+                  <Box size={15} />{tr("Produk & unit")}</span>
                 <strong>{product(detail.product_id)}</strong>
                 <p>
                   {detail.equipment_ids
                     .map((id) => data.equipment.find((e) => e.id === id)?.code)
-                    .join(", ") || "Tanpa reservasi unit"}
+                    .join(", ") || (tr("Tanpa reservasi unit"))}
                 </p>
               </div>
             </div>
             <div className="detail-section">
-              <h3>Tujuan</h3>
+              <h3>{tr("Tujuan")}</h3>
               <p className="pre-wrap">{detail.objective || "—"}</p>
               {detail.notes && <p className="muted pre-wrap">{detail.notes}</p>}
             </div>
             <div className="detail-section">
-              <h3>Anggaran & pelaksanaan</h3>
-              <p>
-                Anggaran {money(detail.budget)} · Realisasi{" "}
-                {money(detail.actual_cost)} · Peserta{" "}
-                {detail.attendance_count || 0}
-              </p>
+              <h3>{tr("Anggaran & pelaksanaan")}</h3>
+              <p>{tr("Anggaran {{value0}} · Realisasi {{value1}} · Peserta {{value2}}", {value0: money(detail.budget), value1: money(detail.actual_cost), value2: detail.attendance_count || 0})}</p>
             </div>
             {detail.approval_note && (
               <div className="info-banner">{detail.approval_note}</div>
             )}
             {detail.report && (
               <div className="detail-section">
-                <h3>Laporan pelaksanaan</h3>
+                <h3>{tr("Laporan pelaksanaan")}</h3>
                 <p className="pre-wrap">{detail.report}</p>
-                <h4>Hasil & feedback</h4>
+                <h4>{tr("Hasil & feedback")}</h4>
                 <p className="pre-wrap">{detail.outcome}</p>
                 {detail.follow_up_date && (
-                  <p>
-                    Target tindak lanjut: {displayDate(detail.follow_up_date)}
-                  </p>
+                  <p>{tr("Target tindak lanjut: {{value0}}", {value0: displayDate(detail.follow_up_date)})}</p>
                 )}
               </div>
             )}
             <div className="detail-section">
               <h3>
-                <Paperclip size={16} />
-                Dokumen pendukung
-              </h3>
+                <Paperclip size={16} />{tr("Dokumen pendukung")}</h3>
               {data.activity_attachments
                 .filter((f) => f.activity_id === detail.id)
                 .map((f) => (
@@ -683,7 +652,7 @@ export function ActivityPage() {
                     </span>
                     <button
                       className="icon-btn"
-                      aria-label={`Unduh ${f.file_name}`}
+                      aria-label={tr("Unduh {{value0}}", { value0: (f.file_name) })}
                       onClick={async () => {
                         try {
                           const { data: d, error: e } = await supabase!.storage
@@ -707,9 +676,7 @@ export function ActivityPage() {
               {editable && (
                 <label className="upload-btn">
                   <Paperclip size={15} />
-                  {busy
-                    ? "Mengunggah…"
-                    : "Tambah PDF, JPG, PNG, DOCX (maks. 10 MB)"}
+                  {busy ? (tr("Mengunggah…")) : (tr("Tambah PDF, JPG, PNG, DOCX (maks. 10 MB)"))}
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png,.docx"
@@ -723,9 +690,7 @@ export function ActivityPage() {
                 </label>
               )}
               {demo && (
-                <small>
-                  Unggah bukti memerlukan lingkungan Supabase aktif.
-                </small>
+                <small>{tr("Unggah bukti memerlukan lingkungan Supabase aktif.")}</small>
               )}
             </div>
             {error && (
@@ -744,18 +709,14 @@ export function ActivityPage() {
                   setError("");
                 }}
               >
-                <Edit3 size={15} />
-                Edit
-              </button>
+                <Edit3 size={15} />{tr("Edit")}</button>
             )}
             {editable && ["draft", "rejected"].includes(detail.status) && (
               <button
                 className="btn primary"
                 disabled={busy}
                 onClick={() => void statusChange("submitted")}
-              >
-                Ajukan persetujuan
-              </button>
+              >{tr("Ajukan persetujuan")}</button>
             )}
             {manager && detail.status === "submitted" && (
               <>
@@ -764,17 +725,13 @@ export function ActivityPage() {
                   onClick={() =>
                     setAction({ status: "rejected", title: "Tolak pengajuan" })
                   }
-                >
-                  Tolak
-                </button>
+                >{tr("Tolak")}</button>
                 <button
                   className="btn primary"
                   disabled={busy}
                   onClick={() => void statusChange("approved")}
                 >
-                  <CheckCircle2 size={15} />
-                  Setujui
-                </button>
+                  <CheckCircle2 size={15} />{tr("Setujui")}</button>
               </>
             )}
             {editable && detail.status === "approved" && (
@@ -782,22 +739,16 @@ export function ActivityPage() {
                 className="btn primary"
                 disabled={busy}
                 onClick={() => void statusChange("in_progress")}
-              >
-                Mulai kegiatan
-              </button>
+              >{tr("Mulai kegiatan")}</button>
             )}
             {editable &&
               ["in_progress", "completed"].includes(detail.status) && (
                 <button className="btn primary" onClick={() => setReport(true)}>
-                  {detail.status === "completed"
-                    ? "Edit laporan"
-                    : "Selesaikan & laporkan"}
+                  {detail.status === "completed" ? (tr("Edit laporan")) : (tr("Selesaikan & laporkan"))}
                 </button>
               )}
             {editable && (
-              <button className="btn secondary" onClick={() => setTask(true)}>
-                Buat tindak lanjut
-              </button>
+              <button className="btn secondary" onClick={() => setTask(true)}>{tr("Buat tindak lanjut")}</button>
             )}
             {editable &&
               !["completed", "cancelled"].includes(detail.status) && (
@@ -809,21 +760,19 @@ export function ActivityPage() {
                       title: "Batalkan kegiatan",
                     })
                   }
-                >
-                  Batalkan
-                </button>
+                >{tr("Batalkan")}</button>
               )}
           </div>
         </Dialog>
       )}
       {detail && action && (
         <EntityForm
-          title={action.title}
+          title={tr(action.title)}
           initial={{ approval_note: "" }}
           fields={[
             {
               key: "approval_note",
-              label: "Alasan / catatan",
+              label: tr("Alasan / catatan"),
               type: "textarea",
               required: true,
             },
@@ -841,44 +790,44 @@ export function ActivityPage() {
       )}
       {detail && report && (
         <EntityForm
-          title="Laporan pelaksanaan"
+          title={tr("Laporan pelaksanaan")}
           initial={detail}
           fields={[
             {
               key: "report",
-              label: "Ringkasan pelaksanaan, kendala, dan next action",
+              label: tr("Ringkasan pelaksanaan, kendala, dan next action"),
               type: "textarea",
               required: true,
-              help: "Minimum 10 karakter. Hindari data pasien.",
+              help: tr("Minimum 10 karakter. Hindari data pasien."),
             },
             {
               key: "outcome",
-              label: "Hasil dibanding tujuan & feedback pelanggan",
+              label: tr("Hasil dibanding tujuan & feedback pelanggan"),
               type: "textarea",
               required: true,
             },
             {
               key: "attendance_count",
-              label: "Jumlah peserta",
+              label: tr("Jumlah peserta"),
               type: "number",
               min: 0,
             },
             {
               key: "actual_cost",
-              label: "Biaya aktual (Rp)",
+              label: tr("Biaya aktual (Rp)"),
               type: "number",
               min: 0,
             },
             {
               key: "follow_up_date",
-              label: "Target tindak lanjut",
+              label: tr("Target tindak lanjut"),
               type: "date",
             },
           ]}
           onClose={() => setReport(false)}
           onSave={async (row) => {
             if (row.report.trim().length < 10)
-              throw Error("Ringkasan laporan minimum 10 karakter.");
+              throw Error(tr("Ringkasan laporan minimum 10 karakter."));
             await save("activities", { ...row, status: "completed" });
             setReport(false);
           }}
@@ -886,7 +835,7 @@ export function ActivityPage() {
       )}
       {detail && task && (
         <EntityForm
-          title="Tindak lanjut kegiatan"
+          title={tr("Tindak lanjut kegiatan")}
           initial={{
             title: "",
             assigned_to: detail.owner_id,
@@ -899,18 +848,18 @@ export function ActivityPage() {
             notes: "",
           }}
           fields={[
-            { key: "title", label: "Tindak lanjut", required: true },
+            { key: "title", label: tr("Tindak lanjut"), required: true },
             {
               key: "assigned_to",
-              label: "Penanggung jawab",
+              label: tr("Penanggung jawab"),
               type: "select",
               options: activePeople,
               required: true,
             },
-            { key: "due_date", label: "Tenggat", type: "date", required: true },
+            { key: "due_date", label: tr("Tenggat"), type: "date", required: true },
             {
               key: "priority",
-              label: "Prioritas",
+              label: tr("Prioritas"),
               type: "select",
               options: options({
                 low: "Rendah",
@@ -919,7 +868,7 @@ export function ActivityPage() {
               }),
               required: true,
             },
-            { key: "notes", label: "Catatan", type: "textarea" },
+            { key: "notes", label: tr("Catatan"), type: "textarea" },
           ]}
           onClose={() => setTask(false)}
           onSave={async (row) => {

@@ -1,3 +1,5 @@
+// localized-ui-v1
+import { tr, localizedLabel } from "./i18n";
 import React, { useEffect, useRef, useState } from "react";
 import { Search, X, Inbox, LoaderCircle, ArrowUpRight } from "lucide-react";
 import { friendlyError } from "./store";
@@ -15,16 +17,16 @@ export function PageHead({
   return (
     <div className="page-head">
       <div>
-        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-        <h1>{title}</h1>
-        {description && <p>{description}</p>}
+        {eyebrow && <div className="eyebrow">{tr(eyebrow)}</div>}
+        <h1>{tr(title)}</h1>
+        {description && <p>{tr(description)}</p>}
       </div>
       {action && <div className="page-actions">{action}</div>}
     </div>
   );
 }
 export function Badge({ value, label }: { value: string; label?: string }) {
-  return <span className={`badge badge-${value}`}>{label || value}</span>;
+  return <span className={`badge badge-${value}`}>{tr(label || value)}</span>;
 }
 export function Empty({
   title,
@@ -40,8 +42,8 @@ export function Empty({
       <div className="empty-icon">
         <Inbox size={27} />
       </div>
-      <h3>{title}</h3>
-      {description && <p>{description}</p>}
+      <h3>{tr(title)}</h3>
+      {description && <p>{tr(description)}</p>}
       {action}
     </div>
   );
@@ -62,13 +64,13 @@ export function SearchToolbar({
       <label className="search-field">
         <Search size={17} />
         <input
-          aria-label={placeholder}
+          aria-label={tr(placeholder)}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={placeholder}
+          placeholder={tr(placeholder)}
         />
         {search && (
-          <button aria-label="Hapus pencarian" onClick={() => setSearch("")}>
+          <button aria-label={tr("Hapus pencarian")} onClick={() => setSearch("")}>
             <X size={14} />
           </button>
         )}
@@ -111,7 +113,7 @@ export function Dialog({
           type="button"
           className="icon-btn"
           onClick={onClose}
-          aria-label="Tutup dialog"
+          aria-label={tr("Tutup dialog")}
         >
           <X size={20} />
         </button>
@@ -160,7 +162,7 @@ export function EntityForm({
   const set = (k: string, v: unknown) => setValues((s) => ({ ...s, [k]: v }));
   return (
     <Dialog
-      title={title}
+      title={tr(title)}
       onClose={() => {
         if (!busy) onClose();
       }}
@@ -180,7 +182,7 @@ export function EntityForm({
                   row[f.key] === "" ||
                   (Array.isArray(row[f.key]) && !row[f.key].length))
               )
-                throw Error(`${f.label} wajib diisi.`);
+                throw Error(tr("{{value0}} wajib diisi.", { value0: tr(f.label) }));
               if (f.type === "number") row[f.key] = Number(row[f.key] || 0);
               if (f.type === "checkbox") row[f.key] = !!row[f.key];
               if (f.type === "multiselect") row[f.key] = row[f.key] || [];
@@ -201,7 +203,7 @@ export function EntityForm({
                 key={f.key}
               >
                 <span>
-                  {f.label}
+                  {tr(f.label)}
                   {f.required && <b className="required"> *</b>}
                 </span>
                 {f.type === "textarea" ? (
@@ -220,10 +222,10 @@ export function EntityForm({
                     value={values[f.key] ?? ""}
                     onChange={(e) => set(f.key, e.target.value)}
                   >
-                    <option value="">Pilih…</option>
+                    <option value="">{tr("Pilih…")}</option>
                     {f.options?.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {localizedLabel(o)}
                       </option>
                     ))}
                   </select>
@@ -246,11 +248,11 @@ export function EntityForm({
                               )
                             }
                           />
-                          {o.label}
+                          {localizedLabel(o)}
                         </label>
                       ))
                     ) : (
-                      <small>Belum ada pilihan tersedia.</small>
+                      <small>{tr("Belum ada pilihan tersedia.")}</small>
                     )}
                   </div>
                 ) : f.type === "checkbox" ? (
@@ -272,7 +274,7 @@ export function EntityForm({
                     onChange={(e) => set(f.key, e.target.value)}
                   />
                 )}
-                {f.help && <small>{f.help}</small>}
+                {f.help && <small>{tr(f.help)}</small>}
               </label>
             ))}
           </div>
@@ -288,12 +290,9 @@ export function EntityForm({
             className="btn secondary"
             disabled={busy}
             onClick={onClose}
-          >
-            Batal
-          </button>
+          >{tr("Batal")}</button>
           <button className="btn primary" disabled={busy}>
-            {busy && <LoaderCircle className="spin" size={16} />}Simpan
-          </button>
+            {busy && <LoaderCircle className="spin" size={16} />}{tr("Simpan")}</button>
         </div>
       </form>
     </Dialog>
@@ -321,12 +320,12 @@ export function StatCard({
       disabled={!onClick}
     >
       <div className="stat-top">
-        <span>{label}</span>
+        <span>{tr(label)}</span>
         <span className="stat-icon">{icon}</span>
       </div>
       <div className="stat-value">{value}</div>
       <div className="stat-note">
-        {note || "Berdasarkan data aktif"}
+        {tr(note || "Berdasarkan data aktif")}
         {onClick && <ArrowUpRight size={14} />}
       </div>
     </button>

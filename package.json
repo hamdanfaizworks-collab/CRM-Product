@@ -8,7 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
-    "test:db": "node scripts/test-db.mjs"
+    "test:db": "node scripts/test-db.mjs",
+    "build:hostinger": "node scripts/verify-deploy-env.mjs && npm run build",
+    "test:deploy-env": "node --test scripts/verify-deploy-env.check.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",
@@ -27,5 +29,8 @@
     "happy-dom": "21.0.4",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.9"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

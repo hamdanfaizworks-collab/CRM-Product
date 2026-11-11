@@ -1,3 +1,5 @@
+// localized-ui-v1
+import { getLanguage, getLocale, tr } from "./i18n";
 import { useState, type ReactNode } from "react";
 import {
   ArrowRight,
@@ -71,7 +73,7 @@ function MemberName({ member }: { member: Profile }) {
         <strong>{member.full_name}</strong>
         <small className="muted">
           {ROLE_LABEL[member.role]}
-          {!member.active ? " · Nonaktif" : ""}
+          {!member.active ? (tr(" · Nonaktif")) : ("")}
         </small>
       </span>
     </div>
@@ -101,7 +103,7 @@ function PeriodToolbar({
     <div className="toolbar insights-filters">
       <div className="toolbar-filters">
         <label className="field">
-          <span>Dari tanggal (WIB)</span>
+          <span>{tr("Dari tanggal (WIB)")}</span>
           <input
             type="date"
             value={from}
@@ -110,7 +112,7 @@ function PeriodToolbar({
           />
         </label>
         <label className="field">
-          <span>Sampai tanggal (WIB)</span>
+          <span>{tr("Sampai tanggal (WIB)")}</span>
           <input
             type="date"
             value={to}
@@ -119,16 +121,16 @@ function PeriodToolbar({
           />
         </label>
         <label className="field">
-          <span>Anggota tim</span>
+          <span>{tr("Anggota tim")}</span>
           <select
             value={member}
             onChange={(event) => setMember(event.target.value)}
           >
-            <option value="">Seluruh tim</option>
+            <option value="">{tr("Seluruh tim")}</option>
             {members.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.full_name}
-                {person.active ? "" : " (nonaktif)"}
+                {person.active ? ("") : (tr(" (nonaktif)"))}
               </option>
             ))}
           </select>
@@ -142,9 +144,7 @@ function PeriodToolbar({
           setFrom(month.from);
           setTo(month.to);
         }}
-      >
-        Bulan ini
-      </button>
+      >{tr("Bulan ini")}</button>
     </div>
   );
 }
@@ -152,8 +152,8 @@ function PeriodToolbar({
 function RangeNote({ from, to }: { from: string; to: string }) {
   return (
     <span>
-      {from ? displayDate(from) : "Awal data"} –{" "}
-      {to ? displayDate(to) : "Tanpa batas akhir"}
+      {from ? (displayDate(from)) : (tr("Awal data"))} –{" "}
+      {to ? (displayDate(to)) : (tr("Tanpa batas akhir"))}
     </span>
   );
 }
@@ -285,7 +285,7 @@ export function DashboardPage({
     .sort(
       (a, b) =>
         b.count - a.count ||
-        a.person.full_name.localeCompare(b.person.full_name, "id"),
+        a.person.full_name.localeCompare(b.person.full_name, getLocale()),
     );
   const maximumLoad = Math.max(1, ...workload.map((row) => row.count));
   const distribution = Object.entries(ACTIVITY_LABEL)
@@ -298,22 +298,20 @@ export function DashboardPage({
     .sort((a, b) => b.count - a.count);
   const personName = (id: string) =>
     data.profiles.find((person) => person.id === id)?.full_name ||
-    "Anggota tidak ditemukan";
+    tr("Anggota tidak ditemukan");
 
   return (
     <>
       <PageHead
-        eyebrow="TTM PRODUCT WORKSPACE"
-        title={`Selamat datang, ${profile.full_name.split(" ")[0]}`}
-        description="Satu pandangan untuk prioritas tim, peluang produk, dan kegiatan pelanggan."
+        eyebrow={tr("TTM PRODUCT WORKSPACE")}
+        title={tr("Selamat datang, {{value0}}", { value0: (profile.full_name.split(" ")[0]) })}
+        description={tr("Satu pandangan untuk prioritas tim, peluang produk, dan kegiatan pelanggan.")}
         action={
           <button
             className="btn primary"
             onClick={() => navigate("activities")}
           >
-            <CalendarDays size={17} />
-            Buka kalender
-          </button>
+            <CalendarDays size={17} />{tr("Buka kalender")}</button>
         }
       />
       <PeriodToolbar
@@ -326,46 +324,41 @@ export function DashboardPage({
         members={data.profiles}
       />
       {invalidRange && (
-        <div className="form-error" role="alert">
-          Tanggal akhir harus sama dengan atau setelah tanggal awal.
-        </div>
+        <div className="form-error" role="alert">{tr("Tanggal akhir harus sama dengan atau setelah tanggal awal.")}</div>
       )}
       <div className="filter-note">
         <RangeNote from={from} to={to} />
         <span>
-          {" "}
-          · Kegiatan berdasarkan tanggal mulai WIB; peluang berdasarkan target
-          closing; tugas berdasarkan tenggat.
-        </span>
+          {" "}{tr("· Kegiatan berdasarkan tanggal mulai WIB; peluang berdasarkan target closing; tugas berdasarkan tenggat.")}</span>
       </div>
 
       <div className="stats-grid">
         <StatCard
-          label="Kegiatan periode"
+          label={tr("Kegiatan periode")}
           value={activities.length}
-          note={`${completed.length} selesai · seluruh status`}
+          note={tr("{{value0}} selesai · seluruh status", { value0: (completed.length) })}
           icon={<CalendarDays size={21} />}
           onClick={() => navigate("activities")}
         />
         <StatCard
-          label="Pipeline aktif periode"
+          label={tr("Pipeline aktif periode")}
           value={shortMoney(pipelineValue)}
-          note={`${pipeline.length} peluang · target closing pada periode`}
+          note={tr("{{value0}} peluang · target closing pada periode", { value0: (pipeline.length) })}
           icon={<TrendingUp size={21} />}
           onClick={() => navigate("pipeline")}
         />
         <StatCard
-          label="Menunggu persetujuan"
+          label={tr("Menunggu persetujuan")}
           value={awaiting.length}
-          note="Tanggal mulai kegiatan pada periode"
+          note={tr("Tanggal mulai kegiatan pada periode")}
           icon={<CheckCircle2 size={21} />}
           color="amber"
           onClick={() => navigate("activities")}
         />
         <StatCard
-          label="Tindak lanjut terlambat"
+          label={tr("Tindak lanjut terlambat")}
           value={overdue.length}
-          note="Tenggat pada periode · belum selesai per hari ini"
+          note={tr("Tenggat pada periode · belum selesai per hari ini")}
           icon={<Clock size={21} />}
           color="red"
           onClick={() => navigate("tasks")}
@@ -376,17 +369,13 @@ export function DashboardPage({
         <section className="card">
           <div className="panel-head">
             <div>
-              <h2>Agenda aktif & mendatang</h2>
-              <p className="muted">
-                Maksimum 5 kegiatan pada periode dan anggota terpilih.
-              </p>
+              <h2>{tr("Agenda aktif & mendatang")}</h2>
+              <p className="muted">{tr("Maksimum 5 kegiatan pada periode dan anggota terpilih.")}</p>
             </div>
             <button
               className="btn secondary small"
               onClick={() => navigate("activities")}
-            >
-              Lihat kalender
-              <ArrowRight size={15} />
+            >{tr("Lihat kalender")}<ArrowRight size={15} />
             </button>
           </div>
           {agenda.length ? (
@@ -415,13 +404,12 @@ export function DashboardPage({
                       {data.accounts.find(
                         (account) => account.id === activity.account_id,
                       )?.name ||
-                        activity.location ||
-                        "Kegiatan internal"}{" "}
+                        activity.location || (tr("Kegiatan internal"))}{" "}
                       · {personName(activity.owner_id)}
                     </p>
                   </div>
                   <div className="agenda-time">
-                    <span>{displayTime(activity.start_at)} WIB</span>
+                    <span>{displayTime(activity.start_at)}{tr(" WIB")}</span>
                     <Badge
                       value={activity.status}
                       label={STATUS_LABEL[activity.status]}
@@ -432,50 +420,41 @@ export function DashboardPage({
             </div>
           ) : (
             <Empty
-              title="Agenda sedang lapang"
-              description="Tidak ada reservasi aktif atau mendatang dalam filter ini."
+              title={tr("Agenda sedang lapang")}
+              description={tr("Tidak ada reservasi aktif atau mendatang dalam filter ini.")}
               action={
                 <button
                   className="btn secondary"
                   onClick={() => navigate("activities")}
-                >
-                  Rencanakan kegiatan
-                  <ArrowRight size={15} />
+                >{tr("Rencanakan kegiatan")}<ArrowRight size={15} />
                 </button>
               }
             />
           )}
-          <div className="card-foot">
-            Termasuk diajukan, disetujui, dan berlangsung.
-            <span>Waktu WIB (UTC+7)</span>
+          <div className="card-foot">{tr("Termasuk diajukan, disetujui, dan berlangsung.")}<span>{tr("Waktu WIB (UTC+7)")}</span>
           </div>
         </section>
 
         <section className="card">
           <div className="panel-head">
             <div>
-              <h2>Fokus pipeline</h2>
-              <p className="muted">
-                Peluang aktif dengan target closing pada periode.
-              </p>
+              <h2>{tr("Fokus pipeline")}</h2>
+              <p className="muted">{tr("Peluang aktif dengan target closing pada periode.")}</p>
             </div>
             <Target size={20} aria-hidden="true" />
           </div>
           <div className="metrics-strip">
             <div className="metric-item">
-              <span className="muted">Nilai tertimbang</span>
+              <span className="muted">{tr("Nilai tertimbang")}</span>
               <strong>{shortMoney(weightedValue)}</strong>
             </div>
             <div className="metric-item">
-              <span className="muted">Peluang aktif</span>
+              <span className="muted">{tr("Peluang aktif")}</span>
               <strong>{pipeline.length}</strong>
             </div>
           </div>
           <div className="detail-section">
-            <p className="muted">
-              Nilai tertimbang = nilai peluang × probabilitas. Angka ini
-              merupakan estimasi pipeline, bukan pendapatan.
-            </p>
+            <p className="muted">{tr("Nilai tertimbang = nilai peluang × probabilitas. Angka ini merupakan estimasi pipeline, bukan pendapatan.")}</p>
             {pipeline.length ? (
               <>
                 {pipeline
@@ -488,24 +467,19 @@ export function DashboardPage({
                         <strong>{opportunity.title}</strong>
                         <p className="muted">
                           {displayDate(opportunity.expected_close)} ·{" "}
-                          {opportunity.probability}% probabilitas
-                        </p>
+                          {opportunity.probability}{tr("% probabilitas")}</p>
                       </div>
                       <strong>{shortMoney(opportunity.value)}</strong>
                     </div>
                   ))}
               </>
             ) : (
-              <p>
-                Belum ada peluang aktif dengan target closing dalam filter ini.
-              </p>
+              <p>{tr("Belum ada peluang aktif dengan target closing dalam filter ini.")}</p>
             )}
             <button
               className="btn secondary"
               onClick={() => navigate("pipeline")}
-            >
-              Tinjau peluang
-              <ArrowRight size={15} />
+            >{tr("Tinjau peluang")}<ArrowRight size={15} />
             </button>
           </div>
         </section>
@@ -513,10 +487,8 @@ export function DashboardPage({
         <section className="card">
           <div className="panel-head">
             <div>
-              <h2>Alokasi tim</h2>
-              <p className="muted">
-                Reservasi aktif dari tanggal mulai kegiatan pada periode.
-              </p>
+              <h2>{tr("Alokasi tim")}</h2>
+              <p className="muted">{tr("Reservasi aktif dari tanggal mulai kegiatan pada periode.")}</p>
             </div>
             <Users size={20} aria-hidden="true" />
           </div>
@@ -525,9 +497,9 @@ export function DashboardPage({
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Anggota</th>
-                    <th>Reservasi</th>
-                    <th>Durasi</th>
+                    <th>{tr("Anggota")}</th>
+                    <th>{tr("Reservasi")}</th>
+                    <th>{tr("Durasi")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -537,19 +509,17 @@ export function DashboardPage({
                         <MemberName member={person} />
                       </td>
                       <td>
-                        <strong>{count} kegiatan</strong>
+                        <strong>{count}{tr(" kegiatan")}</strong>
                         <QuantityBar
-                          label={`Reservasi ${person.full_name}`}
+                          label={tr("Reservasi {{value0}}", { value0: (person.full_name) })}
                           value={count}
                           maximum={maximumLoad}
                         />
                       </td>
                       <td>
-                        {hours.toLocaleString("id-ID", {
+                        {hours.toLocaleString(getLocale(), {
                           maximumFractionDigits: 1,
-                        })}{" "}
-                        jam
-                      </td>
+                        })}{" "}{tr("jam")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -557,22 +527,18 @@ export function DashboardPage({
             </div>
           ) : (
             <Empty
-              title="Belum ada anggota dalam filter"
-              description="Pilih seluruh tim atau tambahkan anggota aktif."
+              title={tr("Belum ada anggota dalam filter")}
+              description={tr("Pilih seluruh tim atau tambahkan anggota aktif.")}
             />
           )}
-          <div className="card-foot">
-            Koordinator dan peserta dihitung sekali per kegiatan per orang.
-          </div>
+          <div className="card-foot">{tr("Koordinator dan peserta dihitung sekali per kegiatan per orang.")}</div>
         </section>
 
         <section className="card">
           <div className="panel-head">
             <div>
-              <h2>Komposisi kegiatan</h2>
-              <p className="muted">
-                Seluruh status kegiatan yang cocok dengan filter.
-              </p>
+              <h2>{tr("Komposisi kegiatan")}</h2>
+              <p className="muted">{tr("Seluruh status kegiatan yang cocok dengan filter.")}</p>
             </div>
             <FileText size={20} aria-hidden="true" />
           </div>
@@ -581,14 +547,14 @@ export function DashboardPage({
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Jenis</th>
-                    <th>Jumlah & proporsi</th>
+                    <th>{tr("Jenis")}</th>
+                    <th>{tr("Jumlah & proporsi")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {distribution.map((row) => (
                     <tr key={row.type}>
-                      <td>{row.label}</td>
+                      <td>{tr(row.label)}</td>
                       <td>
                         <strong>{row.count}</strong>
                         <span className="muted">
@@ -596,7 +562,7 @@ export function DashboardPage({
                           · {Math.round((row.count / activities.length) * 100)}%
                         </span>
                         <QuantityBar
-                          label={`${row.label}, ${row.count} dari ${activities.length} kegiatan`}
+                          label={tr("{{value0}}, {{value1}} dari {{value2}} kegiatan", { value0: tr(row.label), value1: (row.count), value2: (activities.length) })}
                           value={row.count}
                           maximum={activities.length}
                         />
@@ -608,23 +574,17 @@ export function DashboardPage({
             </div>
           ) : (
             <Empty
-              title="Belum ada kegiatan pada periode"
-              description="Sesuaikan rentang tanggal atau rencanakan aktivitas tim."
+              title={tr("Belum ada kegiatan pada periode")}
+              description={tr("Sesuaikan rentang tanggal atau rencanakan aktivitas tim.")}
             />
           )}
           <div className="card-foot">
-            <button className="text-btn" onClick={() => navigate("reports")}>
-              Buka laporan lengkap
-              <ArrowRight size={14} />
+            <button className="text-btn" onClick={() => navigate("reports")}>{tr("Buka laporan lengkap")}<ArrowRight size={14} />
             </button>
           </div>
         </section>
       </div>
-      <p className="source-note muted">
-        Kartu membuka modul terkait; filter dashboard tidak otomatis dipindahkan
-        ke modul tersebut. Peluang tanpa target closing dan tugas tanpa tenggat
-        tidak masuk metrik periode.
-      </p>
+      <p className="source-note muted">{tr("Kartu membuka modul terkait; filter dashboard tidak otomatis dipindahkan ke modul tersebut. Peluang tanpa target closing dan tugas tanpa tenggat tidak masuk metrik periode.")}</p>
     </>
   );
 }
@@ -678,12 +638,12 @@ export function ReportsPage() {
   );
   const personName = (id: string) =>
     data.profiles.find((person) => person.id === id)?.full_name ||
-    "Anggota tidak ditemukan";
+    tr("Anggota tidak ditemukan");
   const accountName = (id: string | null) =>
     data.accounts.find((account) => account.id === id)?.name ||
-    "Internal / tanpa instansi";
+    tr("Internal / tanpa instansi");
   const productName = (id: string | null) =>
-    data.products.find((item) => item.id === id)?.name || "Tanpa produk";
+    data.products.find((item) => item.id === id)?.name || tr("Tanpa produk");
   const performance = data.profiles
     .filter(
       (person) =>
@@ -736,56 +696,56 @@ export function ReportsPage() {
     .sort(
       (a, b) =>
         b.completed - a.completed ||
-        a.person.full_name.localeCompare(b.person.full_name, "id"),
+        a.person.full_name.localeCompare(b.person.full_name, getLocale()),
     );
   const filterRows: unknown[][] = [
-    ["TTM Product CRM", "Laporan operasional"],
-    ["Periode WIB", from || "Awal data", to || "Tanpa batas akhir"],
-    ["Anggota", member ? personName(member) : "Seluruh tim"],
+    [tr("TTM Product CRM"), tr("Laporan operasional")],
+    [tr("Periode WIB"), from || tr("Awal data"), to || tr("Tanpa batas akhir")],
+    [tr("Anggota"), member ? personName(member) : tr("Seluruh tim")],
     [
-      "Filter kegiatan",
+      tr("Filter kegiatan"),
       type
         ? ACTIVITY_LABEL[type as keyof typeof ACTIVITY_LABEL]
-        : "Semua jenis",
+        : tr("Semua jenis"),
       status
         ? STATUS_LABEL[status as keyof typeof STATUS_LABEL]
-        : "Semua status",
-      product ? productName(product) : "Semua produk",
+        : tr("Semua status"),
+      product ? productName(product) : tr("Semua produk"),
     ],
     [
-      "Dasar periode",
-      "Kegiatan: tanggal mulai WIB",
-      "Peluang: expected_close",
-      "Tugas: due_date",
+      tr("Dasar periode"),
+      tr("Kegiatan: tanggal mulai WIB"),
+      tr("Peluang: expected_close"),
+      tr("Tugas: due_date"),
     ],
     [
-      "Cakupan filter",
-      "Jenis/status hanya kegiatan; produk juga membatasi peluang; tugas hanya periode dan anggota",
+      tr("Cakupan filter"),
+      tr("Jenis/status hanya kegiatan; produk juga membatasi peluang; tugas hanya periode dan anggota"),
     ],
   ];
   const exportActivities = () =>
-    downloadCSV(`ttm-kegiatan-${from || "awal"}-${to || "akhir"}.csv`, [
+    downloadCSV(`ttm-${getLanguage() === "en" ? "activities" : "kegiatan"}-${from || tr("awal")}-${to || tr("akhir")}.csv`, [
       ...filterRows,
       [],
       [
-        "ID",
-        "Kegiatan",
-        "Jenis",
-        "Status",
-        "Mulai WIB",
-        "Selesai WIB",
-        "Pelanggan",
-        "Produk",
-        "Koordinator",
-        "Anggota tambahan",
-        "Lokasi",
-        "Tujuan",
-        "Laporan",
-        "Hasil",
-        "Target tindak lanjut",
-        "Anggaran IDR",
-        "Realisasi IDR",
-        "Jumlah peserta",
+        tr("ID"),
+        tr("Kegiatan"),
+        tr("Jenis"),
+        tr("Status"),
+        tr("Mulai WIB"),
+        tr("Selesai WIB"),
+        tr("Pelanggan"),
+        tr("Produk"),
+        tr("Koordinator"),
+        tr("Anggota tambahan"),
+        tr("Lokasi"),
+        tr("Tujuan"),
+        tr("Laporan"),
+        tr("Hasil"),
+        tr("Target tindak lanjut"),
+        tr("Anggaran IDR"),
+        tr("Realisasi IDR"),
+        tr("Jumlah peserta"),
       ],
       ...activities.map((activity) => [
         activity.id,
@@ -809,24 +769,24 @@ export function ReportsPage() {
       ]),
     ]);
   const exportPerformance = () =>
-    downloadCSV(`ttm-kinerja-${from || "awal"}-${to || "akhir"}.csv`, [
+    downloadCSV(`ttm-${getLanguage() === "en" ? "performance" : "kinerja"}-${from || tr("awal")}-${to || tr("akhir")}.csv`, [
       ...filterRows,
       [
-        "Catatan atribusi",
-        "Satu kegiatan dapat dihitung untuk beberapa anggota; tidak menunjukkan penjualan teratribusi dari kegiatan",
+        tr("Catatan atribusi"),
+        tr("Satu kegiatan dapat dihitung untuk beberapa anggota; tidak menunjukkan penjualan teratribusi dari kegiatan"),
       ],
       [],
       [
-        "Anggota",
-        "Role",
-        "Kegiatan ditugaskan",
-        "Kegiatan selesai",
-        "Pipeline aktif IDR",
-        "Pipeline tertimbang IDR",
-        "Won IDR",
-        "Tugas periode",
-        "Tugas selesai",
-        "Tugas terlambat per hari ini",
+        tr("Anggota"),
+        tr("Role"),
+        tr("Kegiatan ditugaskan"),
+        tr("Kegiatan selesai"),
+        tr("Pipeline aktif IDR"),
+        tr("Pipeline tertimbang IDR"),
+        tr("Won IDR"),
+        tr("Tugas periode"),
+        tr("Tugas selesai"),
+        tr("Tugas terlambat per hari ini"),
       ],
       ...performance.map((row) => [
         row.person.full_name,
@@ -845,9 +805,9 @@ export function ReportsPage() {
   return (
     <>
       <PageHead
-        eyebrow="INSIGHTS & PERFORMANCE"
-        title="Laporan & kinerja"
-        description="Evaluasi kegiatan, pipeline, dan tindak lanjut dengan dasar periode yang jelas."
+        eyebrow={tr("INSIGHTS & PERFORMANCE")}
+        title={tr("Laporan & kinerja")}
+        description={tr("Evaluasi kegiatan, pipeline, dan tindak lanjut dengan dasar periode yang jelas.")}
         action={
           <div className="page-actions">
             <button
@@ -855,17 +815,13 @@ export function ReportsPage() {
               disabled={invalidRange || !performance.length}
               onClick={exportPerformance}
             >
-              <Download size={16} />
-              Ekspor kinerja
-            </button>
+              <Download size={16} />{tr("Ekspor kinerja")}</button>
             <button
               className="btn primary"
               disabled={invalidRange || !activities.length}
               onClick={exportActivities}
             >
-              <Download size={16} />
-              Ekspor kegiatan
-            </button>
+              <Download size={16} />{tr("Ekspor kegiatan")}</button>
           </div>
         }
       />
@@ -880,12 +836,12 @@ export function ReportsPage() {
           members={data.profiles}
         >
           <label className="field">
-            <span>Jenis kegiatan</span>
+            <span>{tr("Jenis kegiatan")}</span>
             <select
               value={type}
               onChange={(event) => setType(event.target.value)}
             >
-              <option value="">Semua jenis</option>
+              <option value="">{tr("Semua jenis")}</option>
               {Object.entries(ACTIVITY_LABEL).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -894,12 +850,12 @@ export function ReportsPage() {
             </select>
           </label>
           <label className="field">
-            <span>Status kegiatan</span>
+            <span>{tr("Status kegiatan")}</span>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
             >
-              <option value="">Semua status</option>
+              <option value="">{tr("Semua status")}</option>
               {Object.entries(STATUS_LABEL).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -908,12 +864,12 @@ export function ReportsPage() {
             </select>
           </label>
           <label className="field">
-            <span>Produk</span>
+            <span>{tr("Produk")}</span>
             <select
               value={product}
               onChange={(event) => setProduct(event.target.value)}
             >
-              <option value="">Semua produk</option>
+              <option value="">{tr("Semua produk")}</option>
               {data.products.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -924,42 +880,37 @@ export function ReportsPage() {
         </PeriodToolbar>
       </div>
       {invalidRange && (
-        <div className="form-error" role="alert">
-          Tanggal akhir harus sama dengan atau setelah tanggal awal. Ekspor
-          dinonaktifkan.
-        </div>
+        <div className="form-error" role="alert">{tr("Tanggal akhir harus sama dengan atau setelah tanggal awal. Ekspor dinonaktifkan.")}</div>
       )}
       <p className="filter-note" aria-live="polite">
-        <RangeNote from={from} to={to} /> · {activities.length} kegiatan cocok
-        dengan seluruh filter.
-      </p>
+        <RangeNote from={from} to={to} /> · {activities.length}{tr(" kegiatan cocok dengan seluruh filter.")}</p>
       <div className="stats-grid">
         <StatCard
-          label="Kegiatan terpilih"
+          label={tr("Kegiatan terpilih")}
           value={activities.length}
-          note="Berdasarkan tanggal mulai WIB"
+          note={tr("Berdasarkan tanggal mulai WIB")}
           icon={<CalendarDays size={21} />}
         />
         <StatCard
-          label="Kegiatan selesai"
+          label={tr("Kegiatan selesai")}
           value={completed.length}
-          note={`${activities.length ? Math.round((completed.length / activities.length) * 100) : 0}% dari kegiatan terpilih`}
+          note={tr("{{value0}}% dari kegiatan terpilih", { value0: (activities.length ? Math.round((completed.length / activities.length) * 100) : 0) })}
           icon={<CheckCircle2 size={21} />}
           color="green"
         />
         <StatCard
-          label="Peserta kegiatan selesai"
+          label={tr("Peserta kegiatan selesai")}
           value={completed.reduce(
             (sum, activity) => sum + Number(activity.attendance_count || 0),
             0,
           )}
-          note="Jumlah kehadiran · bukan orang unik"
+          note={tr("Jumlah kehadiran · bukan orang unik")}
           icon={<Users size={21} />}
         />
         <StatCard
-          label="Realisasi biaya"
+          label={tr("Realisasi biaya")}
           value={shortMoney(actualCost)}
-          note="Jumlah biaya tercatat pada kegiatan terpilih"
+          note={tr("Jumlah biaya tercatat pada kegiatan terpilih")}
           icon={<FileText size={21} />}
         />
       </div>
@@ -967,33 +918,25 @@ export function ReportsPage() {
       <section className="card">
         <div className="panel-head">
           <div>
-            <h2>Kinerja anggota</h2>
-            <p className="muted">
-              Aktivitas menurut penugasan; peluang menurut owner; tugas menurut
-              penanggung jawab.
-            </p>
+            <h2>{tr("Kinerja anggota")}</h2>
+            <p className="muted">{tr("Aktivitas menurut penugasan; peluang menurut owner; tugas menurut penanggung jawab.")}</p>
           </div>
         </div>
-        <div className="info-banner">
-          Periode peluang memakai <strong>target closing</strong>, tugas memakai{" "}
-          <strong>tenggat</strong>. Jenis/status hanya memfilter kegiatan;
-          produk juga memfilter peluang. Tugas hanya mengikuti periode dan
-          anggota. Won di sini adalah nilai peluang dengan target closing pada
-          periode, bukan bukti transaksi pada tanggal penjualan.
-        </div>
+        <div className="info-banner">{tr("Periode peluang memakai ")}<strong>{tr("target closing")}</strong>{tr(", tugas memakai")}{" "}
+          <strong>{tr("tenggat")}</strong>{tr(". Jenis/status hanya memfilter kegiatan; produk juga memfilter peluang. Tugas hanya mengikuti periode dan anggota. Won di sini adalah nilai peluang dengan target closing pada periode, bukan bukti transaksi pada tanggal penjualan.")}</div>
         {performance.length ? (
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Anggota</th>
-                  <th>Kegiatan</th>
-                  <th>Selesai</th>
-                  <th>Pipeline aktif</th>
-                  <th>Tertimbang</th>
-                  <th>Won</th>
-                  <th>Tugas selesai</th>
-                  <th>Terlambat</th>
+                  <th>{tr("Anggota")}</th>
+                  <th>{tr("Kegiatan")}</th>
+                  <th>{tr("Selesai")}</th>
+                  <th>{tr("Pipeline aktif")}</th>
+                  <th>{tr("Tertimbang")}</th>
+                  <th>{tr("Won")}</th>
+                  <th>{tr("Tugas selesai")}</th>
+                  <th>{tr("Terlambat")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1012,7 +955,7 @@ export function ReportsPage() {
                     </td>
                     <td>
                       {row.overdue ? (
-                        <Badge value="overdue" label={`${row.overdue} tugas`} />
+                        <Badge value="overdue" label={tr("{{value0}} tugas", { value0: (row.overdue) })} />
                       ) : (
                         "0"
                       )}
@@ -1024,38 +967,33 @@ export function ReportsPage() {
           </div>
         ) : (
           <Empty
-            title="Belum ada anggota untuk ditampilkan"
-            description="Sesuaikan filter anggota atau lengkapi data tim."
+            title={tr("Belum ada anggota untuk ditampilkan")}
+            description={tr("Sesuaikan filter anggota atau lengkapi data tim.")}
           />
         )}
-        <div className="card-foot">
-          Kegiatan bersama dihitung sekali untuk setiap anggota yang ditugaskan;
-          total antaranggota dapat melebihi jumlah kegiatan unik.
-        </div>
+        <div className="card-foot">{tr("Kegiatan bersama dihitung sekali untuk setiap anggota yang ditugaskan; total antaranggota dapat melebihi jumlah kegiatan unik.")}</div>
       </section>
 
       <section className="card">
         <div className="panel-head">
           <div>
-            <h2>Rincian kegiatan</h2>
-            <p className="muted">
-              Seluruh filter berlaku pada tabel dan ekspor kegiatan ini.
-            </p>
+            <h2>{tr("Rincian kegiatan")}</h2>
+            <p className="muted">{tr("Seluruh filter berlaku pada tabel dan ekspor kegiatan ini.")}</p>
           </div>
-          <span className="badge">{activities.length} kegiatan</span>
+          <span className="badge">{activities.length}{tr(" kegiatan")}</span>
         </div>
         {activities.length ? (
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Kegiatan / pelanggan</th>
-                  <th>Jadwal WIB</th>
-                  <th>Jenis / status</th>
-                  <th>Tim</th>
-                  <th>Produk</th>
-                  <th>Laporan & hasil</th>
-                  <th>Biaya aktual</th>
+                  <th>{tr("Kegiatan / pelanggan")}</th>
+                  <th>{tr("Jadwal WIB")}</th>
+                  <th>{tr("Jenis / status")}</th>
+                  <th>{tr("Tim")}</th>
+                  <th>{tr("Produk")}</th>
+                  <th>{tr("Laporan & hasil")}</th>
+                  <th>{tr("Biaya aktual")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1090,31 +1028,28 @@ export function ReportsPage() {
                     <td>
                       {personName(activity.owner_id)}
                       <small className="muted">
-                        {activity.participant_ids.length
-                          ? activity.participant_ids.map(personName).join(", ")
-                          : "Tanpa anggota tambahan"}
+                        {activity.participant_ids.length ? (activity.participant_ids.map(personName).join(", ")) : (tr("Tanpa anggota tambahan"))}
                       </small>
                     </td>
                     <td>{productName(activity.product_id)}</td>
                     <td>
                       {activity.report ? (
                         <details>
-                          <summary>Lihat laporan</summary>
+                          <summary>{tr("Lihat laporan")}</summary>
                           <p className="pre-wrap">{activity.report}</p>
                           {activity.outcome && (
                             <p className="pre-wrap">
-                              <strong>Hasil:</strong> {activity.outcome}
+                              <strong>{tr("Hasil:")}</strong> {activity.outcome}
                             </p>
                           )}
                           {activity.follow_up_date && (
-                            <p>
-                              Tindak lanjut:{" "}
+                            <p>{tr("Tindak lanjut:")}{" "}
                               {displayDate(activity.follow_up_date)}
                             </p>
                           )}
                         </details>
                       ) : (
-                        <span className="muted">Belum dilaporkan</span>
+                        <span className="muted">{tr("Belum dilaporkan")}</span>
                       )}
                     </td>
                     <td>{money(activity.actual_cost)}</td>
@@ -1125,16 +1060,12 @@ export function ReportsPage() {
           </div>
         ) : (
           <Empty
-            title="Tidak ada kegiatan sesuai filter"
-            description="Perluas rentang tanggal, jenis, status, produk, atau anggota yang dipilih."
+            title={tr("Tidak ada kegiatan sesuai filter")}
+            description={tr("Perluas rentang tanggal, jenis, status, produk, atau anggota yang dipilih.")}
           />
         )}
       </section>
-      <p className="source-note muted">
-        Peluang tanpa target closing dan tugas tanpa tenggat dikecualikan dari
-        metrik periode. Nilai pipeline adalah estimasi. CSV memuat hasil filter
-        lengkap dan menetralkan awalan formula untuk spreadsheet.
-      </p>
+      <p className="source-note muted">{tr("Peluang tanpa target closing dan tugas tanpa tenggat dikecualikan dari metrik periode. Nilai pipeline adalah estimasi. CSV memuat hasil filter lengkap dan menetralkan awalan formula untuk spreadsheet.")}</p>
     </>
   );
 }

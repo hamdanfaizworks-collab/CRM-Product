@@ -1,10 +1,12 @@
 # Backend Supabase TTM CRM
 
-Backend target: `yqmcafgnryvsrvalbycz`. Dokumen ini menjelaskan artefak yang disiapkan; migrasi belum diterapkan ke target. Dua koneksi connector awal menolak akses. MCP lokal yang kemudian dikonfigurasi berhasil menginspeksi target tetapi memakai `read_only=true`, sehingga tidak memberi kemampuan deployment.
+Backend target: `yqmcafgnryvsrvalbycz`. Schema, seed katalog, private Storage dan Edge Function telah dideploy. Auth invitation-only telah dikonfigurasi, administrator director telah login, dan 23 pemeriksaan hosted termasuk 3 race tests paralel telah lulus dengan fixture dibersihkan. Status yang disepakati adalah pilot director; SMTP tim dan deployment Hostinger mempunyai langkah release tersendiri.
 
 ## Artefak dan kontrak
 
 - `supabase/migrations/20261110222856_ttm_crm_initial.sql`: schema tambahan, RLS, constraints, trigger, indeks, audit, dan bucket privat.
+- `supabase/migrations/20261110222904_ttm_crm_revoke_rls_auto_enable_execute.sql`: hardening helper event trigger target yang telah diverifikasi.
+- `supabase/migrations/20261111015854_ttm_crm_policy_and_fk_indexes.sql`: policy write-only manager yang setara dan 12 indeks FK tambahan.
 - `supabase/seed.sql`: 87 model/produk hasil pembacaan visual katalog; tidak memuat pelanggan, anggota, unit demo, atau penjualan fiktif. `source_page` berarti nomor halaman fisik PDF berbasis 1. Nomor halaman tercetak disimpan pada `specs.source_printed_page`.
 - `supabase/functions/team-admin/index.ts`: endpoint administratif undangan/profil.
 - `scripts/test-db.mjs`: verifikasi PostgreSQL lokal melalui PGlite. Membuat database sementara in-memory, tidak menghubungi target.
@@ -33,7 +35,7 @@ POST `/functions/v1/team-admin`, header `Authorization: Bearer <access_token_use
 
 `update` menerima `id`, `full_name`, `role`, `active`, `region`, `skills`. `update_self` menerima `full_name` dan selalu memakai ID sesi sendiri. Sukses mengembalikan `{profile}` atau `{profile,invitation_sent:true}`; kegagalan `{error}` dengan status HTTP sesuai. Jangan tampilkan sukses bila status/error gagal. Undangan yang terkirim tetapi insert profil gagal menghasilkan error 500 yang eksplisit; Auth user tanpa profil aktif tetap tidak mendapat data bisnis. Operator memperbaiki profil tanpa mengirim undangan ulang secara buta.
 
-Environment Edge: `APP_ORIGIN` dapat mengoverride origin aplikasi (tanpa path/trailing slash); default source adalah origin deployment yang ditetapkan, `https://ttm-product-workspace.hamdanfaiz.chatgpt.site`. Origin ini konfigurasi publik dan dipakai untuk CORS serta redirect undangan; nilainya tidak diambil dari request. Supabase menyediakan `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` pada hosted function; kode juga mendukung `SUPABASE_PUBLISHABLE_KEY`/`SUPABASE_SECRET_KEY`. Secret hanya server. CORS tidak menggantikan autentikasi. Function memvalidasi user melalui `getUser()`, lalu lookup profil aktif dan role; tidak mengotorisasi `user_metadata`.
+Environment Edge: `APP_ORIGINS` dapat mengoverride daftar origin HTTPS exact, dipisahkan koma; `APP_ORIGIN` didukung sebagai fallback legacy. Default source mengizinkan `https://ttm-product-workspace.hamdanfaiz.chatgpt.site` dan `https://cyan-oryx-350189.hostingersite.com`. Header Origin harus cocok persis dengan daftar server; redirect undangan dipilih hanya dari origin yang sudah tervalidasi tersebut. Body tidak dapat memasok redirect bebas. Request tanpa Origin menggunakan Sites pada konfigurasi default. Supabase menyediakan `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` pada hosted function; kode juga mendukung `SUPABASE_PUBLISHABLE_KEY`/`SUPABASE_SECRET_KEY`. Secret hanya server. CORS tidak menggantikan autentikasi. Function memvalidasi user melalui `getUser()`, lalu lookup profil aktif dan role; tidak mengotorisasi `user_metadata`.
 
 ## Deployment setelah akses diperbaiki
 
@@ -73,7 +75,7 @@ Periksa tepat satu baris tersimpan. Terakhir director/admin aktif tidak dapat di
 
 Jalankan `npm run test:db` setelah dependency PGlite terpasang. Tes mencakup schema/seed, anon, nonmember, inactive, viewer, self escalation, ownership, nilai peluang, workflow, approval actor, overlap/adjacency, laporan, cancellation, audit, dan evidence storage RLS.
 
-Hasil verifikasi lokal 11 November 2026: **47 checks SQL/RLS lulus**, seed **87 produk** terbaca, dan `deno check supabase/functions/team-admin/index.ts` lulus menggunakan Deno **2.9.6** serta SDK terpin **2.119.0**. Typecheck bukan bukti endpoint sudah dideploy atau SMTP undangan sudah bekerja.
+Hasil verifikasi lokal 11 November 2026: **47 checks SQL/RLS lulus**, seed **87 produk** terbaca, dan `deno check supabase/functions/team-admin/index.ts` lulus menggunakan Deno **2.9.6** serta SDK terpin **2.119.0**. Typecheck bukan bukti SMTP undangan sudah bekerja.
 
 Pada staging nyata gunakan dua koneksi/transaksi berbeda yang mengajukan dua kegiatan beririsan dengan orang/unit sama secara bersamaan. Hanya satu boleh commit; lainnya harus gagal `23P01`. Ulangi adjacency (keduanya diterima), cancel lalu booking ulang, unit maintenance, pergantian role, serta penonaktifan sesi aktif. Simpan hasil tanpa token/password.
 
@@ -100,3 +102,15 @@ Tidak ada data atau pengaturan target yang ditulis dalam tahap pemeriksaan ini. 
 Endpoint publik Auth `/auth/v1/settings` kemudian mengembalikan `disable_signup:false`, `mailer_autoconfirm:false`, email provider enabled, dan anonymous users disabled. Jadi public signup target **masih aktif** pada pemeriksaan ini dan harus dimatikan sebelum release invitation-only. RLS aplikasi tetap mensyaratkan profil aktif, tetapi konfigurasi Auth tersebut belum sesuai kebijakan onboarding v1. `config.toml` lokal sudah `enable_signup=false`; file lokal tidak otomatis mengubah hosted settings.
 
 Referensi: [RLS Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security), [Auth admin invitation](https://supabase.com/docs/reference/javascript/auth-admin-inviteuserbyemail), [CLI changelog v3](https://supabase.com/changelog/supabase-cli-v3), [PostgreSQL constraints](https://www.postgresql.org/docs/current/ddl-constraints.html).
+
+## Deployment target yang telah terverifikasi
+
+Ketiga migration version/name pada inventaris artefak di atas sesuai history remote. Initial SQL diterapkan utuh, seed berisi 87 produk dengan provenance pada 24 halaman sumber, seluruh 11 tabel CRM ber-RLS, anon tidak mempunyai grant tabel bisnis, dan pengguna aplikasi tidak mempunyai grant tulis/truncate audit. Helper event trigger public telah dicabut hak execute client-nya tanpa mengganti body/event trigger.
+
+Bucket evidence telah diverifikasi public=false, batas 10 MiB, tipe PDF/PNG/JPEG/DOCX. team-admin terbaru berstatus ACTIVE versi 2 dengan verify_jwt=true. Setelah penambahan Hostinger, live preflight memberikan 204 dengan ACAO exact untuk Sites dan Hostinger, serta 403 tanpa ACAO untuk origin asing. Tes ini tidak mengirim undangan atau menulis data.
+
+Setelah migrasi optimasi, advisor tidak lagi melaporkan multiple-permissive-policy atau missing-FK-index untuk tabel CRM. Sebanyak 21 unused-index notices dipertahankan karena database baru belum mempunyai workload representatif. Advisor keamanan terbaru juga menampilkan warning pengamanan password bocor pada konfigurasi Auth; konfigurasi dan dukungan paket perlu diverifikasi operator. Snapshot akses awal pada bagian sebelumnya adalah riwayat pemeriksaan, bukan keadaan deployment terakhir.
+
+Root telah memverifikasi pilot director: akun director berhasil membuat password dan login, Sites versi 2 berhasil, signup publik nonaktif, minimum password 10, serta 23 pemeriksaan hosted termasuk 3 race tests paralel lulus dan seluruh fixture dibersihkan. Jumlah data bisnis sesudah pembersihan: profiles 1, products 87, accounts 0. SMTP tim belum dikonfigurasi. Pemeriksaan backup menunjukkan backup 0 dan PITR false; pengguna menyetujui snapshot JSON lokal yang sudah dihasilkan sebagai artefak outputs. Snapshot tersebut tidak menggantikan kebijakan backup terjadwal.
+
+Untuk persiapan Hostinger, allowed redirect `https://cyan-oryx-350189.hostingersite.com` telah ditambahkan sambil mempertahankan Sites. Site URL utama masih Sites. CLI diff/push hanya mengubah additional_redirect_urls, mempertahankan sembilan properti remote yang tidak dideklarasikan; verifikasi sesudah push menunjukkan nol perbedaan pada properti yang dideklarasikan. Hostinger belum dianggap live sebelum deployment dan smoke test domain itu berhasil.

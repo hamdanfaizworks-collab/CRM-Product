@@ -2751,3 +2751,4 @@ a svg {
     font-size: 9px;
   }
 }
+.language-switcher{display:inline-flex;align-items:center;gap:6px;color:#62758d}.language-switcher select{border:1px solid #dfe6ef;border-radius:6px;color:#526983;background:#fff;height:32px;font-size:10px;padding:0 7px;width:95px}.login-language{align-self:flex-end;margin-bottom:18px}.login-language .language-switcher select{height:34px}@media(max-width:480px){.language-switcher{gap:3px}.language-switcher svg{width:14px}.language-switcher select{width:82px;padding:0 3px;font-size:9px}.topbar-actions{gap:2px}}

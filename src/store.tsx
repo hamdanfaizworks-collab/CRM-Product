@@ -1,3 +1,5 @@
+// localized-ui-v1
+import { tr } from "./i18n";
 import React, {
   createContext,
   useContext,
@@ -44,10 +46,33 @@ export function friendlyError(error: unknown) {
         ? String(error.message)
         : String(error);
   if (/row.level|permission|not authorized|unauthorized/i.test(message))
-    return "Akses ditolak. Periksa role dan keanggotaan Anda.";
+    return tr("Akses ditolak. Periksa role dan keanggotaan Anda.");
   if (/failed to fetch|network|fetch failed/i.test(message))
-    return "Koneksi ke layanan gagal. Periksa internet lalu coba lagi; input Anda tetap tersedia.";
-  return message;
+    return tr("Koneksi ke layanan gagal. Periksa internet lalu coba lagi; input Anda tetap tersedia.");
+  return tr(message);
+}
+export async function unwrapFunctionError(error: unknown): Promise<unknown> {
+  try {
+    if (
+      typeof error !== "object" ||
+      !error ||
+      !("context" in error) ||
+      !(error.context instanceof Response)
+    ) return error;
+    // Read only the user-visible error field; preserve the original response body.
+    const payload: unknown = await error.context.clone().json();
+    if (
+      typeof payload === "object" &&
+      payload !== null &&
+      !Array.isArray(payload) &&
+      "error" in payload &&
+      typeof payload.error === "string" &&
+      payload.error.trim()
+    ) return new Error(payload.error.trim(), { cause: error });
+  } catch {
+    // Network errors, consumed bodies and non-JSON responses retain their SDK error.
+  }
+  return error;
 }
 interface CRMContext {
   data: Data;
@@ -64,7 +89,7 @@ interface CRMContext {
 const Context = createContext<CRMContext | null>(null);
 export const useCRM = () => {
   const c = useContext(Context);
-  if (!c) throw Error("CRM provider missing");
+  if (!c) throw Error(tr("CRM provider missing"));
   return c;
 };
 const nullable = new Set([
@@ -131,7 +156,7 @@ export function CRMProvider({
       setLoading(false);
       return;
     }
-    if (!supabase) throw Error("Konfigurasi Supabase belum tersedia.");
+    if (!supabase) throw Error(tr("Konfigurasi Supabase belum tersedia."));
     const { data: p, error: e } = await supabase
       .from("profiles")
       .select("*")
@@ -140,7 +165,7 @@ export function CRMProvider({
     if (e) throw e;
     if (!p?.active)
       throw Error(
-        "Akun Anda belum memiliki keanggotaan TTM aktif. Hubungi administrator.",
+        tr("Akun Anda belum memiliki keanggotaan TTM aktif. Hubungi administrator."),
       );
     const entries = await Promise.all(
       TABLES.map(async (t) => {
@@ -156,7 +181,7 @@ export function CRMProvider({
           if (d.length < 1000) return [t, rows];
         }
         throw Error(
-          `Data ${t} melebihi batas tampilan 20.000 baris. Perlu paging server sebelum melanjutkan.`,
+          tr("Data {{value0}} melebihi batas tampilan 20.000 baris. Perlu paging server sebelum melanjutkan.", { value0: (t) }),
         );
       }),
     );
@@ -188,7 +213,7 @@ export function CRMProvider({
   ): Promise<Tables[K]> => {
     const current = dataRef.current;
     const actor = current.profiles.find((p) => p.id === userId)!;
-    if (actor?.role === "viewer") throw Error("Viewer memiliki akses baca.");
+    if (actor?.role === "viewer") throw Error(tr("Viewer memiliki akses baca."));
     if (table === "activities") {
       const conflict = conflictFor(
         row as Partial<Activity>,
@@ -248,18 +273,18 @@ export function CRMProvider({
       try {
         await refresh();
       } catch {
-        notify("Data tersimpan. Penyegaran gagal; gunakan tombol muat ulang.");
+        notify(tr("Data tersimpan. Penyegaran gagal; gunakan tombol muat ulang."));
         return result;
       }
     }
     notify(
-      demo ? "Tersimpan di sandbox demo." : "Perubahan tersimpan di Supabase.",
+      demo ? (tr("Tersimpan di sandbox demo.")) : (tr("Perubahan tersimpan di Supabase.")),
     );
     return result;
   };
   const remove = async (table: Table, id: string) => {
     if (!isManager(dataRef.current.profiles.find((p) => p.id === userId)!.role))
-      throw Error("Perubahan memerlukan administrator.");
+      throw Error(tr("Perubahan memerlukan administrator."));
     if (demo)
       persistDemo({
         ...dataRef.current,
@@ -272,23 +297,23 @@ export function CRMProvider({
         .eq("id", id)
         .select("id");
       if (e) throw e;
-      if (!d?.length) throw Error("Data tidak dihapus. Periksa izin akses.");
+      if (!d?.length) throw Error(tr("Data tidak dihapus. Periksa izin akses."));
       await refresh();
     }
-    notify("Data diperbarui.");
+    notify(tr("Data diperbarui."));
   };
   if (loading)
     return (
       <div className="screen-center">
         <div className="spinner" />
-        <h2>Menyiapkan ruang kerja…</h2>
-        <p>Mengambil data dan hak akses Anda.</p>
+        <h2>{tr("Menyiapkan ruang kerja…")}</h2>
+        <p>{tr("Mengambil data dan hak akses Anda.")}</p>
       </div>
     );
   if (error)
     return (
       <div className="screen-center">
-        <h2>Ruang kerja belum terhubung</h2>
+        <h2>{tr("Ruang kerja belum terhubung")}</h2>
         <p className="error-text">{error}</p>
         <button
           className="btn primary"
@@ -299,12 +324,8 @@ export function CRMProvider({
               setLoading(false);
             });
           }}
-        >
-          Coba lagi
-        </button>
-        <button className="btn secondary" onClick={onLogout}>
-          Kembali ke login
-        </button>
+        >{tr("Coba lagi")}</button>
+        <button className="btn secondary" onClick={onLogout}>{tr("Kembali ke login")}</button>
       </div>
     );
   const profile = data.profiles.find(
@@ -312,8 +333,7 @@ export function CRMProvider({
   );
   if (!profile)
     return (
-      <div className="screen-center">
-        Profil tidak ditemukan.<button onClick={onLogout}>Kembali</button>
+      <div className="screen-center">{tr("Profil tidak ditemukan.")}<button onClick={onLogout}>{tr("Kembali")}</button>
       </div>
     );
   return (
@@ -324,7 +344,7 @@ export function CRMProvider({
       {toast && (
         <div role="status" className="toast">
           {toast}
-          <button aria-label="Tutup notifikasi" onClick={() => setToast("")}>
+          <button aria-label={tr("Tutup notifikasi")} onClick={() => setToast("")}>
             ×
           </button>
         </div>

@@ -1,3 +1,4 @@
+import { translatedLabels } from "./i18n";
 export type Role =
   | "director"
   | "admin"
@@ -163,14 +164,14 @@ export interface Tables {
 }
 export type Table = keyof Tables;
 export type Data = { [K in Table]: Tables[K][] };
-export const ROLE_LABEL: Record<Role, string> = {
+export const ROLE_LABEL: Record<Role, string> = translatedLabels({
   director: "Product Director",
   admin: "Administrator",
   product_specialist: "Product Specialist",
   application_specialist: "Application Specialist",
   viewer: "Viewer",
-};
-export const ACTIVITY_LABEL: Record<ActivityType, string> = {
+});
+export const ACTIVITY_LABEL: Record<ActivityType, string> = translatedLabels({
   demo: "Demo",
   presentation: "Presentasi",
   exhibition: "Pameran",
@@ -179,8 +180,8 @@ export const ACTIVITY_LABEL: Record<ActivityType, string> = {
   visit: "Kunjungan",
   internal: "Internal",
   other: "Lainnya",
-};
-export const STATUS_LABEL: Record<ActivityStatus, string> = {
+});
+export const STATUS_LABEL: Record<ActivityStatus, string> = translatedLabels({
   draft: "Draft",
   submitted: "Menunggu persetujuan",
   approved: "Disetujui",
@@ -188,8 +189,8 @@ export const STATUS_LABEL: Record<ActivityStatus, string> = {
   completed: "Selesai",
   rejected: "Ditolak",
   cancelled: "Dibatalkan",
-};
-export const STAGE_LABEL: Record<Stage, string> = {
+});
+export const STAGE_LABEL: Record<Stage, string> = translatedLabels({
   lead: "Lead",
   qualified: "Qualified",
   demo: "Demo / Presentasi",
@@ -197,4 +198,4 @@ export const STAGE_LABEL: Record<Stage, string> = {
   negotiation: "Negosiasi",
   won: "Won",
   lost: "Lost",
-};
+});

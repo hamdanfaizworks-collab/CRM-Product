@@ -1,3 +1,5 @@
+// localized-ui-v1
+import { tr, localizedLabel, useLanguage } from "./i18n";
 import React, { useState } from "react";
 import {
   Plus,
@@ -11,7 +13,7 @@ import {
   Settings2,
   UserRound,
 } from "lucide-react";
-import { useCRM, supabase, resetDemo, friendlyError } from "./store";
+import { useCRM, supabase, resetDemo, unwrapFunctionError } from "./store";
 import {
   PageHead,
   Badge,
@@ -23,11 +25,12 @@ import {
 } from "./ui";
 import { ROLE_LABEL, type Profile, type Role } from "./types";
 import { isManager, displayDate, dateOnly, downloadCSV } from "./rules";
-const roleOptions = Object.entries(ROLE_LABEL).map(([value, label]) => ({
+const roleOptions = () => Object.entries(ROLE_LABEL).map(([value, label]) => ({
   value,
   label,
 }));
 export function TeamPage() {
+  useLanguage();
   const { data, profile, demo, save, refresh, notify } = useCRM();
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
@@ -42,23 +45,23 @@ export function TeamPage() {
         .includes(search.toLowerCase()),
   );
   const fields: Field[] = [
-    { key: "full_name", label: "Nama lengkap", required: true },
-    { key: "email", label: "Email bisnis", type: "email", required: true },
+    { key: "full_name", label: tr("Nama lengkap"), required: true },
+    { key: "email", label: tr("Email bisnis"), type: "email", required: true },
     {
       key: "role",
-      label: "Peran",
+      label: tr("Peran"),
       type: "select",
       required: true,
-      options: roleOptions,
+      options: roleOptions(),
     },
-    { key: "region", label: "Wilayah" },
+    { key: "region", label: tr("Wilayah") },
     {
       key: "skills",
-      label: "Kompetensi / produk",
-      help: "Pisahkan dengan koma.",
+      label: tr("Kompetensi / produk"),
+      help: tr("Pisahkan dengan koma."),
     },
     ...(edit?.id
-      ? [{ key: "active", label: "Anggota aktif", type: "checkbox" } as Field]
+      ? [{ key: "active", label: tr("Anggota aktif"), type: "checkbox" } as Field]
       : []),
   ];
   async function saveTeam(row: any) {
@@ -72,7 +75,7 @@ export function TeamPage() {
           .filter(Boolean),
         active: row.id ? !!row.active : true,
       });
-      notify("Anggota simulasi tersimpan. Tidak ada email undangan dikirim.");
+      notify(tr("Anggota simulasi tersimpan. Tidak ada email undangan dikirim."));
     } else {
       const { data: d, error: e } = await supabase!.functions.invoke(
         "team-admin",
@@ -87,17 +90,15 @@ export function TeamPage() {
           },
         },
       );
-      if (e) throw Error(friendlyError(e));
+      if (e) throw await unwrapFunctionError(e);
       if (d?.error) throw Error(d.error);
       try {
         await refresh();
       } catch {
-        notify("Perubahan tersimpan; muat ulang untuk memperbarui daftar.");
+        notify(tr("Perubahan tersimpan; muat ulang untuk memperbarui daftar."));
       }
       notify(
-        row.id
-          ? "Profil tim diperbarui."
-          : "Undangan telah dikirim melalui Supabase Auth.",
+        row.id ? (tr("Profil tim diperbarui.")) : (tr("Undangan telah dikirim melalui Supabase Auth.")),
       );
     }
     setInvite(false);
@@ -106,9 +107,9 @@ export function TeamPage() {
   return (
     <>
       <PageHead
-        eyebrow="PEOPLE & CAPACITY"
-        title="Tim produk"
-        description="Satu tim, penugasan yang jelas, dan kapasitas yang terlihat."
+        eyebrow={tr("PEOPLE & CAPACITY")}
+        title={tr("Tim produk")}
+        description={tr("Satu tim, penugasan yang jelas, dan kapasitas yang terlihat.")}
         action={
           manager && (
             <button
@@ -122,19 +123,17 @@ export function TeamPage() {
                 });
               }}
             >
-              <Plus size={17} />
-              Undang anggota
-            </button>
+              <Plus size={17} />{tr("Undang anggota")}</button>
           )
         }
       />
       <div className="metrics-strip">
         <div className="metric-item">
-          <span>Anggota aktif</span>
+          <span>{tr("Anggota aktif")}</span>
           <strong>{data.profiles.filter((p) => p.active).length}</strong>
         </div>
         <div className="metric-item">
-          <span>Product Specialist</span>
+          <span>{tr("Product Specialist")}</span>
           <strong>
             {
               data.profiles.filter(
@@ -144,7 +143,7 @@ export function TeamPage() {
           </strong>
         </div>
         <div className="metric-item">
-          <span>Application Specialist</span>
+          <span>{tr("Application Specialist")}</span>
           <strong>
             {
               data.profiles.filter(
@@ -154,7 +153,7 @@ export function TeamPage() {
           </strong>
         </div>
         <div className="metric-item">
-          <span>Penugasan bulan ini</span>
+          <span>{tr("Penugasan bulan ini")}</span>
           <strong>
             {
               data.activities.filter(
@@ -169,17 +168,17 @@ export function TeamPage() {
       <SearchToolbar
         search={search}
         setSearch={setSearch}
-        placeholder="Cari nama, email, atau wilayah…"
+        placeholder={tr("Cari nama, email, atau wilayah…")}
       >
         <select
-          aria-label="Filter peran"
+          aria-label={tr("Filter peran")}
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          <option value="">Semua peran</option>
-          {roleOptions.map((o) => (
+          <option value="">{tr("Semua peran")}</option>
+          {roleOptions().map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {localizedLabel(o)}
             </option>
           ))}
         </select>
@@ -204,7 +203,7 @@ export function TeamPage() {
                 </div>
                 <Badge
                   value={p.active ? "active" : "inactive"}
-                  label={p.active ? "Aktif" : "Nonaktif"}
+                  label={p.active ? (tr("Aktif")) : (tr("Nonaktif"))}
                 />
               </div>
               <h3>{p.full_name}</h3>
@@ -215,7 +214,7 @@ export function TeamPage() {
               </p>
               <p>
                 <MapPin size={14} />
-                {p.region || "Wilayah belum diisi"}
+                {p.region || (tr("Wilayah belum diisi"))}
               </p>
               <div className="tag-list">
                 {(p.skills || []).map((s) => (
@@ -225,18 +224,16 @@ export function TeamPage() {
                 ))}
               </div>
               <div className="team-workload">
-                <span>Kegiatan bulan ini</span>
+                <span>{tr("Kegiatan bulan ini")}</span>
                 <strong>{assigned.length}</strong>
               </div>
               <div className="team-card-foot">
                 <span>
                   <ShieldCheck size={14} />
-                  {p.id === profile.id ? "Akun Anda" : "Akses internal"}
+                  {p.id === profile.id ? (tr("Akun Anda")) : (tr("Akses internal"))}
                 </span>
                 {manager && (
-                  <button className="text-btn" onClick={() => setEdit(p)}>
-                    Kelola profil
-                  </button>
+                  <button className="text-btn" onClick={() => setEdit(p)}>{tr("Kelola profil")}</button>
                 )}
               </div>
             </article>
@@ -245,13 +242,13 @@ export function TeamPage() {
       </div>
       {!rows.length && (
         <Empty
-          title="Anggota tidak ditemukan"
-          description="Sesuaikan pencarian atau filter peran."
+          title={tr("Anggota tidak ditemukan")}
+          description={tr("Sesuaikan pencarian atau filter peran.")}
         />
       )}
       {edit && (
         <EntityForm
-          title={invite ? "Undang anggota tim" : "Kelola anggota"}
+          title={invite ? (tr("Undang anggota tim")) : (tr("Kelola anggota"))}
           initial={{ ...edit, skills: edit.skills?.join(", ") || "" }}
           fields={fields.filter((f) => !edit.id || f.key !== "email")}
           onClose={() => {
@@ -265,6 +262,7 @@ export function TeamPage() {
   );
 }
 export function SettingsPage() {
+  useLanguage();
   const { data, profile, demo, save, refresh, notify } = useCRM();
   const [editProfile, setEditProfile] = useState(false);
   const [editOrg, setEditOrg] = useState(false);
@@ -279,98 +277,73 @@ export function SettingsPage() {
   return (
     <>
       <PageHead
-        eyebrow="WORKSPACE ADMINISTRATION"
-        title="Pengaturan"
-        description="Kelola profil, identitas ruang kerja, dan transparansi perubahan."
+        eyebrow={tr("WORKSPACE ADMINISTRATION")}
+        title={tr("Pengaturan")}
+        description={tr("Kelola profil, identitas ruang kerja, dan transparansi perubahan.")}
       />
       <div className="settings-grid">
         <section className="card settings-card">
           <div className="panel-head">
             <h2>
-              <UserRound size={19} />
-              Profil saya
-            </h2>
-            <button className="text-btn" onClick={() => setEditProfile(true)}>
-              Edit profil
-            </button>
+              <UserRound size={19} />{tr("Profil saya")}</h2>
+            <button className="text-btn" onClick={() => setEditProfile(true)}>{tr("Edit profil")}</button>
           </div>
           <div className="settings-body">
             <strong>{profile.full_name}</strong>
             <p>{profile.email}</p>
             <Badge value={profile.role} label={ROLE_LABEL[profile.role]} />
-            <p className="muted">{profile.region || "Wilayah belum diisi"}</p>
+            <p className="muted">{profile.region || (tr("Wilayah belum diisi"))}</p>
           </div>
         </section>
         <section className="card settings-card">
           <div className="panel-head">
             <h2>
-              <Settings2 size={19} />
-              Organisasi
-            </h2>
+              <Settings2 size={19} />{tr("Organisasi")}</h2>
             {manager && (
-              <button className="text-btn" onClick={() => setEditOrg(true)}>
-                Edit identitas
-              </button>
+              <button className="text-btn" onClick={() => setEditOrg(true)}>{tr("Edit identitas")}</button>
             )}
           </div>
           <div className="settings-body">
             <strong>{org?.name || "Triputra Techno Med"}</strong>
-            <p>Zona waktu tampilan: Asia/Jakarta (WIB)</p>
-            <p className="muted">Nilai komersial menggunakan rupiah (IDR).</p>
+            <p>{tr("Zona waktu tampilan: Asia/Jakarta (WIB)")}</p>
+            <p className="muted">{tr("Nilai komersial menggunakan rupiah (IDR).")}</p>
           </div>
         </section>
         <section className="card settings-card">
           <div className="panel-head">
             <h2>
-              <ShieldCheck size={19} />
-              Lingkungan aplikasi
-            </h2>
+              <ShieldCheck size={19} />{tr("Lingkungan aplikasi")}</h2>
             <Badge
               value={demo ? "draft" : "active"}
-              label={demo ? "Sandbox demo" : "Supabase aktif"}
+              label={demo ? (tr("Sandbox demo")) : (tr("Supabase aktif"))}
             />
           </div>
           <div className="settings-body">
             <p>
-              {demo
-                ? "Data simulasi tersimpan hanya di browser ini."
-                : "Data ruang kerja dibaca dari backend Supabase yang dikonfigurasi."}
+              {demo ? (tr("Data simulasi tersimpan hanya di browser ini.")) : (tr("Data ruang kerja dibaca dari backend Supabase yang dikonfigurasi."))}
             </p>
-            <p className="muted">
-              Akses pengguna mengikuti keanggotaan aktif dan role. Pendaftaran
-              publik tidak tersedia.
-            </p>
+            <p className="muted">{tr("Akses pengguna mengikuti keanggotaan aktif dan role. Pendaftaran publik tidak tersedia.")}</p>
             {demo && (
               <button className="btn secondary" onClick={() => setReset(true)}>
-                <RotateCcw size={15} />
-                Reset data demo
-              </button>
+                <RotateCcw size={15} />{tr("Reset data demo")}</button>
             )}
           </div>
         </section>
         <section className="card settings-card">
           <div className="panel-head">
             <h2>
-              <Download size={19} />
-              Dokumentasi produk
-            </h2>
+              <Download size={19} />{tr("Dokumentasi produk")}</h2>
           </div>
           <div className="settings-body">
-            <p>
-              PRD, panduan operasional, dan checklist go-live tersedia bersama
-              source project.
-            </p>
+            <p>{tr("PRD, panduan operasional, dan checklist go-live tersedia bersama source project.")}</p>
             <a className="btn secondary" href="/PRD.md" download>
-              <Download size={15} />
-              Unduh PRD
-            </a>
+              <Download size={15} />{tr("Unduh PRD")}</a>
             <a
               className="text-btn block"
               href="https://github.com/hamdanfaizworks-collab/CRM-Product"
               target="_blank"
               rel="noreferrer"
-            >
-              Repository project <ExternalLink size={13} />
+            >{tr("Repository project ")}<ExternalLink size={13} />
             </a>
           </div>
         </section>
@@ -379,14 +352,14 @@ export function SettingsPage() {
         <section className="card">
           <div className="panel-head">
             <div>
-              <h2>Audit perubahan</h2>
-              <p>100 peristiwa terbaru yang dapat Anda akses.</p>
+              <h2>{tr("Audit perubahan")}</h2>
+              <p>{tr("100 peristiwa terbaru yang dapat Anda akses.")}</p>
             </div>
             <button
               className="btn secondary small"
               onClick={() =>
                 downloadCSV("ttm-audit.csv", [
-                  ["Waktu", "Entitas", "ID", "Aksi", "Pelaku"],
+                  [tr("Waktu"), tr("Entitas"), tr("ID"), tr("Aksi"), tr("Pelaku")],
                   ...logs.map((l) => [
                     l.occurred_at,
                     l.entity_type,
@@ -398,19 +371,17 @@ export function SettingsPage() {
                 ])
               }
             >
-              <Download size={15} />
-              Ekspor
-            </button>
+              <Download size={15} />{tr("Ekspor")}</button>
           </div>
           {logs.length ? (
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Waktu (WIB)</th>
-                    <th>Entitas</th>
-                    <th>Aksi</th>
-                    <th>Pelaku</th>
+                    <th>{tr("Waktu (WIB)")}</th>
+                    <th>{tr("Entitas")}</th>
+                    <th>{tr("Aksi")}</th>
+                    <th>{tr("Pelaku")}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -431,15 +402,13 @@ export function SettingsPage() {
                       </td>
                       <td>
                         {data.profiles.find((p) => p.id === l.actor_id)
-                          ?.full_name || "Operator sistem"}
+                          ?.full_name || (tr("Operator sistem"))}
                       </td>
                       <td>
                         <button
                           className="text-btn"
                           onClick={() => setAudit(l.id)}
-                        >
-                          Detail
-                        </button>
+                        >{tr("Detail")}</button>
                       </td>
                     </tr>
                   ))}
@@ -448,21 +417,21 @@ export function SettingsPage() {
             </div>
           ) : (
             <Empty
-              title="Belum ada riwayat perubahan"
-              description="Perubahan data berikutnya akan tampil di sini."
+              title={tr("Belum ada riwayat perubahan")}
+              description={tr("Perubahan data berikutnya akan tampil di sini.")}
             />
           )}
         </section>
       )}
       {editProfile && (
         <EntityForm
-          title="Edit profil saya"
+          title={tr("Edit profil saya")}
           initial={{
             full_name: profile.full_name,
             region: profile.region,
             skills: profile.skills.join(", "),
           }}
-          fields={[{ key: "full_name", label: "Nama lengkap", required: true }]}
+          fields={[{ key: "full_name", label: tr("Nama lengkap"), required: true }]}
           onClose={() => setEditProfile(false)}
           onSave={async (row) => {
             const patch = { full_name: row.full_name };
@@ -472,7 +441,7 @@ export function SettingsPage() {
                 "team-admin",
                 { body: { action: "update_self", ...patch } },
               );
-              if (e) throw e;
+              if (e) throw await unwrapFunctionError(e);
               if (d?.error) throw Error(d.error);
               await refresh();
             }
@@ -482,7 +451,7 @@ export function SettingsPage() {
       )}
       {editOrg && (
         <EntityForm
-          title="Identitas organisasi"
+          title={tr("Identitas organisasi")}
           initial={
             org || {
               id: "ttm",
@@ -490,7 +459,7 @@ export function SettingsPage() {
               timezone: "Asia/Jakarta",
             }
           }
-          fields={[{ key: "name", label: "Nama organisasi", required: true }]}
+          fields={[{ key: "name", label: tr("Nama organisasi"), required: true }]}
           onClose={() => setEditOrg(false)}
           onSave={async (row) => {
             await save("org_settings", row);
@@ -499,42 +468,35 @@ export function SettingsPage() {
         />
       )}
       {reset && (
-        <Dialog title="Reset sandbox demo?" onClose={() => setReset(false)}>
+        <Dialog title={tr("Reset sandbox demo?")} onClose={() => setReset(false)}>
           <div className="dialog-body">
-            <p>
-              Perubahan simulasi di browser ini akan diganti dengan contoh awal.
-              Data Supabase tidak terpengaruh.
-            </p>
+            <p>{tr("Perubahan simulasi di browser ini akan diganti dengan contoh awal. Data Supabase tidak terpengaruh.")}</p>
           </div>
           <div className="dialog-footer">
-            <button className="btn secondary" onClick={() => setReset(false)}>
-              Batal
-            </button>
+            <button className="btn secondary" onClick={() => setReset(false)}>{tr("Batal")}</button>
             <button
               className="btn primary"
               onClick={async () => {
                 resetDemo();
                 await refresh();
                 setReset(false);
-                notify("Sandbox demo direset.");
+                notify(tr("Sandbox demo direset."));
               }}
-            >
-              Reset demo
-            </button>
+            >{tr("Reset demo")}</button>
           </div>
         </Dialog>
       )}
       {selected && (
-        <Dialog title="Detail audit" onClose={() => setAudit(null)} wide>
+        <Dialog title={tr("Detail audit")} onClose={() => setAudit(null)} wide>
           <div className="dialog-body">
             <p>
               {selected.entity_type} · {selected.action} · {selected.entity_id}
             </p>
-            <h3>Sebelum</h3>
+            <h3>{tr("Sebelum")}</h3>
             <pre className="audit-json">
               {JSON.stringify(selected.old_data, null, 2)}
             </pre>
-            <h3>Sesudah</h3>
+            <h3>{tr("Sesudah")}</h3>
             <pre className="audit-json">
               {JSON.stringify(selected.new_data, null, 2)}
             </pre>

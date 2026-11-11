@@ -1,0 +1,76 @@
+// @vitest-environment happy-dom
+import React from "react";
+import {afterEach,beforeEach,expect,it,vi} from "vitest";
+import {cleanup,render,screen,waitFor,within} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+vi.mock("@supabase/supabase-js",()=>({createClient:vi.fn(()=>null)}));
+vi.mock("./store",async original=>({...await original<typeof import("./store")>(),supabase:null,configured:false}));
+import {App} from "./App";
+import {setLanguage} from "./i18n";
+beforeEach(()=>{localStorage.clear();location.hash="";setLanguage("id")});
+afterEach(()=>{cleanup();setLanguage("id")});
+it("switches the complete navigation and forms, retains user data, and persists the preference",async()=>{
+ const user=userEvent.setup();const app=render(<App/>);
+ await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
+ expect(screen.getByRole("heading",{name:"Welcome back"})).toBeTruthy();
+ expect(document.documentElement.lang).toBe("en");expect(localStorage.getItem("ttm.crm.language.v1")).toBe("en");
+ await user.click(screen.getByRole("button",{name:"Explore the interactive demo"}));
+ const nav=await screen.findByRole("navigation",{name:"Main navigation"});
+ expect(screen.getByRole("button",{name:"Open navigation"})).toBeTruthy();
+ expect(screen.getByRole("button",{name:"Close navigation"})).toBeTruthy();
+ for(const name of ["Customers","Opportunity pipeline","Calendar & activities","Product catalog","Demo equipment","Product team","Reports","Settings"]){expect(within(nav).getByRole("button",{name})).toBeTruthy()}
+ await user.click(within(nav).getByRole("button",{name:"Customers"}));
+ await user.click(screen.getByRole("button",{name:"Add customer"}));
+ const form=within(await screen.findByRole("dialog"));
+ await user.type(form.getByLabelText(/Organization name/),"Rumah sakit");
+ await user.click(form.getByRole("button",{name:"Save"}));
+ await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
+ expect(screen.getByText("Rumah sakit",{exact:true,selector:"strong"})).toBeTruthy();
+ await user.selectOptions(screen.getByRole("combobox",{name:"System language"}),"id");
+ expect(screen.getByRole("heading",{name:"Pelanggan"})).toBeTruthy();
+ expect(screen.getByRole("navigation",{name:"Navigasi utama"})).toBeTruthy();
+ expect(screen.queryByRole("navigation",{name:"Main navigation"})).toBeNull();
+ expect(screen.getByRole("button",{name:"Buka navigasi"})).toBeTruthy();
+ expect(screen.getByRole("button",{name:"Tutup navigasi"})).toBeTruthy();
+ expect(screen.getByText("Rumah sakit",{exact:true,selector:"strong"})).toBeTruthy();
+ await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
+ app.unmount();render(<App/>);expect(screen.getByRole("heading",{name:"Welcome back"})).toBeTruthy();
+},20000);
+it("exports English report headings while keeping recorded activity titles unchanged",async()=>{
+ const user=userEvent.setup();let downloaded:Blob|undefined;
+ const create=vi.spyOn(URL,"createObjectURL").mockImplementation(blob=>{downloaded=blob as Blob;return "blob:language-test"});
+ const click=vi.spyOn(HTMLAnchorElement.prototype,"click").mockImplementation(()=>{});
+ const revoke=vi.spyOn(URL,"revokeObjectURL").mockImplementation(()=>{});
+ try{render(<App/>);await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
+ await user.click(screen.getByRole("button",{name:"Explore the interactive demo"}));
+ await user.click(within(await screen.findByRole("navigation")).getByRole("button",{name:"Reports"}));
+ await user.click(screen.getByRole("button",{name:"Export activities"}));
+ const csv=await downloaded!.text();expect(csv).toContain('"Activity"');expect(csv).toContain('"Start (WIB)"');expect(csv).toContain("Demo Pixonic Revo Z");
+ }finally{create.mockRestore();click.mockRestore();revoke.mockRestore()}
+},20000);
+it("localizes the member invitation form and preserves a member name that matches an Indonesian UI label",async()=>{
+ const user=userEvent.setup();render(<App/>);
+ await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
+ await user.click(screen.getByRole("button",{name:"Explore the interactive demo"}));
+ await user.click(within(await screen.findByRole("navigation",{name:"Main navigation"})).getByRole("button",{name:"Product team"}));
+ await user.click(screen.getByRole("button",{name:"Invite member"}));
+ const form=within(await screen.findByRole("dialog"));
+ expect(form.getByRole("heading",{name:"Invite a team member"})).toBeTruthy();
+ expect(form.getByText("Separate with commas.")).toBeTruthy();
+ await user.type(form.getByLabelText(/Full name/),"Presentasi");
+ await user.type(form.getByLabelText(/Business email/),"presentasi@example.test");
+ await user.selectOptions(form.getByLabelText(/^Role/),"application_specialist");
+ await user.type(form.getByLabelText(/^Region/),"Bandung");
+ await user.type(form.getByLabelText(/Skills \/ products/),"USG, MRI");
+ await user.click(form.getByRole("button",{name:"Save"}));
+ await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
+ const name=screen.getByRole("heading",{name:"Presentasi"});
+ const member=within(name.closest("article")!);
+ expect(member.getByText("Application Specialist",{exact:true})).toBeTruthy();
+ expect(member.getByText("Bandung",{exact:true})).toBeTruthy();
+ expect(member.getByText("USG",{exact:true})).toBeTruthy();
+ expect(member.getByText("MRI",{exact:true})).toBeTruthy();
+ expect(screen.getByText("The sample member was saved. No invitation email was sent.")).toBeTruthy();
+ await user.selectOptions(screen.getByRole("combobox",{name:"System language"}),"id");
+ expect(screen.getByRole("heading",{name:"Presentasi"})).toBeTruthy();
+},20000);

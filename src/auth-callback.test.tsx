@@ -32,6 +32,31 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 import { App } from "./App";
+
+// CI has no production .env.local. Inject the authenticated boundary explicitly
+// while retaining the real callback capture and the real App password flow.
+vi.mock("./store", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./store")>();
+  window.location.hash = "";
+  return {
+    ...actual,
+    configured: true,
+    supabase: {
+      auth: {
+        getSession: async () => ({
+          data: { session: { user: { id: "invited-user" } } },
+          error: null,
+        }),
+        onAuthStateChange: () => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        }),
+      },
+      from: () => {
+        throw Error("Business data must wait until password setup.");
+      },
+    },
+  };
+});
 afterEach(cleanup);
 it("shows password setup even when Auth consumed the invite callback before mount", async () => {
   render(<App />);

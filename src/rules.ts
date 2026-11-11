@@ -1,17 +1,18 @@
 import type { Activity, Data, Stage, Role } from "./types";
+import { getLocale, getLanguage, tr } from "./i18n";
 export const isManager = (role: Role) =>
   role === "director" || role === "admin";
 export const money = (n: number) =>
-  new Intl.NumberFormat("id-ID", {
+  new Intl.NumberFormat(getLocale(), {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(Number(n) || 0);
 export const shortMoney = (n: number) =>
   Math.abs(n) >= 1e9
-    ? `Rp ${(n / 1e9).toLocaleString("id-ID", { maximumFractionDigits: 1 })} M`
+    ? `${getLanguage()==="en"?"IDR":"Rp"} ${(n / 1e9).toLocaleString(getLocale(), { maximumFractionDigits: 1 })} ${getLanguage()==="en"?"B":"M"}`
     : Math.abs(n) >= 1e6
-      ? `Rp ${(n / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`
+      ? `${getLanguage()==="en"?"IDR":"Rp"} ${(n / 1e6).toLocaleString(getLocale(), { maximumFractionDigits: 1 })} ${getLanguage()==="en"?"M":"jt"}`
       : money(n);
 export const dateOnly = (v: string | Date = new Date(), tz = "Asia/Jakarta") =>
   new Intl.DateTimeFormat("en-CA", {
@@ -29,13 +30,13 @@ export const displayDate = (
   },
 ) =>
   v
-    ? new Intl.DateTimeFormat("id-ID", {
+    ? new Intl.DateTimeFormat(getLocale(), {
         ...opts,
         timeZone: "Asia/Jakarta",
       }).format(new Date(v.length === 10 ? v + "T00:00:00+07:00" : v))
     : "—";
 export const displayTime = (v: string) =>
-  new Intl.DateTimeFormat("id-ID", {
+  new Intl.DateTimeFormat(getLocale(), {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -59,7 +60,7 @@ export const overlaps = (a: string, b: string, c: string, d: string) =>
 export function conflictFor(a: Partial<Activity>, activities: Activity[]) {
   if (!a.start_at || !a.end_at) return "";
   if (new Date(a.end_at) <= new Date(a.start_at))
-    return "Waktu selesai harus setelah waktu mulai.";
+    return tr("Waktu selesai harus setelah waktu mulai.");
   if (!holdingStatuses.includes(a.status || "draft")) return "";
   const people = new Set([a.owner_id, ...(a.participant_ids || [])]);
   const other = activities.find(
@@ -71,7 +72,7 @@ export function conflictFor(a: Partial<Activity>, activities: Activity[]) {
         x.equipment_ids.some((e) => a.equipment_ids?.includes(e))),
   );
   return other
-    ? `Jadwal bentrok dengan “${other.title}”. Pilih waktu, personel, atau unit lain.`
+    ? tr("Jadwal bentrok dengan “{{value0}}”. Pilih waktu, personel, atau unit lain.",{value0:other.title})
     : "";
 }
 export function csvText(rows: unknown[][]) {

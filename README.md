@@ -4,9 +4,13 @@ Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radio
 
 ## Status pengiriman
 
-Source tersedia pada branch `main` di repository GitHub yang diminta. Backend telah diterapkan pada proyek Supabase `yqmcafgnryvsrvalbycz`: 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan Edge Function `team-admin`. Advisor keamanan setelah deployment tidak menemukan isu. Konfigurasi Auth, bootstrap director, serta uji login/persistensi target tetap dicatat terpisah dan belum boleh dianggap selesai hanya karena schema terpasang.
+Source tersedia pada branch `main` di repository GitHub yang diminta. Backend memiliki tiga migrasi (schema, helper hardening, indeks FK/policy), 11 tabel ber-RLS, 87 produk katalog, Storage privat, dan `team-admin`. **23 pemeriksaan API hosted lulus dan pengguna mengonfirmasi director dapat login pilot.** SMTP/undangan/recovery serta rollout tim tetap pending. Advisor Auth terakhir memberi peringatan leaked-password protection; hasil nol temuan sebelumnya adalah snapshot historis. Snapshot bisnis lokal yang disetujui tidak mencakup Auth/Storage blobs; PITR off dan hosted physical backup belum tersedia. **Deployment Hostinger belum dinyatakan live.**
 
-Verifikasi lokal: **40 tes aplikasi lulus** (36 aturan domain, 3 alur DOM, dan 1 regresi callback undangan) serta **47 pemeriksaan SQL/RLS lulus**. TypeScript dan build produksi lulus. Login, dashboard, kalender, dan form kegiatan telah ditinjau di browser, termasuk lebar ponsel 390 px. Baca [status release](docs/RELEASE.md) untuk bukti deployment dan pekerjaan go-live yang masih tertunda.
+Verifikasi final lokal: **51 tes aplikasi, 5 tes guard environment, 47 pemeriksaan SQL/RLS, dan `npm run build:hostinger` lulus**. Suite mencakup domain, alur DOM, callback Auth, bilingual, preservasi data, serta pesan error Edge. Kamus berisi 695 entri; 547 literal yang diperiksa tidak memiliki key hilang. Pemeriksaan browser sebelumnya mencakup login, dashboard, kalender, form kegiatan, dan lebar ponsel 390 px. Baca [status release bilingual](docs/RELEASE.md) untuk bukti dan pekerjaan go-live yang tersisa.
+
+**Indonesia / English:** pemilih bahasa tersedia di login dan ruang kerja. Default Bahasa Indonesia, preferensi tersimpan di localStorage per origin, dan format tampilan mengikuti `id-ID`/`en-GB`; WIB, IDR, serta data pengguna tetap. / The language selector is available before and after sign-in. Indonesian is the default; the preference persists per browser origin. Display formatting changes while WIB, IDR, and user data remain unchanged.
+
+**Hostinger:** target `https://cyan-oryx-350189.hostingersite.com` adalah site PHP/HTML yang telah ada. GitHub Actions membangun source `main` dengan Node 24 dan memublikasikan hanya isi `dist` ke branch `hostinger`; hPanel Git mengambil artifact ke `public_html`. Site/domain tetap; frontend publik disetujui dengan login CRM invitation-only. Provider deployment masih harus diverifikasi. / GitHub Actions builds the existing source and publishes static output for the existing Hostinger site. Deployment is not yet confirmed. Lihat [panduan Hostinger bilingual](docs/HOSTINGER.md).
 
 ## Menjalankan aplikasi
 
@@ -34,17 +38,20 @@ Backend memerlukan migrasi, seed katalog, konfigurasi Auth, dan bootstrap anggot
 
 ```sh
 npm test
+npm run test:deploy-env
 npm run test:db
-npm run build
+npm run build:hostinger
 npm run preview
 ```
 
 - `test`: aturan interval, reservasi sumber daya, keamanan CSV, KPI pipeline, dan tanggal WIB.
+- `test:deploy-env`: lima tes guard target/key/secret untuk environment build tanpa memakai secret produksi.
 - `test:db`: pemeriksaan SQL/RLS lokal sesuai script backend. Keberhasilan lokal tidak menggantikan uji Auth, REST, Storage, dan Edge Function pada proyek target.
 - `build`: pemeriksaan TypeScript dan bundle produksi ke `dist/`.
+- `build:hostinger`: validasi target Supabase dan publishable key sebelum menjalankan build produksi.
 - `preview`: pemeriksaan hasil build lokal; Vite preview bukan server produksi.
 
-CI menjalankan instalasi terkunci, pengujian frontend, build, serta pengujian database tanpa secret produksi. Skenario penerimaan pengguna tersedia pada PRD dan runbook deployment.
+CI menjalankan instalasi terkunci, tes environment/frontend/database, build guarded, dan metadata/artifact release. Job publish terpisah berjalan hanya untuk push `main` setelah verify lulus, dengan izin tulis terbatas pada job tersebut, lalu memublikasikan isi `dist` ke branch `hostinger`. Build memakai konfigurasi Supabase publik, tanpa credential administratif. Skenario penerimaan tersedia pada PRD dan runbook deployment.
 
 ## Dokumentasi dan struktur
 
@@ -53,11 +60,14 @@ CI menjalankan instalasi terkunci, pengujian frontend, build, serta pengujian da
 | [docs/PRD.md](docs/PRD.md) | Tujuan, pengguna, requirement, aturan bisnis, acceptance criteria |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Environment, hosting, Auth, UAT, backup, rollback, bukti go-live |
 | [docs/BACKEND.md](docs/BACKEND.md) | Migrasi, RLS, bootstrap admin, pengelolaan undangan, verifikasi backend |
+| [docs/HOSTINGER.md](docs/HOSTINGER.md) | Jalur actual main → CI → hostinger → public_html; Indonesia/English |
+| [docs/RELEASE.md](docs/RELEASE.md) | Bukti pengujian terkini, pilot director, dan status deployment |
+| [docs/HOSTED-UAT.md](docs/HOSTED-UAT.md) | 23 pemeriksaan API hosted serta batas verifikasi |
 | `src/` | UI React/TypeScript, data access, katalog, aturan dan uji domain |
 | `supabase/` | Migrasi, konfigurasi dan seed backend |
 | `public/ttm-logo.png` | Logo asli yang diekstrak dari katalog pengguna |
 | `scripts/package-static.ps1` | Build dan paket static release untuk hosting alternatif |
-| `.github/workflows/ci.yml` | Pemeriksaan CI tanpa deployment otomatis |
+| `.github/workflows/ci.yml` | Pemeriksaan CI dan publikasi artifact static ke branch hostinger |
 
 ## Data katalog dan batas operasional
 

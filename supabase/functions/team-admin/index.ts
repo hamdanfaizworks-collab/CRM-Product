@@ -3,24 +3,33 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
 const roles = ['director', 'admin', 'product_specialist', 'application_specialist', 'viewer'];
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-// The deployment origin is public configuration, never a caller-supplied redirect.
-// APP_ORIGIN can override it for a separate authorised staging deployment.
+const sitesOrigin = 'https://ttm-product-workspace.hamdanfaiz.chatgpt.site';
+const hostingerOrigin = 'https://cyan-oryx-350189.hostingersite.com';
+function approvedOrigins(): string[] {
+  const configured = Deno.env.get('APP_ORIGINS') || Deno.env.get('APP_ORIGIN') || `${sitesOrigin},${hostingerOrigin}`;
+  return [...new Set(configured.split(',').map(x => x.trim()).filter(value => {
+    try { const url = new URL(value); return url.protocol === 'https:' && url.origin === value && !url.username && !url.password; }
+    catch { return false; }
+  }))];
+}
+// Redirects are chosen only from the exact server-approved origin list.
 Deno.serve(async (req: Request) => {
-  const appOrigin = Deno.env.get('APP_ORIGIN') || 'https://ttm-product-workspace.hamdanfaiz.chatgpt.site';
+  const allowedOrigins = approvedOrigins();
   const origin = req.headers.get('origin');
+  const appOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins.includes(sitesOrigin) ? sitesOrigin : allowedOrigins[0];
   const headers: Record<string, string> = {
     'Content-Type': 'application/json', 'Vary': 'Origin',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
-  if (origin && origin === appOrigin) headers['Access-Control-Allow-Origin'] = origin;
+  if (origin && allowedOrigins.includes(origin)) headers['Access-Control-Allow-Origin'] = origin;
   const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
-  if (origin && origin !== appOrigin) return respond({ error: 'Origin tidak diizinkan.' }, 403);
+  if (origin && !allowedOrigins.includes(origin)) return respond({ error: 'Origin tidak diizinkan.' }, 403);
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (req.method !== 'POST') return respond({ error: 'Gunakan POST.' }, 405);
   const auth = req.headers.get('Authorization') || '';
   if (!/^Bearer \S+$/i.test(auth)) return respond({ error: 'Sesi login diperlukan.' }, 401);
-  if (!appOrigin || !/^https?:\/\//.test(appOrigin)) return respond({ error: 'Konfigurasi APP_ORIGIN belum lengkap.' }, 503);
+  if (!appOrigin) return respond({ error: 'Konfigurasi origin aplikasi belum lengkap.' }, 503);
   const url = Deno.env.get('SUPABASE_URL') || '';
   const publicKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || '';
   const secretKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SECRET_KEY') || '';

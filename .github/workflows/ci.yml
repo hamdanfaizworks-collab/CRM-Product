@@ -27,9 +27,79 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Test business rules
+      - name: Test deployment environment guard
+        run: npm run test:deploy-env
+      - name: Test application and localization
         run: npm test
-      - name: Build frontend
-        run: npm run build
+      - name: Build Hostinger frontend with public configuration
+        run: npm run build:hostinger
+        env:
+          VITE_SUPABASE_URL: https://yqmcafgnryvsrvalbycz.supabase.co
+          # Publishable browser key; never substitute a server/secret key here.
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_RCpFToXj_f8OPWOviSdD2A_1pgL_vpg
       - name: Verify database rules locally
         run: npm run test:db
+      - name: Record release provenance
+        run: node -e "require('fs').writeFileSync('dist/release.json', JSON.stringify({source_commit:process.env.GITHUB_SHA, run_id:process.env.GITHUB_RUN_ID, languages:['id','en']},null,2))"
+      - name: Save verified static website
+        uses: actions/upload-artifact@v7
+        with:
+          name: hostinger-dist
+          path: dist/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-hostinger:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: hostinger-dist
+          path: website
+      - name: Publish compiled files to Hostinger branch
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('node:fs/promises');
+            const path = require('node:path');
+            const repo = context.repo;
+            const branch = 'hostinger';
+            const files = [];
+            async function walk(dir, prefix = '') {
+              for (const entry of await fs.readdir(dir, {withFileTypes: true})) {
+                const relative = prefix + entry.name;
+                if (entry.isSymbolicLink()) throw new Error('Symlinks are forbidden in deployment artifacts.');
+                if (entry.isDirectory()) {
+                  if (relative !== 'assets') throw new Error('Unexpected deployment directory: ' + relative);
+                  await walk(path.join(dir, entry.name), relative + '/');
+                } else if (entry.isFile()) {
+                  if (!/^(index\.html|PRD\.md|release\.json|ttm-logo\.png|\.htaccess|assets\/[A-Za-z0-9_.-]+\.(js|css|woff2?|png|svg))$/.test(relative)) {
+                    throw new Error('Unexpected deployment file: ' + relative);
+                  }
+                  files.push({relative, bytes: await fs.readFile(path.join(dir, entry.name))});
+                } else throw new Error('Unexpected artifact entry.');
+              }
+            }
+            await walk('website');
+            for (const required of ['index.html', '.htaccess', 'release.json', 'ttm-logo.png']) {
+              if (!files.some(file => file.relative === required)) throw new Error('Missing artifact: ' + required);
+            }
+            const tree = [];
+            for (const file of files) {
+              const blob = await github.rest.git.createBlob({...repo, content: file.bytes.toString('base64'), encoding: 'base64'});
+              tree.push({path: file.relative, mode: '100644', type: 'blob', sha: blob.data.sha});
+            }
+            let parent;
+            try { parent = (await github.rest.git.getRef({...repo, ref: 'heads/' + branch})).data.object.sha; }
+            catch (error) { if (error.status !== 404) throw error; }
+            const createdTree = await github.rest.git.createTree({...repo, tree});
+            const commit = await github.rest.git.createCommit({...repo, message: 'deploy: ' + context.sha, tree: createdTree.data.sha, parents: parent ? [parent] : []});
+            if (parent) await github.rest.git.updateRef({...repo, ref: 'heads/' + branch, sha: commit.data.sha, force: false});
+            else await github.rest.git.createRef({...repo, ref: 'refs/heads/' + branch, sha: commit.data.sha});
+            core.notice('Published verified static release ' + commit.data.sha + ' from source ' + context.sha);

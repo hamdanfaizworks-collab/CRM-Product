@@ -1,12 +1,12 @@
 # Product Requirements Document
 # TTM Product CRM
 
-**Perusahaan:** Triputra Techno Med (TTM)  
-**Pemilik produk:** Product Director TTM  
-**Versi:** 1.0 - baseline implementasi  
-**Tanggal:** 11 November 2026, WIB  
-**Status:** PRD disusun; status pembangunan dan go-live harus dibuktikan terpisah melalui hasil pengujian dan deployment.  
-**Repository yang diminta:** https://github.com/hamdanfaizworks-collab/CRM-Product  
+**Perusahaan:** Triputra Techno Med (TTM)
+**Pemilik produk:** Product Director TTM
+**Versi:** 1.1 - baseline implementasi, bilingual, dan kontrak Hostinger
+**Tanggal:** 11 November 2026, WIB
+**Status:** PRD disusun; status pembangunan dan go-live harus dibuktikan terpisah melalui hasil pengujian dan deployment.
+**Repository yang diminta:** https://github.com/hamdanfaizworks-collab/CRM-Product
 **Backend yang diminta:** proyek Supabase `yqmcafgnryvsrvalbycz`
 
 ## 1. Ringkasan produk
@@ -52,8 +52,8 @@ Release awal melayani satu organisasi TTM. Akun hanya dapat digunakan oleh pengg
 
 Asumsi awal:
 
-1. Bahasa antarmuka Indonesia; nilai uang rupiah (`IDR`).
-2. Tanggal/jam ditampilkan dalam `Asia/Jakarta`; penyimpanan timestamp memakai UTC. Dukungan lokasi Indonesia lainnya dapat ditambahkan tanpa mengubah waktu tersimpan.
+1. Bahasa antarmuka **Bahasa Indonesia (`id`) / English (`en`)**, dengan Bahasa Indonesia sebagai default. Nilai uang tetap rupiah (`IDR`).
+2. Tanggal/jam ditampilkan dalam `Asia/Jakarta`; penyimpanan timestamp memakai UTC. Locale tampilan mengikuti bahasa (`id-ID` / `en-GB`), tanpa mengubah zona waktu, nilai uang, atau data tersimpan.
 3. CRM berisi data organisasi dan kontak bisnis, bukan rekam medis, citra pasien, atau informasi klinis pasien.
 4. Persetujuan v1 satu tingkat oleh director/admin. Approval bertingkat berdasarkan biaya adalah pengembangan berikutnya.
 5. Pipeline adalah estimasi komersial, bukan pembukuan atau bukti transaksi.
@@ -76,6 +76,7 @@ Asumsi awal:
 - Tim, role, aktivasi/nonaktif, dan penugasan anggota.
 - Laporan operasional, pipeline, produktivitas, serta ekspor CSV.
 - Pengaturan organisasi, audit perubahan penting, kontrol akses database, dan dokumentasi operasional.
+- Pemilih bahasa Indonesia/English pada login dan ruang kerja, preferensi persisten pada browser, label/validasi/CSV bilingual, serta format angka/tanggal menurut locale.
 
 ### Tidak termasuk v1
 
@@ -86,6 +87,7 @@ ERP/akuntansi, pengadaan stok komersial, invoicing resmi, pengelolaan tender len
 Navigasi utama: **Dashboard, Pelanggan, Pipeline, Kalender & Aktivitas, Tindak Lanjut, Katalog Produk, Unit Demo, Tim, Laporan, Pengaturan**. Akses menu mengikuti role tetapi otorisasi tetap ditegakkan oleh backend.
 
 - Font **Inter** untuk seluruh UI, dengan fallback sans-serif.
+- Pemilih **Bahasa Indonesia / English** tersedia sebelum dan sesudah login. Pergantian bahasa berlaku pada seluruh modul dan tidak mengubah data pengguna.
 - Gaya modern, profesional, rapi: sidebar biru tua, area kerja terang, kartu ringkas, tabel yang mudah dipindai, dan satu warna aksi utama biru TTM.
 - Logo menggunakan aset asli dari katalog. Token warna utama UI adalah biru `#174B8A`, disampling dari logo/heading katalog; abu pendamping `#6B6C6C`. Nilai ini merupakan hasil sampling aset, bukan pernyataan panduan merek korporat resmi.
 - Sediakan status dengan teks dan warna, empty state yang membantu, loading state, validasi form dekat field, serta error yang dapat ditindaklanjuti.
@@ -186,6 +188,14 @@ Pengaturan meliputi identitas organisasi, zona waktu tampilan, serta profil peng
 
 Audit bersifat append-only bagi pengguna aplikasi. Log tidak merekam password, token, atau secret. Kegagalan integrasi tidak diam-diam menyimpan data produksi hanya di browser.
 
+### FR-14. Bahasa Indonesia / English
+
+Antarmuka menyediakan pemilih `id` dan `en` pada layar login dan ruang kerja. Default kunjungan pertama adalah Bahasa Indonesia. Preferensi tersimpan dalam localStorage browser pada key `ttm.crm.language.v1`, dipulihkan setelah reload, dan diterapkan pada tab origin yang sama melalui perubahan storage. Jika penyimpanan preferensi tidak tersedia, pilihan pada sesi berjalan tetap berfungsi. Preferensi bahasa bukan data role, bukan sesi autentikasi, dan tidak memengaruhi izin akses.
+
+Label navigasi, field, opsi enum, status, dialog, tooltip/aria-label, pesan validasi yang dikenali, ringkasan dashboard, dan header/filter ekspor CSV mengikuti bahasa. Interpolasi nama/jumlah mempertahankan nilai aslinya. Locale `id-ID` atau `en-GB` digunakan untuk tanggal, angka, dan singkatan nilai besar; timezone tetap WIB/Asia-Jakarta, mata uang tetap IDR, enum tetap, dan timestamp/date tersimpan tetap ISO/UTC sesuai kontrak data.
+
+Nama orang, pelanggan, produk/brand/model, judul kegiatan/peluang, catatan, laporan, deskripsi, serta spesifikasi/kategori dari data pengguna tidak diterjemahkan otomatis. Label tampilan pilihan referensi UUID harus mempertahankan nama sumber walaupun namanya kebetulan sama dengan key terjemahan. Konten pengguna pada CSV tetap sama; hanya struktur dan label laporan yang bilingual. Preferensi antarorigin (Sites dan Hostinger) berdiri sendiri karena localStorage mengikuti origin.
+
 ## 7. Model data konseptual
 
 | Entitas | Relasi utama dan kontrol |
@@ -261,6 +271,11 @@ Target kecepatan dan volume pengguna perlu ditetapkan setelah jumlah anggota ser
 | AC-20 | Backend gagal atau environment belum diatur | Pesan koneksi jelas; tidak ada klaim sukses/persistensi produksi palsu |
 | AC-21 | Uji UI desktop dan ponsel | Navigasi, form, modal, tabel/agenda dapat digunakan tanpa kontrol terpotong |
 | AC-22 | Build, migrasi, dan deployment dari checkout bersih | Prosedur dapat diulang; versi/source state diketahui |
+| AC-23 | Kunjungan awal dan pergantian bahasa pada login/ruang kerja | Default Indonesia; pilihan English memperbarui UI modul, status, dialog dan validasi tanpa logout |
+| AC-24 | Reload dan tab lain pada origin sama | Preferensi bahasa dipulihkan dan sinkron tanpa memengaruhi sesi/role |
+| AC-25 | Nama referensi UUID sama dengan teks kamus; catatan/brand dibuka | Data pengguna tetap persis; hanya label antarmuka diterjemahkan |
+| AC-26 | Format English untuk waktu, nilai pipeline, dan CSV | Locale berubah; WIB, IDR, jumlah, timestamp, enum dan konten pengguna tetap |
+| AC-27 | Build Hostinger dengan target salah atau secret pada variabel VITE | Build ditolak sebelum bundle dibuat; pesan tidak mencetak secret |
 
 Pengujian minimal mencakup unit business rules (waktu/KPI/CSV), integration/RLS untuk role dan perubahan status, konflik konkurensi, serta smoke test browser untuk login dan satu alur pelanggan → peluang → kegiatan → laporan → follow-up. Hasil uji harus dicatat sebagai lulus/gagal/belum diuji, bukan hanya daftar rencana.
 
@@ -288,7 +303,15 @@ Situs demo atau antarmuka dengan local storage bukan bukti bahwa backend yang di
 - Kedua koneksi Supabase yang tersedia menolak akses ke proyek target.
 - Katalog lokal dapat dibaca untuk pekerjaan kebutuhan dan inventaris produk.
 
-Penyusunan PRD, implementasi lokal, pengujian yang tidak memerlukan akses target, dan packaging tetap dapat dilakukan. Push GitHub, inspeksi schema target, penerapan migrasi, konfigurasi Auth, serta pembuktian go-live harus menunggu koneksi yang berhak. Jangan meminta atau menyalin secret melalui chat/repository; gunakan pengaturan koneksi atau environment yang aman.
+Catatan di atas adalah riwayat awal, bukan status akses terbaru. Akses kemudian diperbaiki: source berada pada GitHub `main`, backend target telah diterapkan dan menjalani 23 pemeriksaan API hosted, dan director mengonfirmasi login pilot. Status terkini beserta batas pengujian berada pada `RELEASE.md` dan `HOSTED-UAT.md`. Jangan menyalin secret melalui chat/repository; gunakan koneksi aplikasi atau environment penyedia yang aman.
+
+### Kontrak deployment Hostinger
+
+Target yang diminta adalah `https://cyan-oryx-350189.hostingersite.com`. Inspeksi hPanel menunjukkan website **PHP/HTML** yang memiliki Git deployment ke `public_html`, tanpa kolom build command. Karena itu build React/Vite berjalan di GitHub Actions dari source branch `main`: Node `24.x`, install `npm ci`, build `npm run build:hostinger`, output `dist`. Workflow memublikasikan hanya isi `dist` ke branch artifact `hostinger`; hPanel mengambil branch tersebut ke `public_html`. Website/domain yang sudah ada dipertahankan, tanpa migrasi ke jenis website baru.
+
+Script build memvalidasi URL proyek Supabase yang diizinkan dan publishable key serta menolak secret administratif dalam variabel browser. Hanya public build variables yang tersedia bagi bundle. Source React tetap pada `main`, sedangkan branch `hostinger` hanya berisi artifact static; source backend, `.env`, `node_modules`, serta credential server tidak ikut ke web root.
+
+Pengaturan origin/redirect Auth dan allowlist `team-admin` adalah persiapan backend, bukan bukti Hostinger telah live. Status deployment Hostinger tetap **pending** sampai provider melaporkan sukses dari commit release yang diketahui dan smoke test HTTPS, login, bilingual, asset, serta alur bisnis berhasil pada origin target. Detail operasional dan alternatif fallback terdapat pada `HOSTINGER.md`.
 
 ## 13. Data dan keputusan yang diperlukan saat onboarding
 
@@ -344,4 +367,3 @@ Logo asli tersedia sebagai hasil crop katalog. Sampling logo dan heading menghas
 ### Catatan kontrak implementasi
 
 Relasi peserta dan unit pada kegiatan dapat disimpan sebagai `participant_ids` dan `equipment_ids` selama integritas, otorisasi, audit, dan validasi bentrok tetap ditegakkan. Laporan dapat tertanam pada record kegiatan, bukan tabel terpisah. Enum pipeline implementasi: `lead`, `qualified`, `demo`, `proposal`, `negotiation`, `won`, `lost`; enum status kegiatan: `draft`, `submitted`, `approved`, `in_progress`, `completed`, `rejected`, `cancelled`.
-

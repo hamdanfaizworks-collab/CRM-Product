@@ -1,3 +1,6 @@
+// localized-ui-v1
+import { tr, useLanguage } from "./i18n";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -59,6 +62,7 @@ const menu = [
   { id: "settings", label: "Pengaturan", icon: Settings },
 ];
 export function App() {
+  useLanguage();
   const [demo, setDemo] = useState(false);
   const [userId, setUserId] = useState("");
   const [authReady, setAuthReady] = useState(!supabase);
@@ -105,7 +109,7 @@ export function App() {
     return (
       <div className="screen-center">
         <div className="spinner" />
-        <p>Memeriksa sesi Anda…</p>
+        <p>{tr("Memeriksa sesi Anda…")}</p>
       </div>
     );
   if (passwordFlow && userId && !demo)
@@ -152,7 +156,7 @@ function Login({
     try {
       if (!supabase)
         throw Error(
-          "Konfigurasi layanan belum tersedia. Hubungi administrator.",
+          tr("Konfigurasi layanan belum tersedia. Hubungi administrator."),
         );
       if (mode === "reset") {
         const { error: e } = await supabase.auth.resetPasswordForEmail(email, {
@@ -160,7 +164,7 @@ function Login({
         });
         if (e) throw e;
         setMessage(
-          "Jika email terdaftar, tautan pemulihan akan dikirim. Periksa kotak masuk Anda.",
+          tr("Jika email terdaftar, tautan pemulihan akan dikirim. Periksa kotak masuk Anda."),
         );
       } else {
         const { error: e } = await supabase.auth.signInWithPassword({
@@ -169,9 +173,7 @@ function Login({
         });
         if (e)
           throw Error(
-            /invalid login/i.test(e.message)
-              ? "Email atau password tidak sesuai."
-              : e.message,
+            /invalid login/i.test(e.message) ? (tr("Email atau password tidak sesuai.")) : (e.message),
           );
       }
     } catch (e) {
@@ -185,37 +187,22 @@ function Login({
       <section className="login-story">
         <div className="login-brand">
           <img src="/ttm-logo.png" alt="Triputra Techno Med" />
-          <span>PRODUCT WORKSPACE</span>
+          <span>{tr("PRODUCT WORKSPACE")}</span>
         </div>
         <div className="login-story-content">
           <span className="login-kicker">
-            <span />
-            CONNECTED PRODUCT MANAGEMENT
-          </span>
-          <h1>
-            Produk yang tepat.
-            <br />
-            Tim yang terhubung.
-            <br />
-            <em>Dampak yang nyata.</em>
+            <span />{tr("CONNECTED PRODUCT MANAGEMENT")}</span>
+          <h1>{tr("Produk yang tepat.")}<br />{tr("Tim yang terhubung.")}<br />
+            <em>{tr("Dampak yang nyata.")}</em>
           </h1>
-          <p>
-            Ruang kerja untuk membangun hubungan pelanggan dan menggerakkan
-            setiap kegiatan tim produk TTM.
-          </p>
+          <p>{tr("Ruang kerja untuk membangun hubungan pelanggan dan menggerakkan setiap kegiatan tim produk TTM.")}</p>
           <div className="login-feature-list">
             <span>
-              <Check size={16} />
-              CRM & pipeline produk
-            </span>
+              <Check size={16} />{tr("CRM & pipeline produk")}</span>
             <span>
-              <Check size={16} />
-              Penjadwalan tim & unit demo
-            </span>
+              <Check size={16} />{tr("Penjadwalan tim & unit demo")}</span>
             <span>
-              <Check size={16} />
-              Persetujuan, laporan & tindak lanjut
-            </span>
+              <Check size={16} />{tr("Persetujuan, laporan & tindak lanjut")}</span>
           </div>
         </div>
         <div className="medical-orbit" aria-hidden="true">
@@ -224,36 +211,30 @@ function Login({
           </div>
           <span className="orbit-dot one" />
           <span className="orbit-dot two" />
-          <span className="orbit-label">PRECISION IN EVERY CONNECTION</span>
+          <span className="orbit-label">{tr("PRECISION IN EVERY CONNECTION")}</span>
         </div>
-        <div className="login-story-footer">
-          Triputra Techno Med <span>Healthcare technology, connected.</span>
+        <div className="login-story-footer">{tr("Triputra Techno Med ")}<span>{tr("Healthcare technology, connected.")}</span>
         </div>
       </section>
       <section className="login-form-panel">
+        <div className="login-language"><LanguageSwitcher/></div>
         <div className="login-form-wrap">
           <div className="login-small-label">
-            <ShieldCheck size={16} />
-            KHUSUS TIM INTERNAL TTM
-          </div>
+            <ShieldCheck size={16} />{tr("KHUSUS TIM INTERNAL TTM")}</div>
           <h2>
-            {mode === "login"
-              ? "Selamat datang kembali"
-              : "Pulihkan akses Anda"}
+            {mode === "login" ? (tr("Selamat datang kembali")) : (tr("Pulihkan akses Anda"))}
           </h2>
           <p>
-            {mode === "login"
-              ? "Masuk untuk melanjutkan pekerjaan dan kolaborasi tim."
-              : "Masukkan email bisnis yang terdaftar di ruang kerja."}
+            {mode === "login" ? (tr("Masuk untuk melanjutkan pekerjaan dan kolaborasi tim.")) : (tr("Masukkan email bisnis yang terdaftar di ruang kerja."))}
           </p>
           <form onSubmit={(e) => void submit(e)}>
             <label className="field">
-              <span>Email bisnis</span>
+              <span>{tr("Email bisnis")}</span>
               <input
                 autoFocus
                 type="email"
                 autoComplete="username"
-                placeholder="nama@perusahaan.com"
+                placeholder={tr("nama@perusahaan.com")}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -261,7 +242,7 @@ function Login({
             </label>
             {mode === "login" && (
               <label className="field">
-                <span>Password</span>
+                <span>{tr("Password")}</span>
                 <div className="password-input">
                   <input
                     type={show ? "text" : "password"}
@@ -269,12 +250,12 @@ function Login({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Masukkan password"
+                    placeholder={tr("Masukkan password")}
                   />
                   <button
                     type="button"
                     aria-label={
-                      show ? "Sembunyikan password" : "Tampilkan password"
+                      show ? (tr("Sembunyikan password")) : (tr("Tampilkan password"))
                     }
                     onClick={() => setShow(!show)}
                   >
@@ -297,11 +278,7 @@ function Login({
               className="btn primary login-submit"
               disabled={busy || !configured}
             >
-              {busy
-                ? "Memproses…"
-                : mode === "login"
-                  ? "Masuk ke workspace"
-                  : "Kirim tautan pemulihan"}
+              {busy ? (tr("Memproses…")) : (mode === "login" ? (tr("Masuk ke workspace")) : (tr("Kirim tautan pemulihan")))}
               <ArrowRight size={17} />
             </button>
             <button
@@ -313,26 +290,20 @@ function Login({
                 setMessage("");
               }}
             >
-              {mode === "login" ? "Lupa password?" : "Kembali ke login"}
+              {mode === "login" ? (tr("Lupa password?")) : (tr("Kembali ke login"))}
             </button>
           </form>
           <div className="login-divider">
-            <span>Kenali workspace terlebih dahulu</span>
+            <span>{tr("Kenali workspace terlebih dahulu")}</span>
           </div>
-          <button className="btn secondary demo-enter" onClick={onDemo}>
-            Jelajahi demo interaktif <ArrowUpRight size={17} />
+          <button className="btn secondary demo-enter" onClick={onDemo}>{tr("Jelajahi demo interaktif ")}<ArrowUpRight size={17} />
           </button>
-          <p className="login-note">
-            Demo menggunakan data simulasi. Akses operasional hanya untuk
-            anggota yang diundang administrator.
-          </p>
-          <div className="login-help">
-            Butuh akses? Hubungi administrator TTM.
-          </div>
+          <p className="login-note">{tr("Demo menggunakan data simulasi. Akses operasional hanya untuk anggota yang diundang administrator.")}</p>
+          <div className="login-help">{tr("Butuh akses? Hubungi administrator TTM.")}</div>
         </div>
         <footer>
-          © {new Date().getFullYear()} Triputra Techno Med{" "}
-          <span>Product CRM · v1.0</span>
+          © {new Date().getFullYear()}{tr(" Triputra Techno Med")}{" "}
+          <span>{tr("Product CRM · v1.0")}</span>
         </footer>
       </section>
     </main>
@@ -353,8 +324,8 @@ function PasswordSetup({
     <div className="screen-center">
       <div className="password-card card">
         <img src="/ttm-logo.png" alt="TTM" />
-        <h1>Atur password Anda</h1>
-        <p>Lengkapi akses undangan atau pemulihan akun.</p>
+        <h1>{tr("Atur password Anda")}</h1>
+        <p>{tr("Lengkapi akses undangan atau pemulihan akun.")}</p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -362,7 +333,7 @@ function PasswordSetup({
             setError("");
             try {
               if (password !== confirm)
-                throw Error("Konfirmasi password belum sama.");
+                throw Error(tr("Konfirmasi password belum sama."));
               const { error: e } = await supabase!.auth.updateUser({
                 password,
               });
@@ -376,7 +347,7 @@ function PasswordSetup({
           }}
         >
           <label className="field">
-            <span>Password baru</span>
+            <span>{tr("Password baru")}</span>
             <input
               type="password"
               required
@@ -385,10 +356,10 @@ function PasswordSetup({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <small>Minimum 10 karakter.</small>
+            <small>{tr("Minimum 10 karakter.")}</small>
           </label>
           <label className="field">
-            <span>Konfirmasi password</span>
+            <span>{tr("Konfirmasi password")}</span>
             <input
               type="password"
               minLength={10}
@@ -403,12 +374,8 @@ function PasswordSetup({
               {error}
             </div>
           )}
-          <button className="btn primary" disabled={busy}>
-            Simpan password
-          </button>
-          <button className="text-btn" type="button" onClick={onLogout}>
-            Keluar
-          </button>
+          <button className="btn primary" disabled={busy}>{tr("Simpan password")}</button>
+          <button className="text-btn" type="button" onClick={onLogout}>{tr("Keluar")}</button>
         </form>
       </div>
     </div>
@@ -457,7 +424,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     <div className="workspace">
       {sidebar && (
         <button
-          aria-label="Tutup navigasi"
+          aria-label={tr("Tutup navigasi")}
           className="sidebar-backdrop"
           onClick={() => setSidebar(false)}
         />
@@ -467,25 +434,22 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="sidebar-logo">
             <img src="/ttm-logo.png" alt="TTM Triputra Techno Med" />
           </div>
-          <div className="workspace-label">
-            Product workspace<span>CRM & TEAM OPERATIONS</span>
+          <div className="workspace-label">{tr("Product workspace")}<span>{tr("CRM & TEAM OPERATIONS")}</span>
           </div>
           <button
             className="mobile-close icon-btn"
-            aria-label="Tutup navigasi"
+            aria-label={tr("Tutup navigasi")}
             onClick={() => setSidebar(false)}
           >
             <X size={20} />
           </button>
         </div>
-        <nav aria-label="Navigasi utama">
-          <div className="nav-group-label">WORKSPACE</div>
+        <nav aria-label={tr("Navigasi utama")}>
+          <div className="nav-group-label">{tr("WORKSPACE")}</div>
           {menu.map((m, i) => (
             <React.Fragment key={m.id}>
               {i === 5 && (
-                <div className="nav-group-label resources-label">
-                  MANAGEMENT
-                </div>
+                <div className="nav-group-label resources-label">{tr("MANAGEMENT")}</div>
               )}
               <button
                 className={`nav-item ${page === m.id ? "active" : ""}`}
@@ -493,7 +457,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
                 aria-current={page === m.id ? "page" : undefined}
               >
                 <m.icon size={18} />
-                <span>{m.label}</span>
+                <span>{tr(m.label)}</span>
                 {m.id === "tasks" && overdue.length > 0 && (
                   <b className="nav-count">{overdue.length}</b>
                 )}
@@ -506,16 +470,13 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="sidebar-status">
             <span className={demo ? "status-dot demo" : "status-dot"} />
             <div>
-              {demo ? "Sandbox demo" : "Workspace terhubung"}
+              {demo ? (tr("Sandbox demo")) : (tr("Workspace terhubung"))}
               <small>
-                {demo
-                  ? "Data simulasi di browser"
-                  : "Supabase · Akses internal"}
+                {demo ? (tr("Data simulasi di browser")) : (tr("Supabase · Akses internal"))}
               </small>
             </div>
           </div>
-          <a href="/PRD.md" download className="sidebar-doc">
-            Dokumentasi produk <ArrowUpRight size={14} />
+          <a href="/PRD.md" download className="sidebar-doc">{tr("Dokumentasi produk ")}<ArrowUpRight size={14} />
           </a>
         </div>
       </aside>
@@ -524,16 +485,17 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="breadcrumb">
             <button
               className="icon-btn mobile-menu"
-              aria-label="Buka navigasi"
+              aria-label={tr("Buka navigasi")}
               onClick={() => setSidebar(true)}
             >
               <Menu size={21} />
             </button>
-            <span>Workspace</span>
+            <span>{tr("Workspace")}</span>
             <ChevronRight size={13} />
-            <strong>{current.label}</strong>
+            <strong>{tr(current.label)}</strong>
           </div>
-          <div className="topbar-actions">
+        <div className="topbar-actions">
+          <LanguageSwitcher/>
             <span className="topbar-date">
               {displayDate(dateOnly(), {
                 weekday: "short",
@@ -544,14 +506,14 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
             </span>
             <button
               className="icon-btn"
-              aria-label="Muat ulang data"
-              title="Muat ulang data"
+              aria-label={tr("Muat ulang data")}
+              title={tr("Muat ulang data")}
               disabled={sync}
               onClick={async () => {
                 setSync(true);
                 try {
                   await refresh();
-                  notify("Data diperbarui.");
+                  notify(tr("Data diperbarui."));
                 } catch (e) {
                   notify(friendlyError(e));
                 } finally {
@@ -563,7 +525,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
             </button>
             <button
               className="icon-btn notification-button"
-              aria-label={`Notifikasi, ${alerts} perlu perhatian`}
+              aria-label={tr("Notifikasi, {{value0}} perlu perhatian", { value0: (alerts) })}
               onClick={() => setNotifications(true)}
             >
               <Bell size={19} />
@@ -588,8 +550,8 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
             </button>
             <button
               className="icon-btn logout"
-              aria-label={demo ? "Keluar dari demo" : "Logout"}
-              title="Keluar"
+              aria-label={demo ? (tr("Keluar dari demo")) : (tr("Logout"))}
+              title={tr("Keluar")}
               onClick={onLogout}
             >
               <LogOut size={17} />
@@ -600,11 +562,8 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="demo-banner">
             <span>
               <span className="status-dot demo" />
-              <strong>MODE DEMO</strong> · Data simulasi tersimpan di browser
-              ini.
-            </span>
-            <button onClick={onLogout}>
-              Masuk ke akun TTM <ArrowRight size={13} />
+              <strong>{tr("MODE DEMO")}</strong>{tr(" · Data simulasi tersimpan di browser ini.")}</span>
+            <button onClick={onLogout}>{tr("Masuk ke akun TTM ")}<ArrowRight size={13} />
             </button>
           </div>
         )}
@@ -632,14 +591,12 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           )}
         </main>
         <footer className="workspace-footer">
-          <span>© {new Date().getFullYear()} Triputra Techno Med</span>
-          <span>
-            Product Workspace <span className="footer-dot">·</span> v1.0
-          </span>
+          <span>© {new Date().getFullYear()}{tr(" Triputra Techno Med")}</span>
+          <span>{tr("Product Workspace ")}<span className="footer-dot">·</span>{tr(" v1.0")}</span>
         </footer>
       </div>
       {notifications && (
-        <Dialog title="Perlu perhatian" onClose={() => setNotifications(false)}>
+        <Dialog title={tr("Perlu perhatian")} onClose={() => setNotifications(false)}>
           <div className="dialog-body notification-list">
             {overdue.length > 0 && (
               <button
@@ -652,8 +609,8 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
                   <CheckSquare size={19} />
                 </span>
                 <div>
-                  <strong>{overdue.length} tindak lanjut terlambat</strong>
-                  <p>Periksa tugas dan tentukan langkah berikutnya.</p>
+                  <strong>{overdue.length}{tr(" tindak lanjut terlambat")}</strong>
+                  <p>{tr("Periksa tugas dan tentukan langkah berikutnya.")}</p>
                 </div>
                 <ChevronRight size={17} />
               </button>
@@ -670,9 +627,8 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
                 </span>
                 <div>
                   <strong>
-                    {pending.length} pengajuan menunggu persetujuan
-                  </strong>
-                  <p>Tinjau jadwal, personel, dan unit demo.</p>
+                    {pending.length}{tr(" pengajuan menunggu persetujuan")}</strong>
+                  <p>{tr("Tinjau jadwal, personel, dan unit demo.")}</p>
                 </div>
                 <ChevronRight size={17} />
               </button>
@@ -696,20 +652,15 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
                       month: "long",
                       hour: "2-digit",
                       minute: "2-digit",
-                    })}{" "}
-                    WIB
-                  </p>
+                    })}{" "}{tr("WIB")}</p>
                 </div>
                 <ChevronRight size={17} />
               </button>
             ))}
             {!alerts && !upcoming.length && (
-              <p>
-                Semua tertangani. Belum ada notifikasi yang perlu
-                ditindaklanjuti.
-              </p>
+              <p>{tr("Semua tertangani. Belum ada notifikasi yang perlu ditindaklanjuti.")}</p>
             )}
-            <small>Notifikasi dihitung dari data saat terakhir dimuat.</small>
+            <small>{tr("Notifikasi dihitung dari data saat terakhir dimuat.")}</small>
           </div>
         </Dialog>
       )}
