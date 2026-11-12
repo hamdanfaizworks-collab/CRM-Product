@@ -1,5 +1,8 @@
 # Status release / Release status — TTM Product CRM
 
+> **Revisi 12 November 2026:** v1.4 menambahkan approval satu tahap, form hierarki, API wilayah pelanggan, pengingat agenda dan revisi label/login. [Panduan terbaru](APPROVAL-REMINDERS.md). Migrasi tambahan: `20261111205526_single_stage_activity_approval.sql`; koreksi `20261112023647_normalize_approval_note_whitespace.sql`; total setelah deployment: 6 migrasi / 13 tabel publik ber-RLS. Cocokkan source live melalui `/release.json` dan hasil CI. **Semua catatan bertanggal 11 November di bawah adalah histori rilis sebelumnya, bukan bukti deployment v1.4.**
+
+
 Tanggal / Date: **11 November 2026, Asia/Jakarta**.
 
 ## Pembaruan terkini / Current update — LIVE

@@ -26,7 +26,7 @@ export function tr(input:string,values:Record<string,unknown>={}){
   if(!input)return input;
   const leading=input.match(/^\s*/)?.[0]||"",trailing=input.match(/\s*$/)?.[0]||"";
   const key=input.trim();
-  const canonical=reverse.get(key)||key;
+  const canonical=Object.prototype.hasOwnProperty.call(dictionary,key)?key:reverse.get(key)||key;
   const translated=language==="en"?dictionary[key]||dictionary[canonical]||key:canonical;
   if(language==="en"&&!dictionary[key]&&!reverse.has(key)&&/[A-Za-z]/.test(key))missing.add(key);
   return leading+interpolate(translated,values)+trailing;

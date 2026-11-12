@@ -14,6 +14,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { useCRM } from "./store";
+import { AccountForm } from "./AccountForm";
 import {
   Badge,
   Dialog,
@@ -212,8 +213,8 @@ export function AccountsPage() {
       required: true,
       options: members,
     },
-    { key: "city", label: "Kota" },
     { key: "province", label: "Provinsi" },
+    { key: "city", label: "Kabupaten / kota" },
     { key: "territory", label: "Wilayah" },
     { key: "address", label: "Alamat", type: "textarea" },
     { key: "notes", label: "Catatan relasi", type: "textarea" },
@@ -498,7 +499,7 @@ export function AccountsPage() {
         </Dialog>
       )}
       {accountForm && (
-        <EntityForm
+        <AccountForm
           title={accountForm.id ? (tr("Edit pelanggan")) : (tr("Tambah pelanggan"))}
           initial={{ ...accountDefaults, ...accountForm }}
           fields={fields}
@@ -667,7 +668,6 @@ export function PipelinePage() {
       <PageHead
         eyebrow={tr("SALES & PRODUCT PIPELINE")}
         title={tr("Pipeline peluang")}
-        description={tr("Dari percakapan pertama hingga kemitraan yang bertumbuh.")}
         action={
           <AddButton
             disabled={!canCreate || !accounts.length || !products.length}
@@ -1017,7 +1017,6 @@ export function TasksPage() {
       <PageHead
         eyebrow={tr("TEAM FOLLOW-UP")}
         title={tr("Tindak lanjut")}
-        description={tr("Pastikan setiap percakapan memiliki langkah berikutnya.")}
         action={
           <AddButton onClick={newTask} disabled={!canCreate}>{tr("Tambah tugas")}</AddButton>
         }
@@ -1291,7 +1290,7 @@ export function CatalogPage({ onOpenKnowledge }: { onOpenKnowledge?: (productId:
     { key: "active", label: "Produk aktif", type: "checkbox" },
   ];
   return (
-    <>
+    <div className="catalog-refinement">
       <PageHead
         eyebrow={tr("TTM PRODUCT LIBRARY")}
         title={tr("Katalog produk")}
@@ -1469,7 +1468,7 @@ export function CatalogPage({ onOpenKnowledge }: { onOpenKnowledge?: (productId:
           }}
         />
       )}
-    </>
+    </div>
   );
 }
 

@@ -1,7 +1,12 @@
-import type { Activity, Data, Stage, Role } from "./types";
+import type { Activity, Data, Stage, Role, Profile, ReportingLine } from "./types";
 import { getLocale, getLanguage, tr } from "./i18n";
 export const isManager = (role: Role) =>
   role === "director" || role === "admin";
+export function canReviewActivity(profile: Profile, activity: Pick<Activity, "owner_id" | "status">, lines: ReportingLine[], profiles: Profile[] = []) {
+  if (!profile.active || profile.role === "viewer" || activity.status !== "submitted" || profile.id === activity.owner_id) return false;
+  if (profiles.length && !profiles.some(person => person.id === profile.id && person.active && person.role !== "viewer")) return false;
+  return profile.role === "director" || lines.some(line => line.member_id === activity.owner_id && line.supervisor_id === profile.id);
+}
 export const money = (n: number) =>
   new Intl.NumberFormat(getLocale(), {
     style: "currency",

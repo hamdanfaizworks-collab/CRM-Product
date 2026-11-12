@@ -25,20 +25,19 @@ vi.mock("./store", async (importOriginal) => {
 });
 
 import { App } from "./App";
+import {SandboxWorkspace} from "./test-support/workspace";
 import { setLanguage } from "./i18n";
 
 beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Offline test environment")));
   localStorage.clear();
   setLanguage("id");
   location.hash = "";
 });
 
-afterEach(() => cleanup());
+afterEach(() => {cleanup();vi.unstubAllGlobals();});
 
 async function openDemo(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(
-    screen.getByRole("button", { name: /Jelajahi demo interaktif/ }),
-  );
   await screen.findByRole("navigation", { name: "Navigasi utama" });
 }
 
@@ -54,8 +53,7 @@ async function navigate(
 }
 
 describe("alur workspace sandbox melalui DOM", () => {
-  it("memerlukan pilihan demo secara eksplisit dan dapat kembali ke login", async () => {
-    const user = userEvent.setup();
+  it("requires credentials and provides no public demo entry", async () => {
     render(<App />);
     expect(
       screen.queryByRole("navigation", { name: "Navigasi utama" }),
@@ -67,23 +65,17 @@ describe("alur workspace sandbox melalui DOM", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    await openDemo(user);
-    expect(screen.getByText("MODE DEMO")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: /Selamat datang, Director/ }),
-    ).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Keluar dari demo" }));
-    expect(
-      await screen.findByRole("button", { name: /Jelajahi demo interaktif/ }),
-    ).toBeTruthy();
-    expect(
-      screen.queryByRole("navigation", { name: "Navigasi utama" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", {name: /Jelajahi demo/i})).toBeNull();
+    expect(screen.getByRole("heading", {name: "Sistem Terpadu Manajemen Product"})).toBeTruthy();
+    expect(screen.queryByText("KHUSUS TIM INTERNAL TTM")).toBeNull();
+    expect(screen.queryByText(/Kenali workspace/)).toBeNull();
+    expect(screen.queryByText(/Ruang kerja untuk membangun hubungan/)).toBeNull();
+    expect(screen.queryByText(/Butuh akses/)).toBeNull();
   });
 
   it("membuat pelanggan, mencatat peluang, mengganti tahap, dan mempertahankan hasil setelah remount", async () => {
     const user = userEvent.setup();
-    const app = render(<App />);
+    const app = render(<SandboxWorkspace />);
     await openDemo(user);
     await navigate(user, /^Pelanggan$/);
     await user.click(screen.getByRole("button", { name: "Tambah pelanggan" }));
@@ -92,12 +84,13 @@ describe("alur workspace sandbox melalui DOM", () => {
       dialog.getByLabelText(/Nama instansi/),
       "RS Pengujian Alur",
     );
-    await user.type(dialog.getByLabelText(/^Kota$/), "Makassar");
+    await user.selectOptions(dialog.getByLabelText(/^Provinsi$/), "Sulawesi Selatan");
+    await user.selectOptions(dialog.getByLabelText(/^Kabupaten \/ kota$/), "Kota Makassar");
     await user.click(dialog.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(screen.getByText("RS Pengujian Alur")).toBeTruthy();
 
-    await navigate(user, /^Pipeline peluang$/);
+    await navigate(user, /^Pipeline Peluang$/);
     await user.click(screen.getByRole("button", { name: "Tambah peluang" }));
     dialog = within(await screen.findByRole("dialog"));
     await user.type(dialog.getByLabelText(/Judul peluang/), "Evaluasi USG UAT");
@@ -138,9 +131,9 @@ describe("alur workspace sandbox melalui DOM", () => {
     expect(within(stage().closest("article")!).getByText("100%")).toBeTruthy();
 
     app.unmount();
-    render(<App />);
+    render(<SandboxWorkspace />);
     await openDemo(user);
-    await navigate(user, /^Pipeline peluang$/);
+    await navigate(user, /^Pipeline Peluang$/);
     expect(
       (
         (await screen.findByRole("combobox", {
@@ -153,9 +146,9 @@ describe("alur workspace sandbox melalui DOM", () => {
 
   it("menjalankan kegiatan dari draft sampai selesai dengan laporan serta tindak lanjut", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<SandboxWorkspace />);
     await openDemo(user);
-    await navigate(user, /^Kalender & aktivitas$/);
+    await navigate(user, /^Kalender & Aktivitas$/);
     await user.click(screen.getByRole("button", { name: "Tambah kegiatan" }));
     let dialog = within(await screen.findByRole("dialog"));
     await user.type(
@@ -175,6 +168,7 @@ describe("alur workspace sandbox melalui DOM", () => {
       dialog.getByLabelText(/Tujuan kegiatan/),
       "Melatih alur kerja aplikasi dan menilai kesiapan pengguna.",
     );
+    await user.selectOptions(dialog.getByLabelText(/^Koordinator/), within(dialog.getByLabelText(/^Koordinator/)).getByRole("option", {name: "Product Specialist Demo"}));
     await user.click(dialog.getByRole("button", { name: "Simpan" }));
     dialog = within(await screen.findByRole("dialog"));
     await user.click(
@@ -213,7 +207,7 @@ describe("alur workspace sandbox melalui DOM", () => {
     await user.click(dialog.getByRole("button", { name: "Simpan" }));
     dialog = within(await screen.findByRole("dialog"));
     await user.click(dialog.getByRole("button", { name: "Tutup dialog" }));
-    await navigate(user, /^Tindak lanjut/);
+    await navigate(user, /^Tindak Lanjut/);
     expect(
       await screen.findByText("Kirim materi refreshment UAT"),
     ).toBeTruthy();

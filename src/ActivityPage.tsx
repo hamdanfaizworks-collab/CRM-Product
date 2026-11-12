@@ -1,6 +1,6 @@
 // localized-ui-v1
 import { tr, localizedLabel, useLanguage } from "./i18n";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Plus,
   ChevronLeft,
@@ -42,12 +42,14 @@ import {
   isManager,
   conflictFor,
   money,
+  canReviewActivity,
 } from "./rules";
+import {buildReminders, useReminderClock} from "./reminders";
 const options = (o: Record<string, string>) =>
   Object.entries(o).map(([value, label]) => ({ value, label: tr(label) }));
-export function ActivityPage() {
+export function ActivityPage({initialActivityId = ""}: {initialActivityId?: string} = {}) {
   useLanguage();
-  const { data, profile, demo, save, notify, refresh } = useCRM();
+  const { data, profile, demo, save, notify, refresh, reviewActivity } = useCRM();
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
@@ -102,6 +104,13 @@ export function ActivityPage() {
       )
     : inMonth;
   const detail = data.activities.find((a) => a.id === detailId);
+  const reminderNow = useReminderClock();
+  const agendaReminders = useMemo(() => buildReminders(data, profile, reminderNow).filter(item => item.kind === "activity"), [data, profile, reminderNow]);
+  useEffect(() => {
+    if (!initialActivityId) return;
+    const activity = data.activities.find(item => item.id === initialActivityId);
+    if (activity) {setDetailId(activity.id);setMonth(dateOnly(activity.start_at).slice(0, 7));}
+  }, [initialActivityId]);
   const editable =
     detail &&
     writable &&
@@ -245,7 +254,8 @@ export function ActivityPage() {
       };
       const conflict = conflictFor({ ...detail, ...changes }, data.activities);
       if (conflict) throw Error(conflict);
-      await save("activities", changes);
+        if (next === "approved" || next === "rejected") await reviewActivity(detail.id, next, note || "");
+        else await save("activities", changes);
       setAction(null);
     } catch (e) {
       setError(friendlyError(e));
@@ -305,9 +315,8 @@ export function ActivityPage() {
   return (
     <>
       <PageHead
-        eyebrow={tr("TEAM OPERATIONS")}
+        eyebrow={tr("TEAM PRODUCT")}
         title={tr("Kalender & aktivitas")}
-        description={tr("Rencanakan kegiatan, atur penugasan, dan jaga setiap tindak lanjut.")}
         action={
           writable && (
             <button className="btn primary" onClick={newActivity}>
@@ -315,6 +324,10 @@ export function ActivityPage() {
           )
         }
       />
+      {agendaReminders.length > 0 && <div className="card agenda-reminder-banner" role="status">
+        <div><strong>{tr("Pengingat Agenda")}</strong><p>{tr("{{value0}} agenda mendekati jadwal · {{value1}} agenda melewati jadwal", {value0: agendaReminders.filter(item => item.urgency === "upcoming").length, value1: agendaReminders.filter(item => item.urgency === "overdue").length})}</p></div>
+        <button className="btn secondary small" onClick={() => {const item = agendaReminders[0]; const activity = data.activities.find(row => row.id === item.entity_id); if (activity) {setDetailId(activity.id);setMonth(dateOnly(activity.start_at).slice(0,7));}}}>{tr("Tinjau Agenda")}</button>
+      </div>}
       <SearchToolbar
         search={search}
         setSearch={setSearch}
@@ -718,7 +731,7 @@ export function ActivityPage() {
                 onClick={() => void statusChange("submitted")}
               >{tr("Ajukan persetujuan")}</button>
             )}
-            {manager && detail.status === "submitted" && (
+            {canReviewActivity(profile, detail, data.reporting_lines, data.profiles) && (
               <>
                 <button
                   className="btn secondary"

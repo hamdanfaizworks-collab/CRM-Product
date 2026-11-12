@@ -218,6 +218,10 @@ export function demoData(): Data {
       },
     ],
     activity_attachments: [],
+    reporting_lines: [
+      {id: demoId(8001), member_id: demoId(2), supervisor_id: DEMO_USER},
+      {id: demoId(8002), member_id: demoId(3), supervisor_id: demoId(2)},
+    ],
     knowledge_documents: [],
     audit_logs: [],
     org_settings: [

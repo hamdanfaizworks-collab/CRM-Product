@@ -3,9 +3,9 @@
 
 **Perusahaan:** Triputra Techno Med (TTM)
 **Pemilik produk:** Product Director TTM
-**Versi:** 1.3 - English default dan Product Knowledge Base terimplementasi
-**Tanggal:** 11 November 2026, WIB
-**Status:** Default English dan Product Knowledge Base LIVE di Hostinger; source fitur `b8396896966c0c123ecac06001f1a0852ee3c12f` terverifikasi melalui CI, metadata live, HTTP smoke, serta halaman/form director produksi tanpa penulisan data pelanggan. UAT tim penuh dan SMTP tetap terpisah.
+**Versi:** 1.4 — Approval satu tahap, hierarki, wilayah pelanggan dan pengingat agenda
+**Tanggal:** 12 November 2026, WIB
+**Status:** Revisi v1.4 terimplementasi dengan pengujian lokal; bukti deployment spesifik commit diperiksa melalui CI dan `/release.json`. Pilot Director berjalan; SMTP/onboarding dan UAT tim penuh tetap terpisah.
 **Repository yang diminta:** https://github.com/hamdanfaizworks-collab/CRM-Product
 **Backend yang diminta:** proyek Supabase `yqmcafgnryvsrvalbycz`
 
@@ -396,3 +396,15 @@ Logo asli tersedia sebagai hasil crop katalog. Sampling logo dan heading menghas
 ### Catatan kontrak implementasi
 
 Relasi peserta dan unit pada kegiatan dapat disimpan sebagai `participant_ids` dan `equipment_ids` selama integritas, otorisasi, audit, dan validasi bentrok tetap ditegakkan. Laporan dapat tertanam pada record kegiatan, bukan tabel terpisah. Enum pipeline implementasi: `lead`, `qualified`, `demo`, `proposal`, `negotiation`, `won`, `lost`; enum status kegiatan: `draft`, `submitted`, `approved`, `in_progress`, `completed`, `rejected`, `cancelled`.
+
+## Revisi v1.4 — persyaratan final pengguna, 12 November 2026
+
+Ketentuan berikut menggantikan deskripsi awal yang bertentangan tentang demo publik, approval global admin, atau wilayah free text.
+
+- **FR-16 Approval dan hierarki:** satu tahap oleh atasan langsung, Product Director sebagai pengganti; tanpa persetujuan sendiri. Director/Admin mengelola satu atasan aktif per anggota aktif selain viewer. Siklus/identitas baris diubah/atasan tidak layak ditolak server. Pengajuan, detail, alasan penolakan, actor dan timestamp server tersedia. Perubahan jadwal/penugasan kegiatan disetujui memerlukan persetujuan ulang. Keputusan bersamaan hanya boleh menghasilkan satu keputusan.
+- **FR-17 Agenda:** pengingat in-app mendekati 24 jam/overdue, berdasarkan waktu WIB serta status kegiatan, tugas, penugasan dan hak reviewer. Data agenda refresh 60 detik ketika halaman terlihat dan saat fokus kembali; jam dievaluasi 30 detik. Tidak bergantung SMTP dan tidak mengirim notifikasi ketika aplikasi tertutup.
+- **FR-18 Wilayah:** pilihan provinsi dan kabupaten/kota terhubung, API Emsifa v2, 38/514 pada referensi saat implementasi, fallback lokal dan retry. Nilai lama dipertahankan sampai diubah pengguna. Tidak ada data pelanggan pada request API wilayah.
+- **UI-04:** login berjudul “Sistem Terpadu Manajemen Product” / “Integrated Product Management System”; hapus materi promosi dan akses demo yang diminta. Sidebar Title Case, “Product Management Workspace” dan “Customer Relationship Management”; eyebrow dashboard “TTM PRODUCT MANAGEMENT WORKSPACE”; kalender “TEAM PRODUCT” / “PRODUCT TEAM”. Label filter tanggal tanpa “(WIB)” dengan perhitungan zona waktu tetap WIB. Hilangkan deskripsi yang diminta pada Dashboard, Pipeline, Kalender dan Tindak Lanjut; perbaiki padding katalog.
+- **Bahasa:** English default, pilihan Indonesia tersimpan dihormati; perubahan label tidak mengubah data bisnis atau konten dokumen.
+
+Alur pemakaian, batas reminder, atribusi API, serta acceptance deployment: [APPROVAL-REMINDERS.md](APPROVAL-REMINDERS.md).

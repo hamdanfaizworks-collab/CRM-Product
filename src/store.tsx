@@ -12,7 +12,7 @@ import React, {
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Data, Table, Tables, Profile, Activity } from "./types";
 import { demoData, DEMO_USER } from "./demo";
-import { conflictFor, isManager } from "./rules";
+import { conflictFor, isManager, canReviewActivity } from "./rules";
 const env = (import.meta as unknown as { env: Record<string, string> }).env;
 // Capture the callback before Supabase initialization consumes/cleans its hash.
 export const initialAuthFlow = new URLSearchParams(
@@ -25,6 +25,7 @@ export const supabase: SupabaseClient | null = configured
   : null;
 const DEMO_KEY = "ttm.crm.demo.v1";
 const TABLES: Table[] = [
+  "reporting_lines",
   "profiles",
   "accounts",
   "contacts",
@@ -87,6 +88,8 @@ interface CRMContext {
   remove: (table: Table, id: string) => Promise<void>;
   notify: (message: string) => void;
   refresh: () => Promise<void>;
+  refreshAgenda: () => Promise<void>;
+  reviewActivity: (id: string, decision: "approved" | "rejected", note: string) => Promise<Activity>;
 }
 const Context = createContext<CRMContext | null>(null);
 export const useCRM = () => {
@@ -136,6 +139,21 @@ export function CRMProvider({
   const dataRef = useRef(data);
   dataRef.current = data;
   const notify = useCallback((m: string) => setToast(m), []);
+  const refreshAgenda = useCallback(async () => {
+    if (demo) return;
+    if (!supabase) throw Error(tr("Konfigurasi Supabase belum tersedia."));
+    const entries = await Promise.all((["activities", "tasks", "reporting_lines", "profiles"] as Table[]).map(async table => {
+      const rows: unknown[] = [];
+      for (let start = 0; start < 20000; start += 1000) {
+        const {data: page, error} = await supabase!.from(table).select("*").order("id").range(start, start + 999);
+        if (error) throw error;
+        rows.push(...page);
+        if (page.length < 1000) return [table, rows] as const;
+      }
+      throw Error(tr("Data pengingat melebihi batas tampilan. Hubungi administrator."));
+    }));
+    setData(current => ({...current, ...Object.fromEntries(entries)}));
+  }, [demo]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 5500);
@@ -148,8 +166,8 @@ export function CRMProvider({
         const raw = localStorage.getItem(DEMO_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
         d =
-          parsed && TABLES.every((k) => k === "knowledge_documents" && parsed[k] === undefined || Array.isArray(parsed[k]))
-            ? { ...parsed, knowledge_documents: parsed.knowledge_documents || [] }
+          parsed && TABLES.every((k) => ["knowledge_documents", "reporting_lines"].includes(k) && parsed[k] === undefined || Array.isArray(parsed[k]))
+            ? { ...parsed, knowledge_documents: parsed.knowledge_documents || [], reporting_lines: parsed.reporting_lines || [] }
             : demoData();
       } catch {
         d = demoData();
@@ -307,6 +325,25 @@ export function CRMProvider({
     }
     notify(tr("Data diperbarui."));
   };
+  const reviewActivity = async (id: string, decision: "approved" | "rejected", note: string) => {
+    const current = dataRef.current;
+    const actor = current.profiles.find(person => person.id === userId);
+    const activity = current.activities.find(item => item.id === id);
+    if (!actor || !activity || !canReviewActivity(actor, activity, current.reporting_lines, current.profiles))
+      throw Error(tr("Anda tidak berwenang meninjau kegiatan ini atau statusnya telah berubah."));
+    if (decision === "rejected" && !note.trim()) throw Error(tr("Alasan penolakan wajib diisi."));
+    if (demo) {
+      const now = new Date().toISOString();
+      return save("activities", {id, status: decision, approval_note: note.trim(), reviewed_by: userId, reviewed_at: now, approved_by: decision === "approved" ? userId : null, approved_at: decision === "approved" ? now : null});
+    }
+    const {data: result, error} = await supabase!.rpc("review_activity", {p_activity_id: id, p_decision: decision, p_note: note.trim()});
+    if (error) throw Error(friendlyError(error));
+    const row = (Array.isArray(result) ? result[0] : result) as Activity | undefined;
+    if (!row?.id) throw Error(tr("Hasil persetujuan belum terkonfirmasi. Muat ulang sebelum mencoba kembali."));
+    setData({...dataRef.current, activities: dataRef.current.activities.map(item => item.id === row.id ? row : item)});
+    try { await refresh(); } catch { notify(tr("Keputusan tersimpan. Penyegaran gagal; gunakan tombol muat ulang.")); }
+    return row;
+  };
   if (loading)
     return (
       <div className="screen-center">
@@ -343,7 +380,7 @@ export function CRMProvider({
     );
   return (
     <Context.Provider
-      value={{ data, profile, demo, save, remove, notify, refresh }}
+      value={{ data, profile, demo, save, remove, notify, refresh, refreshAgenda, reviewActivity }}
     >
       {children}
       {toast && (

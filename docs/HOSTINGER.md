@@ -1,5 +1,8 @@
 # Hostinger deployment / Panduan deployment TTM Product CRM
 
+> **Revisi 12 November 2026:** v1.4 menambahkan approval satu tahap, form hierarki, API wilayah pelanggan, pengingat agenda dan revisi label/login. [Panduan terbaru](APPROVAL-REMINDERS.md). Migrasi tambahan: `20261111205526_single_stage_activity_approval.sql`; koreksi `20261112023647_normalize_approval_note_whitespace.sql`; total setelah deployment: 6 migrasi / 13 tabel publik ber-RLS. Cocokkan source live melalui `/release.json` dan hasil CI. **Semua catatan bertanggal 11 November di bawah adalah histori rilis sebelumnya, bukan bukti deployment v1.4.**
+
+
 ## Pembaruan terkini / Current update — Knowledge Base LIVE
 
 **Default English + Product Knowledge Base telah LIVE.** Source [`b8396896966c0c123ecac06001f1a0852ee3c12f`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/b8396896966c0c123ecac06001f1a0852ee3c12f) → [CI `43014085080`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/43014085080) SUCCESS (verify + publish) → artifact `hostinger` `349fdec5acde88f06a6b70289990d029fc4ab086` → live metadata cocok. HTTP smoke **13/13 PASS pada 18:43 WIB, 11 November 2026**.

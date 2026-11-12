@@ -6,19 +6,20 @@ import userEvent from "@testing-library/user-event";
 vi.mock("@supabase/supabase-js",()=>({createClient:vi.fn(()=>null)}));
 vi.mock("./store",async original=>({...await original<typeof import("./store")>(),supabase:null,configured:false}));
 import {App} from "./App";
+import {SandboxWorkspace} from "./test-support/workspace";
 import {setLanguage} from "./i18n";
-beforeEach(()=>{localStorage.clear();location.hash="";setLanguage("id")});
-afterEach(()=>{cleanup();setLanguage("id")});
+beforeEach(()=>{vi.stubGlobal("fetch",vi.fn().mockRejectedValue(new Error("Offline test environment")));localStorage.clear();location.hash="";setLanguage("id")});
+afterEach(()=>{cleanup();setLanguage("id");vi.unstubAllGlobals()});
 it("switches the complete navigation and forms, retains user data, and persists the preference",async()=>{
- const user=userEvent.setup();const app=render(<App/>);
+ const user=userEvent.setup();let app=render(<App/>);
  await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
  expect(screen.getByRole("heading",{name:"Welcome back"})).toBeTruthy();
  expect(document.documentElement.lang).toBe("en");expect(localStorage.getItem("ttm.crm.language.v1")).toBe("en");
- await user.click(screen.getByRole("button",{name:"Explore the interactive demo"}));
+ app.unmount();app=render(<SandboxWorkspace/>);
  const nav=await screen.findByRole("navigation",{name:"Main navigation"});
  expect(screen.getByRole("button",{name:"Open navigation"})).toBeTruthy();
  expect(screen.getByRole("button",{name:"Close navigation"})).toBeTruthy();
- for(const name of ["Customers","Opportunity pipeline","Calendar & activities","Product catalog","Demo equipment","Product team","Reports","Settings"]){expect(within(nav).getByRole("button",{name})).toBeTruthy()}
+ for(const name of ["Customers","Opportunity Pipeline","Calendar & Activities","Product Catalog","Demo Equipment","Team","Reports","Settings"]){expect(within(nav).getByRole("button",{name})).toBeTruthy()}
  await user.click(within(nav).getByRole("button",{name:"Customers"}));
  await user.click(screen.getByRole("button",{name:"Add customer"}));
  const form=within(await screen.findByRole("dialog"));
@@ -42,7 +43,7 @@ it("exports English report headings while keeping recorded activity titles uncha
  const click=vi.spyOn(HTMLAnchorElement.prototype,"click").mockImplementation(()=>{});
  const revoke=vi.spyOn(URL,"revokeObjectURL").mockImplementation(()=>{});
  try{render(<App/>);await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
- await user.click(screen.getByRole("button",{name:"Explore the interactive demo"}));
+ cleanup();render(<SandboxWorkspace/>);
  await user.click(within(await screen.findByRole("navigation")).getByRole("button",{name:"Reports"}));
  await user.click(screen.getByRole("button",{name:"Export activities"}));
  const csv=await downloaded!.text();expect(csv).toContain('"Activity"');expect(csv).toContain('"Start (WIB)"');expect(csv).toContain("Demo Pixonic Revo Z");
@@ -51,8 +52,8 @@ it("exports English report headings while keeping recorded activity titles uncha
 it("localizes the member invitation form and preserves a member name that matches an Indonesian UI label",async()=>{
  const user=userEvent.setup();render(<App/>);
  await user.selectOptions(screen.getByRole("combobox",{name:"Bahasa sistem"}),"en");
- await user.click(screen.getByRole("button",{name:"Explore the interactive demo"}));
- await user.click(within(await screen.findByRole("navigation",{name:"Main navigation"})).getByRole("button",{name:"Product team"}));
+ cleanup();render(<SandboxWorkspace/>);
+ await user.click(within(await screen.findByRole("navigation",{name:"Main navigation"})).getByRole("button",{name:"Team"}));
  await user.click(screen.getByRole("button",{name:"Invite member"}));
  const form=within(await screen.findByRole("dialog"));
  expect(form.getByRole("heading",{name:"Invite a team member"})).toBeTruthy();

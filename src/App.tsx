@@ -1,7 +1,7 @@
 // localized-ui-v1
 import { tr, useLanguage } from "./i18n";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -36,7 +36,6 @@ import {
   friendlyError,
   initialAuthFlow,
 } from "./store";
-import { DEMO_USER } from "./demo";
 import { ROLE_LABEL } from "./types";
 import { dateOnly, displayDate, isManager } from "./rules";
 import { Dialog } from "./ui";
@@ -51,6 +50,10 @@ import { ActivityPage } from "./ActivityPage";
 import { TeamPage, SettingsPage } from "./AdminPages";
 import { DashboardPage, ReportsPage } from "./InsightsPages";
 import { KnowledgeBasePage } from "./KnowledgeBasePage";
+import { ApprovalPage } from "./ApprovalPage";
+import {buildReminders, useReminderClock} from "./reminders";
+import {ReminderList} from "./ReminderList";
+import "./reminders.css";
 const menu = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "accounts", label: "Pelanggan", icon: Building2 },
@@ -61,12 +64,12 @@ const menu = [
   { id: "knowledge", label: "Basis Pengetahuan", icon: BookOpen },
   { id: "equipment", label: "Unit Demo", icon: Boxes },
   { id: "team", label: "Team", icon: Users },
+  { id: "approval", label: "Approval Kegiatan", icon: ShieldCheck },
   { id: "reports", label: "Laporan", icon: BarChart3 },
   { id: "settings", label: "Pengaturan", icon: Settings },
 ];
 export function App() {
   useLanguage();
-  const [demo, setDemo] = useState(false);
   const [userId, setUserId] = useState("");
   const [authReady, setAuthReady] = useState(!supabase);
   const [passwordFlow, setPasswordFlow] = useState(
@@ -96,10 +99,6 @@ export function App() {
     return () => subscription.unsubscribe();
   }, []);
   const logout = async () => {
-    if (demo) {
-      setDemo(false);
-      return;
-    }
     const { error: e } = await supabase!.auth.signOut();
     if (e) {
       setError(friendlyError(e));
@@ -115,7 +114,7 @@ export function App() {
         <p>{tr("Memeriksa sesi Anda…")}</p>
       </div>
     );
-  if (passwordFlow && userId && !demo)
+  if (passwordFlow && userId)
     return (
       <PasswordSetup
         onDone={() => {
@@ -125,25 +124,19 @@ export function App() {
         onLogout={() => void logout()}
       />
     );
-  if (!userId && !demo)
-    return <Login initialError={error} onDemo={() => setDemo(true)} />;
+  if (!userId)
+    return <Login initialError={error} />;
   return (
     <CRMProvider
-      demo={demo}
-      userId={demo ? DEMO_USER : userId}
+      demo={false}
+      userId={userId}
       onLogout={() => void logout()}
     >
       <Workspace onLogout={() => void logout()} />
     </CRMProvider>
   );
 }
-function Login({
-  onDemo,
-  initialError,
-}: {
-  onDemo: () => void;
-  initialError: string;
-}) {
+function Login({initialError}: {initialError: string}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -195,18 +188,7 @@ function Login({
         <div className="login-story-content">
           <span className="login-kicker">
             <span />{tr("CONNECTED PRODUCT MANAGEMENT")}</span>
-          <h1>{tr("Produk yang tepat.")}<br />{tr("Tim yang terhubung.")}<br />
-            <em>{tr("Dampak yang nyata.")}</em>
-          </h1>
-          <p>{tr("Ruang kerja untuk membangun hubungan pelanggan dan menggerakkan setiap kegiatan tim produk TTM.")}</p>
-          <div className="login-feature-list">
-            <span>
-              <Check size={16} />{tr("CRM & pipeline produk")}</span>
-            <span>
-              <Check size={16} />{tr("Penjadwalan tim & unit demo")}</span>
-            <span>
-              <Check size={16} />{tr("Persetujuan, laporan & tindak lanjut")}</span>
-          </div>
+          <h1>{tr("Sistem Terpadu Manajemen Product")}</h1>
         </div>
         <div className="medical-orbit" aria-hidden="true">
           <div className="orbit-inner">
@@ -222,8 +204,6 @@ function Login({
       <section className="login-form-panel">
         <div className="login-language"><LanguageSwitcher/></div>
         <div className="login-form-wrap">
-          <div className="login-small-label">
-            <ShieldCheck size={16} />{tr("KHUSUS TIM INTERNAL TTM")}</div>
           <h2>
             {mode === "login" ? (tr("Selamat datang kembali")) : (tr("Pulihkan akses Anda"))}
           </h2>
@@ -296,13 +276,6 @@ function Login({
               {mode === "login" ? (tr("Lupa password?")) : (tr("Kembali ke login"))}
             </button>
           </form>
-          <div className="login-divider">
-            <span>{tr("Kenali workspace terlebih dahulu")}</span>
-          </div>
-          <button className="btn secondary demo-enter" onClick={onDemo}>{tr("Jelajahi demo interaktif ")}<ArrowUpRight size={17} />
-          </button>
-          <p className="login-note">{tr("Demo menggunakan data simulasi. Akses operasional hanya untuk anggota yang diundang administrator.")}</p>
-          <div className="login-help">{tr("Butuh akses? Hubungi administrator TTM.")}</div>
         </div>
         <footer>
           © {new Date().getFullYear()}{tr(" Triputra Techno Med")}{" "}
@@ -384,21 +357,26 @@ function PasswordSetup({
     </div>
   );
 }
-function Workspace({ onLogout }: { onLogout: () => void }) {
-  const { data, profile, demo, refresh, notify } = useCRM();
+export function Workspace({ onLogout }: { onLogout: () => void }) {
+  useLanguage();
+  const { data, profile, demo, refresh, refreshAgenda, notify } = useCRM();
   const initial = location.hash.slice(1).split("?")[0];
   const [page, setPage] = useState(
     menu.some((m) => m.id === initial) ? initial : "dashboard",
   );
   const [sidebar, setSidebar] = useState(false);
   const [knowledgeProduct, setKnowledgeProduct] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("product") || "all");
+  const [focusedActivity, setFocusedActivity] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("activity") || "");
+  const [activityRouteVersion, setActivityRouteVersion] = useState(0);
+  const [agendaSyncFailed, setAgendaSyncFailed] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [sync, setSync] = useState(false);
   const navigate = (id: string, productId = "all") => {
     if (!menu.some((m) => m.id === id)) return;
     setPage(id);
     if (id === "knowledge") setKnowledgeProduct(productId);
-    location.hash = id + (id === "knowledge" && productId !== "all" ? "?product=" + encodeURIComponent(productId) : "");
+    if (id === "activities") {setFocusedActivity(productId === "all" ? "" : productId);setActivityRouteVersion(value => value + 1);}
+    location.hash = id + (id === "knowledge" && productId !== "all" ? "?product=" + encodeURIComponent(productId) : id === "activities" && productId !== "all" ? "?activity=" + encodeURIComponent(productId) : "");
     setSidebar(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -407,24 +385,39 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
       const id = location.hash.slice(1).split("?")[0];
       if (menu.some((m) => m.id === id)) setPage(id);
       if (id === "knowledge") setKnowledgeProduct(new URLSearchParams(location.hash.split("?")[1] || "").get("product") || "all");
+      if (id === "activities") setFocusedActivity(new URLSearchParams(location.hash.split("?")[1] || "").get("activity") || "");
     };
     addEventListener("hashchange", f);
     return () => removeEventListener("hashchange", f);
   }, []);
-  const overdue = data.tasks.filter(
-    (t) => t.due_date < dateOnly() && !["done", "cancelled"].includes(t.status),
-  );
-  const pending = data.activities.filter((a) => a.status === "submitted");
-  const upcoming = data.activities
-    .filter(
-      (a) =>
-        a.start_at > new Date().toISOString() &&
-        ["approved", "in_progress"].includes(a.status),
-    )
-    .sort((a, b) => a.start_at.localeCompare(b.start_at))
-    .slice(0, 5);
-  const alerts =
-    overdue.length + (isManager(profile.role) ? pending.length : 0);
+  const now = useReminderClock();
+  const reminders = useMemo(() => buildReminders(data, profile, now), [data, profile, now]);
+  const alerts = reminders.length;
+  const overdue = reminders.filter(item => item.kind === "task" && item.urgency === "overdue");
+  const announced = useRef(new Set<string>());
+  useEffect(() => {
+    if (demo) return;
+    const key = `ttm.crm.agenda-reminders.v1.${profile.id}`;
+    try {for (const id of JSON.parse(localStorage.getItem(key) || "[]")) announced.current.add(String(id));} catch { /* in-memory deduplication remains available */ }
+    const fresh = reminders.filter(item => item.kind === "activity" && !announced.current.has(item.id));
+    if (fresh.length) notify(tr("{{value0}} agenda mendekati jadwal atau telah melewati jadwal. Buka notifikasi untuk meninjau.", {value0: fresh.length}));
+    announced.current = new Set(reminders.map(item => item.id));
+    try {localStorage.setItem(key, JSON.stringify([...announced.current].slice(-1000)));} catch { /* optional preference storage */ }
+  }, [reminders, profile.id, demo, notify]);
+  useEffect(() => {
+    if (demo) return;
+    let running = false;
+    let active = true;
+    const update = async () => {
+      if (running || document.hidden) return;
+      running = true;
+      try {await refreshAgenda(); if (active) setAgendaSyncFailed(false);} catch {if (active) setAgendaSyncFailed(true);} finally {running = false;}
+    };
+    const timer = setInterval(() => void update(), 60000);
+    const focus = () => void update();
+    window.addEventListener("focus", focus);
+    return () => {active = false;clearInterval(timer);window.removeEventListener("focus", focus);};
+  }, [demo, refreshAgenda]);
   const current = menu.find((m) => m.id === page)!;
   return (
     <div className="workspace">
@@ -440,7 +433,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           <div className="sidebar-logo">
             <img src="/ttm-logo.png" alt="TTM Triputra Techno Med" />
           </div>
-          <div className="workspace-label">{tr("Product Management Workspace")}<span>{tr("CUSTOMER RELATIONSHIP MANAGEMENT")}</span>
+          <div className="workspace-label">{tr("Product Management Workspace")}<span>{tr("Customer Relationship Management")}</span>
           </div>
           <button
             className="mobile-close icon-btn"
@@ -535,7 +528,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
               onClick={() => setNotifications(true)}
             >
               <Bell size={19} />
-              {alerts > 0 && <span className="notification-dot" />}
+              {alerts > 0 && <span className="notification-count">{alerts > 99 ? "99+" : alerts}</span>}
             </button>
             <div className="topbar-divider" />
             <button
@@ -581,7 +574,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
           ) : page === "pipeline" ? (
             <PipelinePage />
           ) : page === "activities" ? (
-            <ActivityPage />
+            <ActivityPage key={`${focusedActivity}:${activityRouteVersion}`} initialActivityId={focusedActivity} />
           ) : page === "tasks" ? (
             <TasksPage />
           ) : page === "catalog" ? (
@@ -592,6 +585,8 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
             <EquipmentPage />
           ) : page === "team" ? (
             <TeamPage />
+          ) : page === "approval" ? (
+            <ApprovalPage />
           ) : page === "reports" ? (
             <ReportsPage />
           ) : (
@@ -604,71 +599,13 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
         </footer>
       </div>
       {notifications && (
-        <Dialog title={tr("Perlu perhatian")} onClose={() => setNotifications(false)}>
-          <div className="dialog-body notification-list">
-            {overdue.length > 0 && (
-              <button
-                onClick={() => {
-                  navigate("tasks");
-                  setNotifications(false);
-                }}
-              >
-                <span className="notice-icon amber">
-                  <CheckSquare size={19} />
-                </span>
-                <div>
-                  <strong>{overdue.length}{tr(" tindak lanjut terlambat")}</strong>
-                  <p>{tr("Periksa tugas dan tentukan langkah berikutnya.")}</p>
-                </div>
-                <ChevronRight size={17} />
-              </button>
-            )}
-            {isManager(profile.role) && pending.length > 0 && (
-              <button
-                onClick={() => {
-                  navigate("activities");
-                  setNotifications(false);
-                }}
-              >
-                <span className="notice-icon blue">
-                  <ShieldCheck size={19} />
-                </span>
-                <div>
-                  <strong>
-                    {pending.length}{tr(" pengajuan menunggu persetujuan")}</strong>
-                  <p>{tr("Tinjau jadwal, personel, dan unit demo.")}</p>
-                </div>
-                <ChevronRight size={17} />
-              </button>
-            )}
-            {upcoming.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => {
-                  navigate("activities");
-                  setNotifications(false);
-                }}
-              >
-                <span className="notice-icon blue">
-                  <CalendarDays size={19} />
-                </span>
-                <div>
-                  <strong>{a.title}</strong>
-                  <p>
-                    {displayDate(a.start_at, {
-                      day: "numeric",
-                      month: "long",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}{tr("WIB")}</p>
-                </div>
-                <ChevronRight size={17} />
-              </button>
-            ))}
-            {!alerts && !upcoming.length && (
-              <p>{tr("Semua tertangani. Belum ada notifikasi yang perlu ditindaklanjuti.")}</p>
-            )}
-            <small>{tr("Notifikasi dihitung dari data saat terakhir dimuat.")}</small>
+        <Dialog title={tr("Pengingat Agenda")} onClose={() => setNotifications(false)}>
+          <div className="dialog-body">
+            {agendaSyncFailed && <p className="form-error" role="alert">{tr("Pengingat belum diperbarui. Muat ulang data untuk memeriksa status terbaru.")}</p>}
+            <ReminderList items={reminders} onOpen={item => {
+              navigate(item.kind === "approval" ? "approval" : item.kind === "task" ? "tasks" : "activities", item.kind === "activity" ? item.entity_id : "all");
+              setNotifications(false);
+            }}/>
           </div>
         </Dialog>
       )}

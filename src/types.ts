@@ -38,6 +38,10 @@ export interface Profile extends Base {
   region: string;
   skills: string[];
 }
+export interface ReportingLine extends Base {
+  member_id: string;
+  supervisor_id: string | null;
+}
 export interface Account extends Base {
   name: string;
   type: string;
@@ -112,6 +116,9 @@ export interface Activity extends Base {
   equipment_ids: string[];
   submitted_at?: string | null;
   approved_by?: string | null;
+  approved_at?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
   approval_note: string;
   budget: number;
   actual_cost: number;
@@ -166,6 +173,7 @@ export interface OrgSettings extends Base {
   timezone: string;
 }
 export interface Tables {
+  reporting_lines: ReportingLine;
   profiles: Profile;
   accounts: Account;
   contacts: Contact;

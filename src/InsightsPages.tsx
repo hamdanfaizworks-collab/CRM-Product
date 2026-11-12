@@ -103,7 +103,7 @@ function PeriodToolbar({
     <div className="toolbar insights-filters">
       <div className="toolbar-filters">
         <label className="field">
-          <span>{tr("Dari tanggal (WIB)")}</span>
+          <span>{tr("Dari tanggal")}</span>
           <input
             type="date"
             value={from}
@@ -112,7 +112,7 @@ function PeriodToolbar({
           />
         </label>
         <label className="field">
-          <span>{tr("Sampai tanggal (WIB)")}</span>
+          <span>{tr("Sampai tanggal")}</span>
           <input
             type="date"
             value={to}
@@ -303,9 +303,8 @@ export function DashboardPage({
   return (
     <>
       <PageHead
-        eyebrow={tr("TTM PRODUCT WORKSPACE")}
+        eyebrow={tr("TTM PRODUCT MANAGEMENT WORKSPACE")}
         title={tr("Selamat datang, {{value0}}", { value0: (profile.full_name.split(" ")[0]) })}
-        description={tr("Satu pandangan untuk prioritas tim, peluang produk, dan kegiatan pelanggan.")}
         action={
           <button
             className="btn primary"

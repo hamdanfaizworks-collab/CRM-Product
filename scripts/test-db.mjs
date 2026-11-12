@@ -66,7 +66,8 @@ await actor('director');await ok('director approval records actor',async()=>{awa
 await actor('ps');await ok('rescheduling requires approval again',async()=>{await db.exec(`update public.activities set start_at='2026-11-15 08:00+07',end_at='2026-11-15 09:00+07' where id='${ids.activity}'`);await eq(`select status v from public.activities where id='${ids.activity}'`,'submitted');});
 await actor('director');await db.exec(`update public.activities set status='approved' where id='${ids.activity}'`);
 await actor('ps');await db.exec(`update public.activities set status='in_progress' where id='${ids.activity}'`);
-await ok('approver remains server controlled',async()=>{await db.exec(`update public.activities set approved_by='${ids.ps}' where id='${ids.activity}'`);await eq(`select approved_by::text v from public.activities where id='${ids.activity}'`,ids.director);});
+await rejects('approver spoofing is rejected',`update public.activities set approved_by='${ids.ps}' where id='${ids.activity}'`,'ditetapkan oleh server');
+await ok('approver remains server controlled',()=>eq(`select approved_by::text v from public.activities where id='${ids.activity}'`,ids.director));
 await rejects('completion needs report',`update public.activities set status='completed' where id='${ids.activity}'`,'activities_report_required');
 await ok('valid report completes activity',()=>db.exec(`update public.activities set status='completed',report='Kegiatan berjalan sesuai rencana; feedback dan tindak lanjut dicatat.',outcome='Tujuan tercapai' where id='${ids.activity}'`));
 await rejects('cancel reason required',`update public.activities set status='cancelled' where id='40000000-0000-4000-8000-000000000003'`,'activities_reason_required');
@@ -219,9 +220,158 @@ for(const [extension,mime] of [
 await ok('knowledge accepts general material at exact 25 MiB limit',async()=>{const file=await uploadKnowledge('ps','pdf','application/pdf',26214400);await knowledgeInsert(file,{product_id:null});await eq(`select product_id is null v from public.knowledge_documents where id='${file.documentId}'`,true);});
 await actor('director');await ok('knowledge changes are audited',async()=>{const result=await db.query("select count(*)::int n from public.audit_logs where entity_type='knowledge_documents'");if(result.rows[0].n<5)throw new Error('Knowledge audits missing');});
 await ok('audits record changes',async()=>{const r=await db.query('select count(*)::int v from public.audit_logs');if(r.rows[0].v<8)throw new Error('Audit missing');});
+// Single-stage approval and hierarchy: isolated operator-created identities, no live backend.
+await db.exec('reset role');
+Object.assign(ids,{admin:'00000000-0000-4000-8000-000000000007',supervisor:'00000000-0000-4000-8000-000000000008',ancestor:'00000000-0000-4000-8000-000000000009',director2:'00000000-0000-4000-8000-000000000010',member:'00000000-0000-4000-8000-000000000011'});
+for(const [name,role] of [['admin','admin'],['supervisor','product_specialist'],['ancestor','application_specialist'],['director2','director'],['member','product_specialist']]){
+  await db.query('insert into auth.users(id,email) values($1,$2)',[ids[name],`${name}@example.invalid`]);
+  await db.query('insert into public.profiles(id,full_name,email,role) values($1,$2,$3,$4)',[ids[name],name,`${name}@example.invalid`,role]);
+}
+await actor();await rejects('anonymous cannot read reporting lines','select * from public.reporting_lines','permission denied');
+await actor('director');
+const reportingId=randomUUID();
+await ok('manager creates hierarchy with server-controlled creator',async()=>{
+  await db.query('insert into public.reporting_lines(id,member_id,supervisor_id,created_by) values($1,$2,$3,$4)',[reportingId,ids.ps,ids.supervisor,ids.ps]);
+  await eq(`select created_by::text v from public.reporting_lines where id='${reportingId}'`,ids.director);
+});
+await rejects('hierarchy rejects an inactive member',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.inactive}','${ids.supervisor}')`,'Anggota dalam hierarki');
+await rejects('hierarchy rejects a viewer member',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.viewer}','${ids.supervisor}')`,'Anggota dalam hierarki');
+await rejects('hierarchy rejects a missing member',`insert into public.reporting_lines(member_id,supervisor_id) values('${randomUUID()}','${ids.supervisor}')`,'Anggota dalam hierarki');
+await db.exec(`update public.profiles set active=false where id='${ids.ps}'`);
+await rejects('inactive member hierarchy cannot be updated even to clear supervisor',`update public.reporting_lines set supervisor_id=null where id='${reportingId}'`,'Anggota dalam hierarki');
+await ok('manager can delete an inactive member hierarchy row',async()=>{
+  await db.exec(`delete from public.reporting_lines where id='${reportingId}'`);
+  await eq(`select count(*)::int v from public.reporting_lines where id='${reportingId}'`,0);
+});
+await db.exec(`update public.profiles set active=true where id='${ids.ps}';insert into public.reporting_lines(id,member_id,supervisor_id) values('${reportingId}','${ids.ps}','${ids.supervisor}')`);
+await rejects('hierarchy rejects self supervisor',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.member}','${ids.member}')`,'dirinya sendiri');
+await rejects('hierarchy rejects inactive supervisor',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.member}','${ids.inactive}')`,'Atasan harus');
+await rejects('hierarchy rejects viewer supervisor',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.member}','${ids.viewer}')`,'Atasan harus');
+await rejects('hierarchy rejects a direct two-person cycle',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.supervisor}','${ids.ps}')`,'siklus');
+await db.exec(`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.supervisor}','${ids.ancestor}'),('${ids.ancestor}','${ids.director2}')`);
+await rejects('hierarchy rejects a deeper cycle',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.director2}','${ids.ps}')`,'siklus');
+await rejects('hierarchy update cannot introduce a cycle',`update public.reporting_lines set supervisor_id='${ids.ps}' where member_id='${ids.ancestor}'`,'siklus');
+await rejects('hierarchy row member identity cannot be swapped',`update public.reporting_lines set member_id='${ids.member}' where id='${reportingId}'`,'hierarki');
+await rejects('hierarchy creator cannot be forged',`update public.reporting_lines set created_by='${ids.ps}' where id='${reportingId}'`,'pembuat hierarki');
+await actor('viewer');await ok('active viewer can read reporting lines',()=>eq('select count(*)::int v from public.reporting_lines',3));
+await rejects('viewer cannot insert hierarchy',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.member}','${ids.supervisor}')`);
+await ok('viewer cannot update hierarchy',async()=>{await db.exec(`update public.reporting_lines set supervisor_id=null where id='${reportingId}'`);await eq(`select supervisor_id::text v from public.reporting_lines where id='${reportingId}'`,ids.supervisor);});
+await actor('ps');await rejects('specialist cannot insert hierarchy',`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.member}','${ids.supervisor}')`);
+await ok('specialist cannot delete hierarchy',async()=>{await db.exec(`delete from public.reporting_lines where id='${reportingId}'`);await eq(`select count(*)::int v from public.reporting_lines where id='${reportingId}'`,1);});
+await actor('outsider');await ok('nonmember cannot read hierarchy',()=>eq('select count(*)::int v from public.reporting_lines',0));
+await actor('inactive');await ok('inactive member cannot read hierarchy',()=>eq('select count(*)::int v from public.reporting_lines',0));
+await actor('admin');await ok('admin can assign a supervisor but gets no global approval right',()=>db.exec(`insert into public.reporting_lines(member_id,supervisor_id) values('${ids.member}','${ids.admin}')`));
+let reviewDay=0;
+async function pendingReview(owner='ps',participants=[]){
+  await actor(owner);const id=randomUUID(),start=new Date(Date.UTC(2060,0,1+reviewDay++,2)),end=new Date(start.getTime()+3600000);
+  await db.query('insert into public.activities(id,title,type,owner_id,start_at,end_at,status,participant_ids) values($1,$2,$3,$4,$5,$6,$7,$8)',[id,'Approval fixture','internal',ids[owner],start.toISOString(),end.toISOString(),'submitted',participants]);
+  return id;
+}
+async function review(id,decision='approved',note=''){return db.query('select * from public.review_activity($1,$2,$3)',[id,decision,note]);}
+const reviewTarget=await pendingReview();
+await actor();await rejects('anonymous cannot call review RPC',`select public.review_activity('${reviewTarget}','approved','')`,'permission denied');
+for(const actorName of ['viewer','outsider','inactive']){
+  await actor(actorName);await rejectsKnowledge(actorName+' cannot call approval RPC',()=>review(reviewTarget),'hak tulis');
+}
+await actor('ps');await rejectsKnowledge('owner cannot self approve through RPC',()=>review(reviewTarget),'bukan pemilik');
+await rejectsKnowledge('owner cannot self reject through RPC',()=>review(reviewTarget,'rejected','Own decision'),'bukan pemilik');
+await rejects('owner cannot self approve through direct UPDATE',`update public.activities set status='approved' where id='${reviewTarget}'`,'bukan pemilik');
+await actor('admin');await rejectsKnowledge('unassigned admin is not a fallback approver',()=>review(reviewTarget),'bukan pemilik');
+await ok('admin retains normal metadata edits without approval rights',()=>db.exec(`update public.activities set objective='Manager coordination' where id='${reviewTarget}'`));
+await actor('ancestor');await rejectsKnowledge('higher ancestor is not the direct supervisor',()=>review(reviewTarget));
+await ok('unassigned direct UPDATE cannot approve outside scope',async()=>{await db.exec(`update public.activities set status='approved' where id='${reviewTarget}'`);await eq(`select status v from public.activities where id='${reviewTarget}'`,'submitted');});
+await actor('supervisor');
+await rejects('supervisor cannot perform unrelated edits',`update public.activities set notes='Unrelated payload' where id='${reviewTarget}'`,'Atasan hanya');
+await rejects('supervisor cannot cancel as a reviewer',`update public.activities set status='cancelled',approval_note='Cancelled' where id='${reviewTarget}'`,'Atasan hanya');
+for(const change of ["title='Tampered'","budget=100",`owner_id='${ids.member}'`,`start_at=start_at+interval '2 hours'`,`participant_ids=array['${ids.ancestor}']::uuid[]`,`id='${randomUUID()}'`]){
+  await rejects('approval rejects simultaneous business mutation '+change.split('=')[0],`update public.activities set status='approved',${change} where id='${reviewTarget}'`,'tidak boleh disertai');
+}
+await rejectsKnowledge('RPC rejects unknown decision',()=>review(reviewTarget,'completed'),'Keputusan harus');
+await rejectsKnowledge('RPC requires rejection reason',()=>review(reviewTarget,'rejected',' '),'Alasan penolakan');
+await rejectsKnowledge('RPC rejects tab/newline-only rejection reason',()=>review(reviewTarget,'rejected',' \t\r\n '),'Alasan penolakan');
+await rejects('direct UPDATE also requires rejection reason',`update public.activities set status='rejected',approval_note=' ' where id='${reviewTarget}'`,'Alasan penolakan');
+await rejects('direct UPDATE rejects tab/newline-only rejection reason',`update public.activities set status='rejected',approval_note=E' \\t\\r\\n ' where id='${reviewTarget}'`,'Alasan penolakan');
+await rejectsKnowledge('review note length is limited',()=>review(reviewTarget,'approved','x'.repeat(4001)),'4000 karakter');
+await ok('direct supervisor approves without owning or participating',async()=>{
+  const result=await review(reviewTarget,'approved','  Reviewed in scope  ');const row=result.rows[0];
+  if(row.status!=='approved'||row.approved_by!==ids.supervisor||row.reviewed_by!==ids.supervisor||!row.approved_at||!row.reviewed_at||String(row.approved_at)!==String(row.reviewed_at)||row.approval_note!=='Reviewed in scope')throw new Error('Approval metadata incorrect');
+});
+await rejectsKnowledge('RPC rejects stale second decision',()=>review(reviewTarget,'rejected','Stale'),'tidak lagi menunggu');
+await rejects('direct UPDATE cannot reject an already approved activity',`update public.activities set status='rejected',approval_note='Stale' where id='${reviewTarget}'`,'tidak lagi menunggu');
+await actor('ps');await ok('rescheduling clears decision fields and requires approval again',async()=>{
+  await db.exec(`update public.activities set start_at=start_at+interval '2 hours',end_at=end_at+interval '2 hours' where id='${reviewTarget}'`);
+  await eq(`select status='submitted' and approved_by is null and approved_at is null and reviewed_by is null and reviewed_at is null v from public.activities where id='${reviewTarget}'`,true);
+});
+await actor('supervisor');await ok('direct supervisor can reject with a stamped review',async()=>{
+  const row=(await review(reviewTarget,'rejected','  Needs more detail  ')).rows[0];
+  if(row.status!=='rejected'||row.approved_by!==null||row.approved_at!==null||row.reviewed_by!==ids.supervisor||!row.reviewed_at||row.approval_note!=='Needs more detail')throw new Error('Rejection metadata incorrect');
+});
+await actor('ps');await ok('new submission clears the previous rejection decision',async()=>{
+  await db.exec(`update public.activities set status='submitted' where id='${reviewTarget}'`);
+  await eq(`select approved_by is null and approved_at is null and reviewed_by is null and reviewed_at is null and approval_note='' v from public.activities where id='${reviewTarget}'`,true);
+});
+const participantTarget=await pendingReview('ps',[ids.ancestor]);
+await actor('ancestor');await rejectsKnowledge('participant status does not confer approval rights',()=>review(participantTarget),'bukan pemilik');
+await ok('participant retains ordinary activity editing',()=>db.exec(`update public.activities set objective='Participant preparation' where id='${participantTarget}'`));
+await actor('director');await rejects('even director cannot edit business data while approving',`update public.activities set status='approved',budget=100 where id='${participantTarget}'`,'tidak boleh disertai');
+await ok('director can review another owner even with an assigned supervisor',()=>review(participantTarget));
+const ownDirector=await pendingReview('director');
+await actor('director');await rejectsKnowledge('director cannot self approve',()=>review(ownDirector),'bukan pemilik');
+await rejectsKnowledge('director cannot self reject',()=>review(ownDirector,'rejected','Own decision'),'bukan pemilik');
+await rejects('director cannot bypass self approval by reassigning in the same UPDATE',`update public.activities set status='approved',owner_id='${ids.ps}' where id='${ownDirector}'`,'bukan pemilik');
+await actor('director2');await ok('a different director can review director-owned activity',()=>review(ownDirector));
+const adminOwned=await pendingReview('admin');
+await actor('admin');await rejectsKnowledge('admin also cannot review own activity',()=>review(adminOwned),'bukan pemilik');
+const adminScoped=await pendingReview('member');
+await actor('admin');await ok('assigned admin may approve their direct report',()=>review(adminScoped));
+const directUpdateTarget=await pendingReview();
+await actor('supervisor');await ok('authorized direct UPDATE gets the same server-stamped review',async()=>{
+  await db.exec(`update public.activities set status='approved',approval_note='Direct API decision' where id='${directUpdateTarget}'`);
+  await eq(`select status='approved' and approved_by='${ids.supervisor}' and reviewed_by='${ids.supervisor}' and approved_at=reviewed_at v from public.activities where id='${directUpdateTarget}'`,true);
+});
+const spoofTarget=await pendingReview();
+await actor('director');
+for(const change of [`approved_by='${ids.director}'`,`approved_at=now()`,`reviewed_by='${ids.director}'`,`reviewed_at=now()`]){
+  await rejects('manager cannot forge review field '+change.split('=')[0],`update public.activities set status='approved',${change} where id='${spoofTarget}'`,'ditetapkan oleh server');
+}
+await db.exec(`update public.profiles set active=false where id='${ids.supervisor}'`);
+await actor('supervisor');await rejectsKnowledge('inactive supervisor cannot approve using existing identity',()=>review(spoofTarget),'hak tulis');
+await actor('director');await ok('director fallback still works with inactive assigned supervisor',()=>review(spoofTarget));
+await db.exec(`update public.profiles set active=true,role='viewer' where id='${ids.supervisor}'`);
+const viewerSupervisorTarget=await pendingReview();
+await actor('supervisor');await rejectsKnowledge('supervisor demoted to viewer cannot approve',()=>review(viewerSupervisorTarget),'hak tulis');
+await actor('director');await db.exec(`update public.profiles set role='product_specialist' where id='${ids.supervisor}'`);
+await db.exec(`update public.reporting_lines set supervisor_id=null where id='${reportingId}'`);
+await ok('null supervisor enables director fallback without a new hierarchy stage',()=>review(viewerSupervisorTarget));
+await db.exec(`update public.reporting_lines set supervisor_id='${ids.supervisor}' where id='${reportingId}'`);
+await pendingReview();await pendingReview();await pendingReview('supervisor');await pendingReview('member');
+await actor('supervisor');await ok('supervisor sidebar pending count excludes own and other reports',async()=>{
+  const actual=(await db.query("select count(*)::int n from public.activities where status='submitted' and private.can_review_activity(owner_id)")).rows[0].n;
+  const expected=(await db.query(`select count(*)::int n from public.activities where status='submitted' and owner_id='${ids.ps}'`)).rows[0].n;
+  if(actual!==expected||actual<2)throw new Error('Supervisor pending count is incorrect');
+});
+await actor('admin');await ok('admin sidebar pending count is limited to assigned direct reports',async()=>{
+  const actual=(await db.query("select count(*)::int n from public.activities where status='submitted' and private.can_review_activity(owner_id)")).rows[0].n;
+  const expected=(await db.query(`select count(*)::int n from public.activities where status='submitted' and owner_id='${ids.member}'`)).rows[0].n;
+  if(actual!==expected||actual<1)throw new Error('Admin pending count is incorrect');
+});
+await actor('director');await ok('director sidebar count excludes own submitted requests',async()=>{
+  const actual=(await db.query("select count(*)::int n from public.activities where status='submitted' and private.can_review_activity(owner_id)")).rows[0].n;
+  const expected=(await db.query(`select count(*)::int n from public.activities where status='submitted' and owner_id<>'${ids.director}'`)).rows[0].n;
+  if(actual!==expected)throw new Error('Director pending count is incorrect');
+});
+await ok('hierarchy and decision changes are audited',async()=>{
+  await eq("select count(*)>0 v from public.audit_logs where entity_type='reporting_lines'",true);
+  await eq("select count(*)>0 v from public.audit_logs where entity_type='activities' and new_data->>'reviewed_by' is not null",true);
+});
 await db.exec('reset role');
 await ok('all public tables enable RLS',()=>eq("select count(*)::int v from pg_tables where schemaname='public' and not rowsecurity",0));
-await ok('knowledge schema adds exactly one public business table',()=>eq("select count(*)::int v from pg_tables where schemaname='public'",12));
+await ok('feature migrations create thirteen RLS business tables',()=>eq("select count(*)::int v from pg_tables where schemaname='public'",13));
+await ok('review RPC is invoker and inaccessible to anonymous clients',async()=>{
+  await eq("select not prosecdef v from pg_proc where oid='public.review_activity(uuid,text,text)'::regprocedure",true);
+  await eq("select has_function_privilege('anon','public.review_activity(uuid,text,text)','execute') v",false);
+  await eq("select has_function_privilege('authenticated','public.review_activity(uuid,text,text)','execute') v",true);
+});
 await ok('anonymous cannot execute pre-existing helper',()=>eq("select has_function_privilege('anon','public.rls_auto_enable()','execute') v",false));
 await ok('authenticated cannot execute pre-existing helper',()=>eq("select has_function_privilege('authenticated','public.rls_auto_enable()','execute') v",false));
 console.log(JSON.stringify({result:'PASS',checks:passes,limitation:'PGlite verifies SQL and sequential RLS/business rules; hosted Supabase integration and parallel network race require target access.'}));

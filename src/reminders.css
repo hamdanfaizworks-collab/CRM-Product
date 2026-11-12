@@ -1,0 +1,8 @@
+.notification-count{position:absolute;top:-3px;right:-4px;min-width:16px;height:16px;padding:1px 4px;display:grid;place-items:center;border-radius:12px;background:#c0453c;color:white;font-size:9px;font-weight:700;line-height:1;border:2px solid #fff}
+.agenda-reminder-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 20px;margin-bottom:18px;border-left:3px solid #cb8e33;background:#fffcf6}
+.agenda-reminder-banner p{margin:4px 0 0;color:#80653d;font-size:12px}
+.reminder-state.overdue{color:#b63c34;font-weight:600}
+.reminder-state.upcoming{color:#285d92;font-weight:600}
+.reminder-state.pending{color:#7762a6;font-weight:600}
+.agenda-reminders button>div{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.agenda-reminder-banner{padding:14px;flex-direction:column;align-items:flex-start}}

@@ -39,6 +39,10 @@ describe("English default and stored language choice",()=>{
  });
 });
 describe("language settings and data invariants",()=>{
+ it("preserves explicit canonical labels when another translation shares the same value",()=>{
+  setLanguage("id");expect(tr("Team")).toBe("Team");
+  setLanguage("en");expect(tr("Team")).toBe("Team");expect(tr("Tim")).toBe("Team");
+ });
  it("changes UI text and interpolates values without changing names",()=>{
   setLanguage("en");expect(tr("Pelanggan")).toBe("Customers");
   expect(tr("Selamat datang, {{value0}}",{value0:"Selesai"})).toBe("Welcome, Selesai");

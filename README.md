@@ -2,19 +2,15 @@
 
 Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radiologi, kalender kegiatan, persetujuan, penugasan Product Specialist/Application Specialist, unit demo, laporan, dan tindak lanjut. UI memakai Inter dengan biru TTM `#174B8A` yang diambil dari katalog.
 
-## Status pengiriman
+## Revisi v1.4 — 12 November 2026
 
-**ENGLISH DEFAULT + PRODUCT KNOWLEDGE BASE — LIVE DAN TERVERIFIKASI.** Pembaruan tersedia di [Hostinger](https://cyan-oryx-350189.hostingersite.com). Source [`b8396896966c0c123ecac06001f1a0852ee3c12f`](https://github.com/hamdanfaizworks-collab/CRM-Product/commit/b8396896966c0c123ecac06001f1a0852ee3c12f) → [CI `43014085080`](https://github.com/hamdanfaizworks-collab/CRM-Product/actions/runs/43014085080) **SUCCESS** (verify + publish) → artifact `hostinger` **`349fdec5acde88f06a6b70289990d029fc4ab086`**. Live `release.json` cocok dan **HTTP smoke 13/13 PASS, 18:43 WIB, 11 November 2026**. Catatan ini menunjuk source fitur yang telah diverifikasi, bukan commit dokumentasi berikutnya.
+Login berbasis akun dengan copy yang disederhanakan; sidebar **Product Management Workspace / Customer Relationship Management**; label Indonesia/English diselaraskan. Form pelanggan kini memakai API wilayah v2 dengan 38 provinsi dan 514 kabupaten/kota serta cadangan lokal. Katalog memiliki ruang isi yang lebih nyaman.
 
-**Workspace director terhubung telah diperiksa pada origin produksi:** halaman Knowledge Base berbahasa English dan form unggah terbuka, seluruh 12 tabel berhasil dimuat, serta pustaka berisi 0 dokumen saat inspeksi. Pemeriksaan tersebut menggunakan sesi nyata tanpa mode demo dan **tanpa mengunggah file atau mengubah data pelanggan**. Screenshot sanitized: `TTM-Knowledge-Base.png`. UAT workflow bisnis tim penuh, SMTP/onboarding, serta backup/restore tetap tindak lanjut terpisah.
+**Approval Kegiatan / Activity Approval** menambahkan antrean tinjauan, keputusan satu tahap oleh atasan langsung dengan Product Director sebagai pengganti, serta form/pohon hierarki yang dikelola Director/Admin. Persetujuan sendiri, perubahan pelaku keputusan, siklus hierarki dan keputusan ganda ditolak di database. Pengingat agenda 24 jam/overdue berjalan di aplikasi yang terbuka, dengan penyegaran berkala.
 
-**Verifikasi:** **68 tes aplikasi, 109 pemeriksaan SQL/RLS lokal, 5 tes guard environment, dan build produksi lulus**; **39/39 API hosted Knowledge Base lulus**, dengan fixture dibersihkan dan audit dipertahankan. Browser preview juga membuktikan persistensi file demo setelah reload, unduhan berhash identik, pintasan produk, toggle bahasa, validasi ukuran, dan layout tanpa overflow. Rincian teknis terdapat pada [bukti UAT Hostinger](docs/HOSTINGER-UAT.md) dan deliverable `TTM-Knowledge-Hosted-UAT.json`.
+English tetap default; pilihan Indonesia tersimpan tetap berlaku. Knowledge Base privat, katalog 87 produk, dan bucket privat tetap tersedia. Panduan: [Approval, hierarchy and reminders](docs/APPROVAL-REMINDERS.md), [Knowledge Base](docs/KNOWLEDGE-BASE.md), [PRD](docs/PRD.md), [deployment GitHub → Hostinger](docs/HOSTINGER.md).
 
-**Backend:** **4 migrasi, 12 tabel ber-RLS, 87 produk, dan 2 bucket privat**: `activity-evidence` (10 MiB) dan `product-knowledge` (25 MiB). Migrasi keempat `20261111071649_product_knowledge_library.sql` menambahkan pustaka tanpa file atau penulis produksi fiktif.
-
-**English / Indonesia:** English adalah default ketika preferensi kosong/tidak valid atau storage tidak tersedia. Pilihan Indonesia (`id`) yang tersimpan tetap dihormati. Pemilih tersedia di login dan workspace; format mengikuti `en-GB`/`id-ID`, sedangkan WIB, IDR, enum, nama, catatan dan isi file tetap. / English is the default when no valid preference is available; an explicitly saved Indonesian choice is preserved. Switching the UI does not translate user data or document contents.
-
-**Knowledge Base:** materi privat dengan produk opsional, jenis, versi, bahasa, tag, pencarian/filter, unduhan signed URL 60 detik, edit metadata serta arsip/pulihkan oleh penulis asli atau director/admin. Viewer membaca dan mengunduh. File immutable; revisi memakai record baru. Lihat [panduan pemakaian bilingual](docs/KNOWLEDGE-BASE.md), [FR-15](docs/PRD.md), dan [status release](docs/RELEASE.md).
+Target: [Hostinger CRM](https://cyan-oryx-350189.hostingersite.com). Bukti source aplikasi yang sedang berjalan tersedia pada `/release.json`; cocokkan dengan commit source dan dua job CI. Catatan rilis terdahulu diberi tanggal di [RELEASE.md](docs/RELEASE.md). SMTP/onboarding tim dan UAT proses bisnis nyata tetap merupakan tindak lanjut pilot Director.
 
 ## Menjalankan aplikasi
 
@@ -25,7 +21,7 @@ npm ci
 npm run dev
 ```
 
-Buka alamat localhost yang ditampilkan Vite. Tanpa konfigurasi Supabase, gunakan sandbox demo untuk meninjau alur. Metadata sandbox tersimpan di localStorage dan file demo Knowledge Base di IndexedDB pada browser/origin yang sama; keduanya bukan data operasional Supabase. Reset demo membersihkan metadata dan file sandbox.
+Buka alamat localhost yang ditampilkan Vite setelah mengatur konfigurasi publik Supabase. Aplikasi tidak menyediakan pintu masuk demo publik. Fixture sandbox hanya dipakai oleh pengujian UI dan bukan akses operasional.
 
 Untuk koneksi backend, salin `.env.example` menjadi `.env.local`, lalu isi melalui environment lokal/hosting:
 
