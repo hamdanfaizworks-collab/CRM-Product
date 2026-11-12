@@ -1,6 +1,6 @@
 # Backend Supabase TTM CRM
 
-Backend target: `yqmcafgnryvsrvalbycz`. **Empat migrasi telah diterapkan**, mencakup **12 tabel bisnis ber-RLS** dan dua bucket privat: evidence **10 MiB** serta Knowledge Base **25 MiB**. Suite SQL/RLS lokal lulus **109/109**, dan hosted Knowledge Base API lulus **39/39** dengan fixture dibersihkan. Hostinger telah live dan login director dikonfirmasi pengguna; status yang disepakati tetap pilot director. SMTP tim, workflow bisnis nyata dan backup/restore mempunyai tindak lanjut tersendiri. Bukti KB: `KNOWLEDGE-UAT.md`.
+Backend target: `yqmcafgnryvsrvalbycz`. **Enam migrasi telah diterapkan**, mencakup **13 tabel bisnis ber-RLS** dan dua bucket privat: evidence **10 MiB** serta Knowledge Base **25 MiB**. Verifikasi 12 November 2026: **188 SQL/RLS lokal** dan **40/40 hosted approval API** lulus; fixture dibersihkan. Bukti: [APPROVAL-UAT.md](APPROVAL-UAT.md). Hasil Knowledge Base sebelumnya **39/39**, 11 November 2026, tetap dicatat di `KNOWLEDGE-UAT.md`. SMTP tim, workflow bisnis nyata dan backup/restore tetap tindak lanjut pilot Director.
 
 ## Artefak dan kontrak
 
@@ -8,11 +8,13 @@ Backend target: `yqmcafgnryvsrvalbycz`. **Empat migrasi telah diterapkan**, menc
 - `supabase/migrations/20261110222904_ttm_crm_revoke_rls_auto_enable_execute.sql`: hardening helper event trigger target yang telah diverifikasi.
 - `supabase/migrations/20261111015854_ttm_crm_policy_and_fk_indexes.sql`: policy write-only manager yang setara dan 12 indeks FK tambahan.
 - `supabase/migrations/20261111071649_product_knowledge_library.sql`: library materi produk/umum, private Storage 25 MiB, file binding immutable, archive/restore dan audit.
+- `supabase/migrations/20261111205526_single_stage_activity_approval.sql`: reporting lines, satu tahap review supervisor/Director, RLS, actor/time server, audit dan pencegahan siklus.
+- `supabase/migrations/20261112023647_normalize_approval_note_whitespace.sql`: normalisasi tab/baris baru agar alasan penolakan whitespace-only ditolak pada RPC maupun direct UPDATE.
 - `supabase/seed.sql`: 87 model/produk hasil pembacaan visual katalog; tidak memuat pelanggan, anggota, unit demo, atau penjualan fiktif. `source_page` berarti nomor halaman fisik PDF berbasis 1. Nomor halaman tercetak disimpan pada `specs.source_printed_page`.
 - `supabase/functions/team-admin/index.ts`: endpoint administratif undangan/profil.
 - `scripts/test-db.mjs`: verifikasi PostgreSQL lokal melalui PGlite. Membuat database sementara in-memory, tidak menghubungi target.
 
-Seluruh data bisnis dapat dibaca anggota aktif dalam satu organisasi TTM. Viewer hanya membaca. Specialist menulis milik/penugasan sendiri; director/admin mengelola data dan persetujuan. Profil memiliki aturan khusus: anggota aktif dapat mengubah `full_name` sendiri; hanya director/admin dapat mengubah role, email, wilayah, kompetensi, atau status aktif. Email login Auth tidak ikut diubah melalui endpoint profil.
+Seluruh data bisnis dapat dibaca anggota aktif dalam satu organisasi TTM. Viewer hanya membaca. Specialist menulis milik/penugasan sendiri; director/admin mengelola data dan hierarki. Approval hanya oleh atasan langsung atau Product Director, tidak boleh pemilik kegiatan sendiri; admin perlu assignment sebagai atasan langsung. Profil memiliki aturan khusus: anggota aktif dapat mengubah `full_name` sendiri; hanya director/admin dapat mengubah role, email, wilayah, kompetensi, atau status aktif. Email login Auth tidak ikut diubah melalui endpoint profil.
 
 Tabel `audit_logs` memakai `id bigint`, `entity_type`, `entity_id`, `action`, `actor_id`, `occurred_at`, `old_data`, `new_data`. Tidak ada grant insert/update/delete untuk pengguna. Actor dari JWT pemanggil dicatat oleh trigger; maintenance SQL operator dapat memiliki actor null.
 
@@ -24,7 +26,7 @@ Anggota aktif termasuk viewer dapat membaca materi; hanya nonviewer dapat mengun
 
 ## Status dan reservasi
 
-Status kegiatan: `draft`, `submitted`, `approved`, `in_progress`, `completed`, `rejected`, `cancelled`. Insert hanya draft/submitted. Approval/rejection hanya director/admin. Completed memerlukan laporan minimal 10 karakter dan outcome; rejected/cancelled memerlukan `approval_note` sebagai alasan. Perubahan jadwal/koordinator/peserta/unit pada approved/in_progress mengembalikan status ke submitted.
+Status kegiatan: `draft`, `submitted`, `approved`, `in_progress`, `completed`, `rejected`, `cancelled`. Insert hanya draft/submitted. Approval/rejection melalui `review_activity(p_activity_id,p_decision,p_note)` memakai satu tahap oleh atasan langsung atau Product Director selain owner. RPC dan direct UPDATE menegakkan aturan sama. Penolakan wajib alasan nonblank, maksimal 4000 karakter; perubahan business field tidak boleh digabung dengan keputusan. Completed memerlukan laporan minimal 10 karakter dan outcome; cancelled memerlukan alasan. Perubahan jadwal/koordinator/peserta/unit pada approved/in_progress mengembalikan status ke submitted dan mengosongkan approval/review stamps. Hierarki dikelola Director/Admin, menolak self/cycle, dan hanya menerima member/supervisor aktif selain viewer.
 
 Submitted, approved, dan in_progress menahan slot. Konflik memakai interval `[start_at,end_at)` dan memeriksa koordinator, array `participant_ids`, serta `equipment_ids`. Trigger mengambil transaction advisory lock yang sama untuk seluruh perubahan jadwal, kemudian memeriksa overlap terhadap seluruh organisasi. Ini sengaja mengutamakan konsistensi untuk tim internal; pada skala besar, normalisasi reservasi ke tabel resource dengan exclusion constraints layak dipertimbangkan. Uji race paralel pada PostgreSQL target tetap diperlukan; PGlite tidak membuktikan konkurensi antar koneksi jaringan.
 

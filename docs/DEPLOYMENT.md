@@ -2,7 +2,11 @@
 
 Runbook ini membedakan verifikasi lokal, publikasi frontend, dan go-live operasional. Jangan menandai pekerjaan selesai sebelum bukti pada lingkungan target tersedia.
 
-## Status terkini / Current status
+## Status revisi 12 November 2026
+
+Backend approval telah deployed: **6 migrasi, 13 tabel RLS, 87 produk**, **188 SQL/RLS** dan **40/40 hosted approval API PASS** dengan fixture dibersihkan. Aplikasi: **94 tes**, **5 environment guard** dan build Hostinger PASS. Panduan fitur dan cara memverifikasi source live: [APPROVAL-REMINDERS.md](APPROVAL-REMINDERS.md); bukti backend: [APPROVAL-UAT.md](APPROVAL-UAT.md). Status frontend per commit ditentukan oleh dua job CI dan `/release.json` pada Hostinger.
+
+## Riwayat status 11 November 2026 / Historical status
 
 | Komponen | Temuan 11 November 2026 | Dampak |
 | --- | --- | --- |
