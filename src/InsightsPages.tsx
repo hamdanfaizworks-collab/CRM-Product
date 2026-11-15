@@ -1,6 +1,8 @@
 // localized-ui-v1
 import { getLanguage, getLocale, tr } from "./i18n";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { ProductAnalyticsPage } from "./ProductAnalyticsPage";
+import { ProductAttentionSummary } from "./ProductAttentionSummary";
 import {
   ArrowRight,
   CalendarDays,
@@ -193,7 +195,7 @@ function QuantityBar({
 export function DashboardPage({
   navigate,
 }: {
-  navigate: (page: string) => void;
+  navigate: (page: string, context?: string) => void;
 }) {
   const { data, profile } = useCRM();
   const [from, setFrom] = useState(() => currentMonth().from);
@@ -364,6 +366,7 @@ export function DashboardPage({
         />
       </div>
 
+      <ProductAttentionSummary onOpen={() => navigate("reports", "products")} />
       <div className="dashboard-grid">
         <section className="card">
           <div className="panel-head">
@@ -588,7 +591,22 @@ export function DashboardPage({
   );
 }
 
-export function ReportsPage() {
+export function ReportsPage({initialTab = "operations", onPlanActivity}: {initialTab?: "operations" | "products"; onPlanActivity?: (productId: string) => void} = {}) {
+  const [tab, setTab] = useState(initialTab);
+  useEffect(() => setTab(initialTab), [initialTab]);
+  const selectTab = (next: "operations" | "products") => {
+    setTab(next);location.hash = next === "products" ? "reports?view=products" : "reports";
+  };
+  return <>
+    <div className="report-mode-tabs" role="tablist" aria-label={tr("Jenis laporan")}>
+      <button role="tab" aria-selected={tab === "operations"} onClick={() => selectTab("operations")}>{tr("Laporan Operasional")}</button>
+      <button role="tab" aria-selected={tab === "products"} onClick={() => selectTab("products")}>{tr("Analisis Produk")}</button>
+    </div>
+    {tab === "products" ? <ProductAnalyticsPage onPlanActivity={onPlanActivity} /> : <OperationalReportsPage />}
+  </>;
+}
+
+function OperationalReportsPage() {
   const { data } = useCRM();
   const [from, setFrom] = useState(() => currentMonth().from);
   const [to, setTo] = useState(() => currentMonth().to);

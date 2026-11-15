@@ -1,5 +1,15 @@
 # Status release / Release status — TTM Product CRM
 
+## Revisi v1.5 — 15 November 2026
+
+**Analisis Produk / Product Analytics** berada di Laporan, dengan ringkasan **Produk Perlu Perhatian** pada Dashboard. Fitur memisahkan enam jenis promosi selesai dari rencana 30 hari, menyertakan produk nol kegiatan, membandingkan periode WIB yang sama panjang, serta menyediakan urutan/filter presentasi, rincian per produk, snapshot pipeline/tugas dan ekspor CSV. Tombol rencana membuka draft berisi produk pilihan; pengguna tetap meninjau dan menyimpan formulir. [Panduan dan batas metrik](PRODUCT-ANALYTICS.md).
+
+Pemeriksaan lokal: **149 tes aplikasi**, **5 environment guard**, typecheck dan build Hostinger lulus. Pemeriksaan awal bersamaan menemukan timeout satu skenario DOM lama; skenario itu lulus sendiri dan seluruh 149 tes kemudian lulus dengan dua worker. Tidak ada assertion atau timeout yang dilonggarkan. CI tetap menjalankan suite penuh dan seluruh pemeriksaan SQL/RLS sebelum artifact diterbitkan. Tidak ada migrasi, perubahan Auth, atau penulisan data bisnis oleh fitur ini. Cocokkan rilis live melalui `/release.json`; keberhasilan lokal bukan bukti deployment.
+
+Website blank setelah reconnect Git telah dipulihkan: Hostinger sebelumnya mengambil source `feat/ttm-crm-v1`, lalu dikembalikan ke artifact **`hostinger` → `public_html`**. Provider Completed **09:46 WIB**, 13/13 HTTP PASS, sesi Director terbuka kembali, dan auto-deployment aktif. Source tetap diedit pada `main`. [Aturan koneksi Hostinger](HOSTINGER.md).
+
+English remains the default; a saved Indonesian preference is retained. The older dated records below describe historical releases and do not replace the v1.5 feature definition or current live provenance.
+
 > **Revisi 12 November 2026:** v1.4 menambahkan approval satu tahap, form hierarki, API wilayah pelanggan, pengingat agenda dan revisi label/login. [Panduan terbaru](APPROVAL-REMINDERS.md). Migrasi tambahan: `20261111205526_single_stage_activity_approval.sql`; koreksi `20261112023647_normalize_approval_note_whitespace.sql`; total setelah deployment: 6 migrasi / 13 tabel publik ber-RLS. Cocokkan source live melalui `/release.json` dan hasil CI. **Semua catatan bertanggal 11 November di bawah adalah histori rilis sebelumnya, bukan bukti deployment v1.4.**
 
 

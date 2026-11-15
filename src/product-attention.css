@@ -1,0 +1,22 @@
+.report-mode-tabs{display:flex;gap:10px;margin:0 0 24px;padding:5px;width:fit-content;max-width:100%;border:1px solid #dfe7f0;border-radius:10px;background:#edf2f8;overflow-x:auto}
+.report-mode-tabs>button{border:0;border-radius:7px;background:transparent;padding:10px 16px;color:#65788f;font:inherit;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer}
+.report-mode-tabs>button[aria-selected=true]{color:#174b8a;background:white;box-shadow:0 1px 5px #1c3b6020}
+.report-mode-tabs>button:focus-visible{outline:2px solid #174b8a;outline-offset:-2px}
+.product-attention-card{margin:24px 0;padding:24px;min-width:0}
+.product-attention-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.product-attention-head h2{margin:6px 0 7px;font-size:18px}
+.product-attention-head p{margin:0;color:#73859c;font-size:11px;line-height:1.7}
+.product-attention-head>svg{color:#5b82b1;flex-shrink:0}
+.product-attention-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:22px 0;gap:20px;padding:18px;background:#f6f9fd;border:1px solid #e8eef5;border-radius:9px}
+.product-attention-metrics>div{min-width:0}
+.product-attention-metrics strong{display:block;font-size:24px;line-height:1.2;color:#174b8a}
+.product-attention-metrics span{display:block;font-size:11px;color:#6d7f96;line-height:1.7;margin-top:6px}
+.product-attention-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));list-style:none;padding:0;margin:0;gap:18px}
+.product-attention-list li{min-width:0;padding:0 0 16px;border-bottom:1px solid #e8eef5;overflow-wrap:anywhere}
+.product-attention-list strong{display:block;font-size:12px;line-height:1.7}
+.product-attention-list span,.product-attention-list small{display:block;font-size:10px;line-height:1.7;color:#75859b;margin-top:4px}
+.product-attention-list small{color:#5276a2}
+.product-attention-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:20px}
+.product-attention-foot p{margin:0;max-width:74ch;font-size:10px;line-height:1.8;color:#7a899d}
+.product-attention-foot .btn{flex-shrink:0}
+@media(max-width:700px){.product-attention-card{padding:20px}.product-attention-list{grid-template-columns:1fr}.product-attention-foot{align-items:stretch;flex-direction:column;gap:15px}.product-attention-foot .btn{align-self:flex-start}.product-attention-metrics{gap:15px;padding:15px}.product-attention-metrics strong{font-size:21px}}

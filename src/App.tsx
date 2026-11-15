@@ -367,6 +367,8 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
   const [sidebar, setSidebar] = useState(false);
   const [knowledgeProduct, setKnowledgeProduct] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("product") || "all");
   const [focusedActivity, setFocusedActivity] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("activity") || "");
+  const [plannedProduct, setPlannedProduct] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("newProduct") || "");
+  const [reportsView, setReportsView] = useState<"operations" | "products">(() => new URLSearchParams(location.hash.split("?")[1] || "").get("view") === "products" ? "products" : "operations");
   const [activityRouteVersion, setActivityRouteVersion] = useState(0);
   const [agendaSyncFailed, setAgendaSyncFailed] = useState(false);
   const [notifications, setNotifications] = useState(false);
@@ -375,17 +377,29 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
     if (!menu.some((m) => m.id === id)) return;
     setPage(id);
     if (id === "knowledge") setKnowledgeProduct(productId);
-    if (id === "activities") {setFocusedActivity(productId === "all" ? "" : productId);setActivityRouteVersion(value => value + 1);}
-    location.hash = id + (id === "knowledge" && productId !== "all" ? "?product=" + encodeURIComponent(productId) : id === "activities" && productId !== "all" ? "?activity=" + encodeURIComponent(productId) : "");
+    if (id === "activities") {setFocusedActivity(productId === "all" ? "" : productId);setPlannedProduct("");setActivityRouteVersion(value => value + 1);}
+    if (id === "reports") setReportsView(productId === "products" ? "products" : "operations");
+    location.hash = id + (id === "knowledge" && productId !== "all" ? "?product=" + encodeURIComponent(productId) : id === "activities" && productId !== "all" ? "?activity=" + encodeURIComponent(productId) : id === "reports" && productId === "products" ? "?view=products" : "");
     setSidebar(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const planProductActivity = (productId: string) => {
+    if (profile.role === "viewer" || !data.products.some(product => product.id === productId && product.active !== false)) return;
+    setFocusedActivity("");setPlannedProduct(productId);setActivityRouteVersion(value => value + 1);
+    setPage("activities");setSidebar(false);
+    location.hash = "activities?newProduct=" + encodeURIComponent(productId);
+    window.scrollTo({top: 0, behavior: "smooth"});
   };
   useEffect(() => {
     const f = () => {
       const id = location.hash.slice(1).split("?")[0];
       if (menu.some((m) => m.id === id)) setPage(id);
       if (id === "knowledge") setKnowledgeProduct(new URLSearchParams(location.hash.split("?")[1] || "").get("product") || "all");
-      if (id === "activities") setFocusedActivity(new URLSearchParams(location.hash.split("?")[1] || "").get("activity") || "");
+      if (id === "activities") {
+        const params = new URLSearchParams(location.hash.split("?")[1] || "");
+        setFocusedActivity(params.get("activity") || "");setPlannedProduct(params.get("newProduct") || "");
+      }
+      if (id === "reports") setReportsView(new URLSearchParams(location.hash.split("?")[1] || "").get("view") === "products" ? "products" : "operations");
     };
     addEventListener("hashchange", f);
     return () => removeEventListener("hashchange", f);
@@ -574,7 +588,7 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
           ) : page === "pipeline" ? (
             <PipelinePage />
           ) : page === "activities" ? (
-            <ActivityPage key={`${focusedActivity}:${activityRouteVersion}`} initialActivityId={focusedActivity} />
+            <ActivityPage key={`${focusedActivity}:${plannedProduct}:${activityRouteVersion}`} initialActivityId={focusedActivity} initialProductId={plannedProduct} />
           ) : page === "tasks" ? (
             <TasksPage />
           ) : page === "catalog" ? (
@@ -588,7 +602,7 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
           ) : page === "approval" ? (
             <ApprovalPage />
           ) : page === "reports" ? (
-            <ReportsPage />
+            <ReportsPage initialTab={reportsView} onPlanActivity={planProductActivity} />
           ) : (
             <SettingsPage />
           )}

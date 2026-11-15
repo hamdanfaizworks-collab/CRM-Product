@@ -47,7 +47,7 @@ import {
 import {buildReminders, useReminderClock} from "./reminders";
 const options = (o: Record<string, string>) =>
   Object.entries(o).map(([value, label]) => ({ value, label: tr(label) }));
-export function ActivityPage({initialActivityId = ""}: {initialActivityId?: string} = {}) {
+export function ActivityPage({initialActivityId = "", initialProductId = ""}: {initialActivityId?: string; initialProductId?: string} = {}) {
   useLanguage();
   const { data, profile, demo, save, notify, refresh, reviewActivity } = useCRM();
   const [search, setSearch] = useState("");
@@ -129,9 +129,10 @@ export function ActivityPage({initialActivityId = ""}: {initialActivityId?: stri
     setMonth(d.toISOString().slice(0, 7));
     setSelectedDay("");
   };
-  const newActivity = () =>
+  const newActivity = (productId = "") =>
     setEdit({
       title: "",
+      product_id: productId || null,
       type: "demo",
       status: "draft",
       owner_id: profile.id,
@@ -154,6 +155,13 @@ export function ActivityPage({initialActivityId = ""}: {initialActivityId?: stri
       report: "",
       outcome: "",
     });
+  useEffect(() => {
+    if (initialProductId && writable && data.products.some(product => product.id === initialProductId && product.active !== false)) newActivity(initialProductId);
+  }, [initialProductId]);
+  const closeActivityForm = () => {
+    setEdit(null);
+    if (initialProductId) history.replaceState(null, "", location.pathname + location.search + "#activities");
+  };
   const fields: Field[] = [
     { key: "title", label: tr("Nama kegiatan"), required: true },
     {
@@ -319,7 +327,7 @@ export function ActivityPage({initialActivityId = ""}: {initialActivityId?: stri
         title={tr("Kalender & aktivitas")}
         action={
           writable && (
-            <button className="btn primary" onClick={newActivity}>
+            <button className="btn primary" onClick={() => newActivity()}>
               <Plus size={17} />{tr("Tambah kegiatan")}</button>
           )
         }
@@ -534,7 +542,7 @@ export function ActivityPage({initialActivityId = ""}: {initialActivityId?: stri
             end_at: localInput(edit.end_at!),
           }}
           fields={fields}
-          onClose={() => setEdit(null)}
+          onClose={closeActivityForm}
           onSave={async (row) => {
             const payload = {
               ...row,
@@ -574,7 +582,7 @@ export function ActivityPage({initialActivityId = ""}: {initialActivityId?: stri
                 payload.status = "submitted";
             }
             const a = await save("activities", payload);
-            setEdit(null);
+            closeActivityForm();
             setDetailId(a.id);
           }}
         />

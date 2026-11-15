@@ -1,5 +1,13 @@
 # Hostinger deployment / Panduan deployment TTM Product CRM
 
+## Pemulihan koneksi Git — 15 November 2026
+
+Website sempat blank setelah koneksi Git diarahkan ke branch source `feat/ttm-crm-v1`. Pada target PHP/HTML ini, source tersebut tidak dibangun oleh Hostinger. Koneksi dipulihkan ke repository yang sama, branch **`hostinger`**, direktori **`public_html`**. hPanel menunjukkan Completed pada **09:46 WIB**; 13/13 pemeriksaan HTTP kemudian lulus dan workspace Director kembali terbuka. Auto-deployment aktif, dibuktikan oleh pilihan **Turn off auto-deployment** pada panel.
+
+Jika menghubungkan ulang GitHub, pilih **`hostinger`**, bukan `main` atau `feat/ttm-crm-v1`. `main` tetap menjadi tempat mengedit source; GitHub Actions membangun dan menerbitkan artifact. Untuk setiap rilis berikutnya cocokkan source pada `/release.json`, CI verify/publish, dan hasil Hostinger. Panduan [Analisis Produk](PRODUCT-ANALYTICS.md) menjelaskan fitur v1.5; angka dan bukti rilis bertanggal lebih lama di bawah merupakan histori.
+
+The blank site was recovered by reconnecting the existing repository's **`hostinger`** artifact branch to **`public_html`**. Edit source on `main`; let CI build it. Do not select an unbuilt source branch in this PHP/HTML Git deployment.
+
 > **Revisi 12 November 2026:** v1.4 menambahkan approval satu tahap, form hierarki, API wilayah pelanggan, pengingat agenda dan revisi label/login. [Panduan terbaru](APPROVAL-REMINDERS.md). Migrasi tambahan: `20261111205526_single_stage_activity_approval.sql`; koreksi `20261112023647_normalize_approval_note_whitespace.sql`; total setelah deployment: 6 migrasi / 13 tabel publik ber-RLS. Cocokkan source live melalui `/release.json` dan hasil CI. **Semua catatan bertanggal 11 November di bawah adalah histori rilis sebelumnya, bukan bukti deployment v1.4.**
 
 

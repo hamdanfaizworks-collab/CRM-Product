@@ -2,6 +2,12 @@
 
 Aplikasi internal Triputra Techno Med untuk CRM pelanggan, pipeline produk radiologi, kalender kegiatan, persetujuan, penugasan Product Specialist/Application Specialist, unit demo, laporan, dan tindak lanjut. UI memakai Inter dengan biru TTM `#174B8A` yang diambil dari katalog.
 
+## Revisi v1.5 — Analitik promosi produk
+
+**Reports → Product Analytics / Laporan → Analisis Produk** menampilkan realisasi enam jenis promosi selesai, perbandingan periode WIB, seluruh produk termasuk nol kegiatan, urutan/filter presentasi, dan CSV sesuai tabel. Rencana 30 hari, pipeline serta tugas merupakan snapshot terpisah. Kartu produk Dashboard memakai seluruh tim/produk aktif/90 hari, terpisah dari filter bulanan operasional. Target dua kegiatan dan jeda 90 hari dapat disesuaikan sebagai panduan rencana, bukan skor anggota.
+
+Detail produk dapat membuka draft kegiatan dengan produk terisi **tanpa otomatis menyimpan**. English tetap default, pilihan Indonesia tersimpan tetap berlaku, dan tidak ada perubahan skema database. Panduan bilingual dan metode: [Product promotion analytics](docs/PRODUCT-ANALYTICS.md).
+
 ## Revisi v1.4 — 12 November 2026
 
 Login berbasis akun dengan copy yang disederhanakan; sidebar **Product Management Workspace / Customer Relationship Management**; label Indonesia/English diselaraskan. Form pelanggan kini memakai API wilayah v2 dengan 38 provinsi dan 514 kabupaten/kota serta cadangan lokal. Katalog memiliki ruang isi yang lebih nyaman.
@@ -63,6 +69,7 @@ CI menjalankan instalasi terkunci, tes environment/frontend/database, build guar
 | [docs/HOSTINGER.md](docs/HOSTINGER.md) | Jalur actual main → CI → hostinger → public_html; Indonesia/English |
 | [docs/RELEASE.md](docs/RELEASE.md) | Bukti pengujian terkini, pilot director, dan status deployment |
 | [docs/KNOWLEDGE-BASE.md](docs/KNOWLEDGE-BASE.md) | Panduan bilingual unggah, pencarian, versi, unduh, dan arsip materi produk |
+| [docs/PRODUCT-ANALYTICS.md](docs/PRODUCT-ANALYTICS.md) | Panduan bilingual analitik promosi, cakupan nol produk, pembanding, snapshot dan perencanaan |
 | [docs/HOSTED-UAT.md](docs/HOSTED-UAT.md) | 23 pemeriksaan API hosted serta batas verifikasi |
 | [docs/HOSTINGER-UAT.md](docs/HOSTINGER-UAT.md) | Commit/CI/artifact/provider/HTTPS dan smoke test frontend Hostinger |
 | `src/` | UI React/TypeScript, data access, katalog, aturan dan uji domain |

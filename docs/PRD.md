@@ -3,9 +3,9 @@
 
 **Perusahaan:** Triputra Techno Med (TTM)
 **Pemilik produk:** Product Director TTM
-**Versi:** 1.4 — Approval satu tahap, hierarki, wilayah pelanggan dan pengingat agenda
-**Tanggal:** 12 November 2026, WIB
-**Status:** Revisi v1.4 terimplementasi dengan pengujian lokal; bukti deployment spesifik commit diperiksa melalui CI dan `/release.json`. Pilot Director berjalan; SMTP/onboarding dan UAT tim penuh tetap terpisah.
+**Versi:** 1.5 — Analitik promosi produk dan prioritas perencanaan
+**Tanggal:** 15 November 2026, WIB
+**Status:** Kebutuhan mencakup implementasi aplikasi v1.5; bukti release/deployment dicatat terpisah pada `RELEASE.md`. SMTP/onboarding dan UAT tim penuh tetap terpisah.
 **Repository yang diminta:** https://github.com/hamdanfaizworks-collab/CRM-Product
 **Backend yang diminta:** proyek Supabase `yqmcafgnryvsrvalbycz`
 
@@ -75,6 +75,7 @@ Asumsi awal:
 - Katalog produk berdasarkan lampiran, sumber/halaman, dan status validasi.
 - Tim, role, aktivasi/nonaktif, dan penugasan anggota.
 - Laporan operasional, pipeline, produktivitas, serta ekspor CSV.
+- Analitik promosi produk, termasuk produk nol kegiatan, perbandingan periode, prioritas perencanaan, serta snapshot rencana/pipeline/tugas.
 - Pengaturan organisasi, audit perubahan penting, kontrol akses database, dan dokumentasi operasional.
 - Pemilih bahasa Indonesia/English pada login dan ruang kerja, preferensi persisten pada browser, label/validasi/CSV bilingual, serta format angka/tanggal menurut locale.
 - Product Knowledge Base: materi privat terkait produk dengan metadata jenis, versi, bahasa, tag, pencarian/filter, unduh terotorisasi dan arsip. Implementasi dan deployment pembaruan ini telah diverifikasi; bukti serta batas pengujian dijelaskan pada FR-15 dan release status.
@@ -215,6 +216,25 @@ Pustaka produksi **dimulai kosong**. Katalog tidak menghasilkan file atau penuli
 
 **Bukti saat ini:** 68 tes aplikasi, 109 SQL/RLS lokal, 5 guard environment dan build lulus; hosted Knowledge Base 39/39 lulus dengan fixture dibersihkan dan audit dipertahankan. Browser production preview membuktikan default English/toggle Indonesia, upload demo, reload, unduh berhash identik, pintasan/filter produk serta layout tanpa overflow. Secara terpisah, browser pada origin Hostinger membuktikan workspace director terhubung tanpa mode demo, halaman Knowledge Base English dan form unggah terbuka, 12 tabel dimuat, serta 0 dokumen saat inspeksi. Tidak ada file produksi diunggah atau data pelanggan diubah dalam pemeriksaan UI itu. Ini bukan UAT workflow bisnis tim penuh. Screenshot sanitized: `TTM-Knowledge-Base.png`. Panduan pengguna: [KNOWLEDGE-BASE.md](KNOWLEDGE-BASE.md).
 
+### FR-19. Analitik promosi produk dan prioritas perencanaan (v1.5)
+
+1. Modul **Reports → Product Analytics / Laporan → Analisis Produk** menyediakan filter periode, seluruh tim/anggota tertentu, kategori, brand, pencarian nama produk/brand/kategori, serta katalog aktif/default atau termasuk nonaktif. English tetap default; pilihan Indonesia tersimpan dihormati dan data pengguna tidak diterjemahkan.
+2. Rentang awal adalah **90 hari kalender WIB termasuk hari ini**, dengan pilihan cepat 30/90/180/365 dan tanggal khusus. Rentang kosong, terbalik, tidak valid, atau berakhir setelah hari ini ditolak. Pembanding langsung mendahului rentang terpilih dengan jumlah hari kalender yang sama; tanggal mulai jadwal WIB menentukan periode kegiatan.
+3. Realisasi hanya menghitung enam jenis promosi eksternal **presentation, demo, exhibition, training, refreshment, visit**, berstatus `completed`, dengan interval jadwal valid dan telah berakhir saat perhitungan. Jenis internal/other, draft, kegiatan belum selesai, ditolak, dan dibatalkan tidak menambah realisasi. Relasi produk harus eksplisit pada `activity.product_id`; tidak ditebak dari judul, catatan, atau opportunity terkait.
+4. Seluruh produk katalog dalam cakupan, **termasuk nol kegiatan**, menjadi denominator cakupan. Cakupan adalah produk dengan minimal satu realisasi dibagi jumlah produk tersebut. Grafik lima produk teratas membandingkan realisasi dan pembanding; tabel memuat rincian presentasi, demo, training, jenis lain, total, pembanding/selisih/tren, serta konteks perencanaan. Pembanding nol menghasilkan persentase kosong, bukan tak hingga.
+5. Filter anggota memakai pemilik **atau peserta** kegiatan, pemilik opportunity, serta penerima tugas. Riwayat tersedia dan jeda menggunakan seluruh catatan selesai yang memenuhi kriteria dalam cakupan anggota, terlepas dari periode terpilih. Istilah tanpa riwayat tidak boleh diartikan sebagai tidak pernah dipromosikan di luar data CRM yang tersedia.
+6. Rencana adalah snapshot `submitted`/`approved` yang mulai **setelah sekarang hingga 30 hari bergulir mendatang**, terpisah dari periode analisis. Kegiatan `in_progress` yang sudah mulai merupakan snapshot tersendiri, termasuk yang akhir jadwalnya terlewati. Rencana terdekat ditampilkan tanpa menambah realisasi.
+7. Pipeline merupakan snapshot opportunity pada `lead/qualified/demo/proposal/negotiation`, tanpa batas tanggal penutupan. Jumlah, nilai estimasi, dan nilai tertimbang tidak disebut pendapatan atau bukti konversi promosi. Tugas terbuka `todo/in_progress` terhubung melalui kegiatan/opportunity; relasi ganda ke produk sama dihitung sekali per tugas. Tenggat sebelum hari ini WIB ditandai terlambat.
+8. Promosi terakhir memakai **akhir jadwal** terbaru dari kegiatan selesai yang memenuhi kriteria, bukan timestamp perubahan status. Jeda hari kalender WIB dari akhir jadwal tersebut memiliki ambang panduan **90 hari**, dapat diubah ke bilangan bulat minimal 1. Tanpa riwayat ditampilkan terpisah dari jeda yang diketahui.
+9. Target panduan awal **2 kegiatan selesai per produk per periode terpilih**, dapat diubah ke bilangan bulat minimal 1 dan tidak otomatis diprorata menurut panjang periode. Produk nol dan katalog baru tetap termasuk di bawah target bila realisasi kurang. Badge baru menggunakan tanggal pembuatan record selama/setelah periode, bukan tanggal peluncuran. Target, badge, dan prioritas adalah alat perencanaan; **bukan skor kinerja anggota**.
+10. Perhatian dan urutan mengubah **tabel dan CSV saja**, dengan caption bahwa ringkasan/grafik memakai cakupan katalog serta anggota. Sediakan urutan promosi paling sedikit/banyak, **presentasi paling sedikit/banyak**, jeda terlama, nama produk, serta filter **tanpa presentasi pada periode** (`presentation = 0`) di samping tanpa kegiatan/di bawah target/jeda/tanpa riwayat.
+11. CSV mencakup baris tabel sesuai filter dan urutan, **termasuk nol**, metadata periode dan pembanding, waktu snapshot, anggota/katalog/pencarian, perhatian/urutan, target/ambang, serta metode. Header bilingual, format locale, nilai IDR, data pengguna asli, dan proteksi formula teks mengikuti ekspor yang tersedia. Ekspor tidak tersedia untuk hasil/rentang invalid atau tabel kosong.
+12. Detail produk menyediakan rincian enam jenis, pembanding, pelanggan unik, riwayat, rencana, pipeline, dan tugas. **Plan activity / Rencanakan kegiatan** membuka Kalender dengan produk terisi pada **draft baru tanpa menyimpan otomatis**; simpan dan approval tetap mengikuti aturan kegiatan. Aksi tidak tersedia bagi viewer dan produk nonaktif.
+13. Kartu **Products Needing Attention / Produk Perlu Perhatian** di Dashboard selalu memakai seluruh tim, produk aktif, 90 hari kalender WIB terakhir dan ambang dua kegiatan. Kartu ini **independen dari filter bulanan operasional Dashboard**. Tombolnya membuka analisis dengan cakupan awal, bukan meneruskan filter bulanan.
+14. Diagnostik menampilkan kegiatan selesai/rencana tanpa relasi produk atau produk tidak dikenal, jadwal tidak valid, serta nonaktif dikecualikan. Cakupan diagnostik anggota/periode dihitung sebelum filter kategori/brand/pencarian dan diberi label; data tanpa produk tidak dialokasikan secara perkiraan. Perhitungan membaca data yang sudah dimuat sesuai akses aplikasi; **tidak mengubah skema database** atau menyimpan tabel agregat baru.
+
+Panduan bilingual, contoh interpretasi, dan batas perhitungan: [PRODUCT-ANALYTICS.md](PRODUCT-ANALYTICS.md).
+
 ## 7. Model data konseptual
 
 | Entitas | Relasi utama dan kontrol |
@@ -305,6 +325,15 @@ Target kecepatan dan volume pengguna perlu ditetapkan setelah jumlah anggota ser
 | AC-34 | Upload demo → reload → masuk demo kembali → download | Byte/hash file sama, metadata tetap terkait; tidak ada upload Supabase dari mode demo |
 | AC-35 | Edit metadata lalu unggah revisi file | File lama tidak ditimpa; revisi memakai record baru dengan versi yang dipilih |
 | AC-36 | Pustaka produksi baru dibuka | Daftar kosong yang jujur; tidak ada dokumen, penulis, atau file produksi fiktif |
+| AC-37 | Dua produk aktif, hanya satu memiliki promosi selesai memenuhi kriteria | Cakupan 1/2; kedua produk tercantum, nol tidak dikeluarkan; internal/other dan status belum selesai tidak menambah realisasi |
+| AC-38 | Periode khusus melintasi batas bulan/WIB; pembanding nol | Tanggal mulai WIB memilih periode inklusif, pembanding langsung sebelumnya sama panjang; delta benar dan persentase pembanding nol kosong |
+| AC-39 | Filter anggota/kategori/brand/pencarian diubah lalu perhatian/urutan dipilih | Ringkasan mengikuti cakupan katalog/anggota termasuk nol; perhatian/urutan hanya mengubah tabel/CSV; pemilik atau peserta kegiatan masuk cakupan anggota |
+| AC-40 | Produk dua demo tanpa presentasi; pilih filter tanpa presentasi dan urutan presentasi | Total selesai 2, presentasi 0; tetap tampil pada filter tanpa presentasi, urutan berdasarkan jumlah presentasi selesai |
+| AC-41 | Pilih periode historis sementara ada rencana dua minggu mendatang, pipeline penutupan jauh, tugas relasi ganda | Rencana 30 hari/sedang berlangsung/pipeline/tugas tetap snapshot saat ini; rencana tidak menambah realisasi dan satu tugas sama tidak terduplikasi per produk |
+| AC-42 | Produk baru nol riwayat; kegiatan lama berakhir pada tanggal berbeda dari perubahan status | Katalog baru dan panduan target diberi konteks, bukan skor anggota; tanpa riwayat tidak disebut tidak pernah dipromosikan; jeda memakai akhir jadwal terakhir |
+| AC-43 | Detail → Rencanakan kegiatan; ulangi sebagai viewer/produk nonaktif | Draft baru terisi UUID produk tanpa penyimpanan otomatis; pengguna tetap menyimpan melalui aturan normal; viewer/nonaktif tidak dapat memulai aksi |
+| AC-44 | Filter tabel menghasilkan produk nol lalu ekspor dalam kedua bahasa | Baris nol serta filter/urutan/metode/periode/snapshot ikut CSV; header bilingual dan data master asli; rentang invalid/masa depan mencegah ekspor |
+| AC-45 | Filter bulanan Dashboard diubah lalu buka analisis dari kartu produk | Kartu tetap seluruh tim/produk aktif/90 hari/ambang dua; analisis membuka cakupan default tanpa mewarisi filter bulanan |
 
 Pengujian minimal mencakup unit business rules (waktu/KPI/CSV), integration/RLS untuk role dan perubahan status, konflik konkurensi, serta smoke test browser untuk login dan satu alur pelanggan → peluang → kegiatan → laporan → follow-up. Hasil uji harus dicatat sebagai lulus/gagal/belum diuji, bukan hanya daftar rencana.
 
@@ -408,3 +437,7 @@ Ketentuan berikut menggantikan deskripsi awal yang bertentangan tentang demo pub
 - **Bahasa:** English default, pilihan Indonesia tersimpan dihormati; perubahan label tidak mengubah data bisnis atau konten dokumen.
 
 Alur pemakaian, batas reminder, atribusi API, serta acceptance deployment: [APPROVAL-REMINDERS.md](APPROVAL-REMINDERS.md).
+
+## Revisi v1.5 — analitik promosi produk, 15 November 2026
+
+FR-19 menambahkan analitik dan prioritas perencanaan berbasis pencatatan kegiatan, katalog, opportunity, dan tugas yang sudah tersedia, tanpa migrasi database baru. Realisasi, rencana 30 hari, dan snapshot pipeline/tugas dipisahkan; produk nol tetap masuk cakupan. Filter/urutan presentasi membantu membaca produk yang sering atau jarang dipresentasikan. Ringkasan produk Dashboard memiliki cakupan seluruh tim 90 hari sendiri, terpisah dari filter bulanan operasional. Draft dari analitik tidak otomatis tersimpan. English tetap default, dengan pilihan Indonesia persisten. Panduan: [PRODUCT-ANALYTICS.md](PRODUCT-ANALYTICS.md).
