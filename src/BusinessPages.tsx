@@ -1391,7 +1391,7 @@ export function CatalogPage({ onOpenKnowledge }: { onOpenKnowledge?: (productId:
       )}
       {product && (
         <Dialog title={product.name} onClose={() => setSelected(null)}>
-          <div className="dialog-body detail-section">
+          <div className="dialog-body catalog-product-detail">
             <div className="product-card-top">
               <span className="product-icon">
                 <Stethoscope size={30} />
@@ -1440,6 +1440,7 @@ export function CatalogPage({ onOpenKnowledge }: { onOpenKnowledge?: (productId:
                   .length
               }{" "}{tr("kegiatan ·")}{" "}
               {data.equipment.filter((e) => e.product_id === product.id).length}{" "}{tr("unit demo terdaftar")}</p>
+            <div className="catalog-product-actions">
             {manager && (
               <button className="btn primary" onClick={() => setForm(product)}>{tr("Edit produk")}</button>
             )}
@@ -1448,6 +1449,7 @@ export function CatalogPage({ onOpenKnowledge }: { onOpenKnowledge?: (productId:
                 {tr("Lihat materi produk")} ({data.knowledge_documents.filter((document) => document.product_id === product.id && document.status === "active").length})
               </button>
             )}
+            </div>
           </div>
         </Dialog>
       )}
